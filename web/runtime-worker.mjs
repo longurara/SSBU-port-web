@@ -25,6 +25,9 @@ self.onmessage = async ({data}) => {
     if(data.diagnosticFrames===true)self.__ssbuDiagnosticGpu=backend;
     module = await create({webgpuDevice:device,webgpuBackend:backend,
       webgpuDispatch:request=>dispatchGpuRequest(module,request).catch(failed),onRuntimeReport:text => completed(JSON.parse(text))});
+    // The local diagnostic harness can inspect exports and bounded guest data
+    // directly, without heap-wide DevTools object queries on a large live Wasm.
+    if(data.diagnosticFrames===true)self.__ssbuDiagnosticModule=module;
     if (!(data.file instanceof File)) throw new Error('Chưa chọn main.elf');
     module.FS.mkdir('/program');
     module.FS.mount(module.WORKERFS, {blobs:[{name:'main.elf',data:data.file}]}, '/program');
@@ -108,5 +111,5 @@ self.onmessage = async ({data}) => {
       scope:'Runtime worker failure snapshot; a recorded draw packet does not prove GPU submission or game rendering'
     }});
   }
-  finally { delete self.__ssbuDiagnosticGpu;if(module){module.webgpuBridgeClosed=true;module.PThread.terminateAllThreads();}backend?.close();device?.destroy();self.close(); }
+  finally { delete self.__ssbuDiagnosticModule;delete self.__ssbuDiagnosticGpu;if(module){module.webgpuBridgeClosed=true;module.PThread.terminateAllThreads();}backend?.close();device?.destroy();self.close(); }
 };
