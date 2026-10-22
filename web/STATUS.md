@@ -1,5 +1,79 @@
 # Verified status — 21 October 2026
 
+## Same optimizer verified; media source limits recorded — 23 October 2026, 01:44 Vietnam
+
+Previous goal turn was verified wait on live90200/exec8095. This turn revalidated
+the same process and advancing CPU; no publication or new boot. Current health JSON
+is authoritative for the latest CPU/private-memory observation. No second linker.
+
+Read-only media review saved to build/codex-media-path-review.json. Movie virtual
+dispatch in web_os_indirect returns explicit0x4000failure, matching the native
+nnmovie.c placeholder; a blanket-success decoder stall was not established.
+Named buffer/constructor wrappers have different semantics; no actual boot call trace
+was collected for this hypothesis. AudioOut implements timed buffer release, not a
+browser PCM output bridge. Real audio remains part of the unfinished completion audit.
+No C/media/clock/matrix changes during the active control-reuse build. Rendering and
+guest uniform data must still be checked on the actual new Wasm after publication.
+
+## Portable guest-source tracing prepared for next boot — 23 October 2026, 01:28 Vietnam
+
+Previous turn verified the existing optimizer and screened clock callers. This turn
+verified SAME optimizer90200/coordinator183220/builder179628/exec8095 remains live,
+CPU4422.77s/private8127930368bytes at01:28. No new publication/boot, browser idle.
+Frozen runtime C/Worker/header hashes, roots and manifest still match build input receipt.
+No C/clock/matrix/graph/compiler changes during this linker. Do not start another link.
+
+Added gpu-guest-pool-diagnostics.mjs (commit a3fd877, local) to identify the pinned
+Wasm32 Resource registry by hashed-chain validation and actual backend GPU handle/size
+matches. No hardcoded static address; metadata reads only. Production operation2 comes
+only from host_gpu_resources.c:transfer while resource_lock remains held until reply,
+so the optional hook observes stable metadata there. Captured guest buffer addresses
+use Resource.memory+offset, never the separate GPU address; memory0 is explicitly absent.
+Candidate/scan/chain budgets are bounded and diagnostic failures leave requests running.
+
+Resource ABI checked with pinned compiler (compile-only object, no second linker).
+18 synthetic JS contracts pass. Actual already-built C/NVN/WebGPU fixture with this
+inspection enabled still passes3502checks and maps pool0x7100006000 to guest
+0x7100020000,size81920, plus the recreated GPU-only pool memory0/address0x7b00000000.
+Report build/codex-guest-pool-fixture-report.json, no errors. This is fixture evidence,
+not proof of game uniform contents or rendering. Initial harness expectation65536 was
+corrected after reading the fixture's actual81920-byte allocation; no implementation
+change was needed to obtain the correct result.
+
+Updated future-read codex-start-integrated.cjs to install guest-pool probe after target/
+pass probes; lazy heap getter waits naturally until actual C upload. Existing pass
+capture now annotates buffer.guestSource from the observed pool metadata. The helper
+module is copied into build/web-poc already; current publisher does not remove extra
+files. New startup mock13checks confirms one boot, active-runtime refusal and nonfatal
+optional probe failure: build/codex-guest-pool-startup-smoke.json. No old-game boot.
+
+After publication/Node/new boot: check diagnosticProbes.guestPools.ready and
+self.__ssbuGuestPoolProbe.report(). The report should eventually map actual vertex/UBO
+handles; captured guestSource then identifies the real guest upload address for the
+next UI producer investigation. If unavailable, preserve explicit error/scope and do
+not assume raw addresses. Existing bounded guest reader can be installed separately
+after ABI validation; old f37e command/list raw offsets are NOT valid for a new SHA.
+UI producer, menu, working input, playable match/audio/FPS remain unverified.
+
+## Control-reuse optimizer live; clock screening did not establish a bug — 23 October 2026, 01:11 Vietnam
+
+Previous goal turn made progress: observed actual control reuse, fixed ownership,
+passed3502C/GPU checks and launched guarded build. This continuation verified the same
+exec8095/coordinator183220/builder179628. Finalizer8772 completed; optimizer90200 now
+live, CPU474.59375s/private5446713344bytes at18:11:18UTC. No publication/new game boot.
+build/codex-control-reuse-build-health.json holds the current live optimizer snapshot.
+Browser ssbu-web remains idle; preserve existing link, no second runtime builder.
+
+Screened actual GetSystemTick callers in compact generated units while waiting.
+Pinned PTHREADS emscripten_get_now uses synchronized timeOrigin+performance.now, unlike
+native QPC origin. That difference alone is not proof of broken animation. The21 nearby
+floating-point candidates were screened; both zero-nearby-subtraction candidates reviewed
+use unrelated saved/configuration values, and the observed time difference path subtracts
+integers before conversion. build/codex-tick-caller-screen.json records scope and findings.
+No demonstrated absolute-tick float32 cancellation or identified UI producer. No C/clock/
+matrix/source edits during this build. New game still must verify reclaimed counts,
+bounded registry/snapshots, UI, input and playable match after link/Node checks.
+
 ## Control-storage lifetime fix verified in fixture; full build live — 23 October 2026, 01:05 Vietnam
 
 BOOT21 ENDED: page crashed during optional CDP Runtime.queryObjects inspection; CLI

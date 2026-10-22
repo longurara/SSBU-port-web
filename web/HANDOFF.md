@@ -1,10 +1,18 @@
 # Bàn giao AI: SSBU 13.0.4 WebAssembly / WebGPU
 
+> **Bổ sung01:28:** vẫn optimizer90200/exec8095, CPU4422.77s; chưa publish/boot.
+> Source a3fd877 thêm guest-pool metadata tracing,18JS checks và3502C/WebGPU
+> fixture checks pass. Harness tương lai tự cài probe và ghi buffer.guestSource
+> vào pass captures; startup mock13checks pass. Không đổi C/flags/graph đang link.
+> Sau boot mới kiểm tra self.__ssbuGuestPoolProbe.report(), dùng pool.memory+offset
+> để truy uniform guest. Chưa có bằng chứng mapping từ game mới. Xem STATUS.md.
+
 > **HIỆN TẠI — 23/10,01:05 Việt Nam: FULL BUILD CONTROL-REUSE ĐANG CHẠY.**
 > Boot21 đã crash khi thử CDP object query; boot22 sau đó dừng đúng lỗi snapshot65536
 > tạiheap3.54GB. Đã quan sát565lần reuse control address, sửa vòng đời trong50b1275;
 > fixture3502checks/99reclaims pass, registry/snapshots về0. Workerdiagnostic hook5e8c5d6.
-> Exec8095 / coordinator183220 / builder179628 / finalizer8772 còn sống; preserve.
+> Exec8095 / coordinator183220 / builder179628 / optimizer90200 còn sống; preserve.
+> Finalizer8772 đã kết thúc; optimizer CPU474.59s lúc01:11. Chưa publish/boot mới.
 > State `build/codex-control-reuse-followup.json`, log `codex-runtime-control-reuse-build.log`.
 > Script tự kiểm tra memory65536pages + Node306 đúngSHA rồi guarded boot mới.
 > Browser ssbu-web idle '/', Node172852. f37e hiện phục vụ là BẢN CŨ chưa cófix;
