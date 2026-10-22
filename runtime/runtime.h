@@ -55,6 +55,14 @@ static inline void r1m(uint64_t a) {
 #else
 #define R1M(a, n) ((void)0)
 #endif
+void stx_diag(Ctx *c, uint64_t a, uint64_t expected, uint64_t seen, uint64_t v, int bits);
+
+#ifdef RECOMP_WEB_MEMORY
+/* Opt-in web prototype: native builds retain the identity-mapping helpers below.
+ * This adapts lifted memory helpers only; host runtime pointer casts still need
+ * a separate audit before the game can use this backend. */
+#include "runtime_memory.h"
+#else
 /* Guest memory is mapped at its real address: a guest pointer is a host pointer. */
 #define DEF_MEM(bits) \
     static inline uint##bits##_t rd##bits(uint64_t a) { uint##bits##_t v; memcpy(&v, (void *)(uintptr_t)a, sizeof v); return v; } \
@@ -62,7 +70,6 @@ static inline void r1m(uint64_t a) {
 DEF_MEM(8) DEF_MEM(16) DEF_MEM(32) DEF_MEM(64)
 
 /* STXR: store only if the location still holds the value the matching LDXR read. Returns 0 on success. */
-void stx_diag(Ctx *c, uint64_t a, uint64_t expected, uint64_t seen, uint64_t v, int bits);
 #define DEF_STX(bits) \
     static inline uint32_t stx##bits(Ctx *c, uint64_t a, uint##bits##_t v) { \
         if (c->ex_addr != a) { stx_diag(c, a, 0, 0, v, -bits); return 1; } \
@@ -77,6 +84,7 @@ DEF_STX(8) DEF_STX(16) DEF_STX(32) DEF_STX(64)
 
 static inline V128 rdv(uint64_t a, int n) { V128 v; v.d[0] = 0; v.d[1] = 0; memcpy(&v, (void *)(uintptr_t)a, (size_t)n); return v; }
 static inline void wrv(uint64_t a, const V128 *v, int n) { R1M(a, (uint64_t)n); memcpy((void *)(uintptr_t)a, v, (size_t)n); }
+#endif
 static inline void vzero(V128 *v) { v->d[0] = 0; v->d[1] = 0; }
 
 static inline uint64_t adds64(Ctx *c, uint64_t a, uint64_t b, uint32_t cin) {

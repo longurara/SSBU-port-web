@@ -262,8 +262,8 @@ static inline void v_ldn(Ctx *c, uint64_t a, int rt, int n, int sz, int q) {
     for (int k = 0; k < n; k++) { r[k].d[0] = 0; r[k].d[1] = 0; }
     for (int i = 0; i < count; i++)
         for (int k = 0; k < n; k++) {
-            uint64_t v = 0;
-            memcpy(&v, (void *)(uintptr_t)(a + (uint64_t)((i * n + k) * es)), (size_t)es);
+            uint64_t ea = a + (uint64_t)((i * n + k) * es);
+            uint64_t v = sz == 0 ? rd8(ea) : sz == 1 ? rd16(ea) : sz == 2 ? rd32(ea) : rd64(ea);
             vset(&r[k], sz, i, v);
         }
     for (int k = 0; k < n; k++) c->v[(rt + k) & 31] = r[k];
@@ -272,9 +272,12 @@ static inline void v_stn(Ctx *c, uint64_t a, int rt, int n, int sz, int q) {
     int count = (q ? 16 : 8) >> sz, es = 1 << sz;
     for (int i = 0; i < count; i++)
         for (int k = 0; k < n; k++) {
+            uint64_t ea = a + (uint64_t)((i * n + k) * es);
             uint64_t v = vget(&c->v[(rt + k) & 31], sz, i);
-            R1M(a + (uint64_t)((i * n + k) * es), (uint64_t)es);
-            memcpy((void *)(uintptr_t)(a + (uint64_t)((i * n + k) * es)), &v, (size_t)es);
+            if (sz == 0) wr8(ea, (uint8_t)v);
+            else if (sz == 1) wr16(ea, (uint16_t)v);
+            else if (sz == 2) wr32(ea, (uint32_t)v);
+            else wr64(ea, v);
         }
 }
 
