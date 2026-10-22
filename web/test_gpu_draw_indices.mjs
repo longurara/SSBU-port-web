@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {triangleIndices} from './gpu-draw.mjs';
+const result=(input,mode,options)=>Array.from(triangleIndices(input,mode,options));
+assert.deepEqual(result([0,1,2,3,4,5],4),[0,1,2,3,4,5]);
+assert.deepEqual(result([0,1,2,3,4,5],4,{flat:true}),[2,0,1,5,3,4]);
+assert.deepEqual(result([0,1,2,3,4],5),[0,1,2,2,1,3,2,3,4]);
+assert.deepEqual(result([0,1,2,3,4],5,{flat:true}),[2,0,1,3,2,1,4,2,3]);
+assert.deepEqual(result([0,1,99,2,3,4,5],5,{restart:99}),[2,3,4,4,3,5]);
+assert.deepEqual(result([0,1,99,2,3,4,5],5,{restart:99,flat:true}),[4,2,3,5,4,3]);
+assert.deepEqual(result([0,99,1,2,3,99,4,5],4,{restart:99}),[1,2,3]);
+assert.deepEqual(result([0,1,255],4,{flat:true}),[255,0,1]);
+assert.throws(()=>triangleIndices([0,-1,2],4),/vertex index/);
+assert.throws(()=>triangleIndices([],12),/assembly mode/);
+assert.throws(()=>triangleIndices({length:20000000},5),/64 MiB/);
+console.log('NVN triangle assembly: PASS (11 contract cases; strip winding, last provoking vertex, restart and bounds)');

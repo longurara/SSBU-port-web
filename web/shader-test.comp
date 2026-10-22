@@ -1,0 +1,15 @@
+#version 450
+layout(local_size_x=1) in;
+layout(set=0,binding=0,std430) buffer Output { uint values[]; } outputData;
+uint nextValue(uint current, uint increment) { return current + increment; }
+void main() {
+    uint index=gl_GlobalInvocationID.x;
+    uint value=0u;
+    switch(index) {
+    case 0u: value=nextValue(value,1u);
+    case 1u: value=nextValue(value,2u);
+    case 2u: value=nextValue(value,4u); break;
+    default: value=99u;
+    }
+    outputData.values[index]=value;
+}
