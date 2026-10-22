@@ -8,7 +8,9 @@
 @draws:36-44/30
 # title -> main menu (746-759 draws); "Mischia" (Smash) is the item under the cursor
 30:Z
-@draws:700-800/40 30:Z
+# A fresh save shows Milestones notices before the menu. Dismiss them periodically.
+@until:700-800/40:Z/400
+30:Z
 # Smash menu (same draw count): "Incontro normale" is the default item -> rules screen (384 draws)
 150:Z
 # rules -> stage select (274-289 draws): A picks the stage under the hand, the first one (Battlefield)
