@@ -132,6 +132,18 @@ static void advance(WebFont *f, const WebFontStyle *s, int32_t *dx, int32_t *dy)
     *dx = scaled(units, s->scale[0], f->face->units_per_EM);
     *dy = scaled(units, s->scale[2], f->face->units_per_EM);
 }
+int web_font_kerning(WebFont *f, uint32_t first, uint32_t second,
+                     const WebFontStyle *s, int32_t *dx, int32_t *dy) {
+    if (!f || !dx || !dy || !style_valid(s)) return 1;
+    FT_Vector v = {0};
+    int error = FT_Get_Kerning(f->face,web_font_glyph(f,first),web_font_glyph(f,second),
+                               FT_KERNING_UNSCALED,&v);
+    if (!error) {
+        *dx = (int32_t)((int64_t)v.x * s->scale[0] / f->face->units_per_EM);
+        *dy = (int32_t)((int64_t)v.x * s->scale[2] / f->face->units_per_EM);
+    }
+    return error;
+}
 int web_font_advance(WebFont *f, uint32_t code, const WebFontStyle *s, int32_t *dx, int32_t *dy) {
     if (!f || !dx || !dy || !style_valid(s)) return 1;
     int error = load(f, code);

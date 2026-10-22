@@ -20,7 +20,7 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     emcc = ROOT/'deps/emsdk/upstream/emscripten/emcc.py'
     node = ROOT/'deps/emsdk/node/24.19.0_64bit/node.exe'
-    sources = [ROOT/'web/font_raster.c', ROOT/'web/font_raster_probe.c']
+    sources = [ROOT/'web/font_raster.c', ROOT/'web/font_otf.c', ROOT/'web/font_raster_probe.c']
     command = [sys.executable, str(emcc), '-std=c11', '-O1', '-Wall', '-Wextra', '-Werror',
                '-pthread', '-sUSE_FREETYPE=1', '-sNODERAWFS=1', '-sINITIAL_MEMORY=67108864',
                '-sASSERTIONS=1', *map(str, sources), '-o', str(out/'probe.cjs')]
@@ -35,7 +35,7 @@ def main():
               'scope': 'Standalone Wasm raster/metrics fixture, not guest ABI integration or game completion',
               'inputs': [{'name': p.name, 'bytes': p.stat().st_size} for p in fonts],
               'sources': {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
-                          for p in [*sources, ROOT/'web/font_raster.h']},
+                          for p in [*sources, ROOT/'web/font_raster.h', ROOT/'web/font_otf.h']},
               'wasmSha256': hashlib.sha256((out/'probe.wasm').read_bytes()).hexdigest(),
               'output': run.stdout}
     (out/'report.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')

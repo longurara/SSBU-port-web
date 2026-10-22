@@ -1,5 +1,6 @@
 /* Local actual-font fixture; argv paths are never packaged in the module. */
 #include "font_raster.h"
+#include "font_otf.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +35,11 @@ int main(int argc, char **argv) {
         assert((unsigned)r32(metrics+0x934) == web_font_glyph_count(f));
         assert(r16(metrics+4) > 0 && r16(metrics+6) >= 0);
         assert(metrics[0xcc] && metrics[0xfe] && r16(metrics+0x22) > 0);
+        WebFontPair *pairs=NULL; size_t pair_count=0;
+        assert(!web_font_otf(f,0,&pairs,&pair_count));
+        for (size_t i=1;i<pair_count;i++) assert(pairs[i-1].first < pairs[i].first ||
+            (pairs[i-1].first == pairs[i].first && pairs[i-1].second <= pairs[i].second));
+        printf("OTF entries=%zu\n",pair_count); free(pairs);
         /* Extension fonts need not contain Latin; choose a real cmap entry. */
         uint32_t code = 'A';
         if (!web_font_glyph(f,code)) for (code = 33; code < 0xffff; code++)

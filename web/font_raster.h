@@ -20,6 +20,8 @@ unsigned web_font_glyph_count(WebFont *font);
 int web_font_table(WebFont *font, const char tag[4], void *out, size_t *size);
 /* SDK Metrics, exactly 0x93c bytes, expressed in font units. */
 int web_font_metrics(WebFont *font, uint8_t out[0x93c]);
+int web_font_kerning(WebFont *font, uint32_t first, uint32_t second,
+                     const WebFontStyle *style, int32_t *dx, int32_t *dy);
 int web_font_advance(WebFont *font, uint32_t code, const WebFontStyle *style,
                      int32_t *dx, int32_t *dy);
 /* Returns an owned SDK GlyphMap (0x28-byte header + top-down gray coverage).
