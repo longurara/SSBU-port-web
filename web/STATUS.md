@@ -1,5 +1,32 @@
 # Verified status — 21 October 2026
 
+## Portable real-font raster/metrics core verified, not yet connected to game
+
+Added font_raster.c/.h using the pinned Emscripten FreeType port (2.14.3).
+The core copies and owns font inputs, selects the SDK Unicode cmap preference,
+reads actual SFNT metrics into the 0x93c SDK layout, and emits independent
+0x28-header GlyphMaps with top-down gray coverage. Supports the full 2x2
+16.16 scale matrix and native adapter's filled/unfilled outline dilation.
+This does not reproduce iType hinting or bold; no claim of pixel equivalence.
+
+Reproducible command (pinned Python): web/test_font_raster.py, optional --font-dir.
+All seven local TTF inputs pass in pthread Wasm/Node: actual unitsPerEm and glyph
+counts, cmap existence, ASCII/CJK/symbol coverage when present, metrics fields,
+whitespace, independent retained maps, doubled size, 90-degree rotation, shear,
+reflection, outline extents and filled-minus-unfilled coverage. Compiles with
+-Wall -Wextra -Werror. Evidence build/font-raster/{report.json,build.log,run.log}.
+No TTF assets are packaged, committed or uploaded. No full runtime link started.
+
+Still required: guest-safe font import adapter (load/set/metrics/glyph lifetimes,
+kerning/GPOS/error semantics), actual shared-font input/mounting, build integration,
+then an actual game boot. Production host_os.c still uses its old empty-glyph stub.
+Do not mistake the standalone fixture for a game fix already deployed.
+
+Boot23 rechecked at3844s: live, heap1324744704/system1222093504,
+311527 snapshots created/150 live, registry242/controlReclaims571788,
+522830draws/22044presents. Presentation samples remain black. Same live run
+preserved, no reload. Evidence build/codex-boot23-font-work-live.log.
+
 ## HID polling and actual empty glyphs verified; movie workers exited — boot23
 
 Extracted a non-executable disassembly skeleton from exact f40835ac Wasm using

@@ -1,5 +1,14 @@
 # Bàn giao AI: SSBU 13.0.4 WebAssembly / WebGPU
 
+> **Tiến độ font thật:** đã thêm web/font_raster.c/.h và fixture chạy lại bằng
+> web/test_font_raster.py (pinned Python). FreeType2.14.3, 7TTF local đều pass
+> raster/metrics/cmap/CJK khi có/whitespace/rotate/shear/reflection/outline và
+> giữ glyph độc lập. Evidence build/font-raster/report.json. Chưa nối guest ABI,
+> chưa nạp shared fonts/chưa build runtime mới; host_os.c vẫn glyph stub cũ.
+> Tiếp theo adapter guest-safe + lifetime + kerning/GPOS và đường nạp font thật.
+> Boot23 tại3844s vẫn live, heap1324744704,311527snapshot tạo/150live,
+> registry242/controlReclaims571788; presentation vẫn đen. Preserve run.
+
 > **Cập nhật sau55phút boot23:** vẫn live, heap1324744704;263877snapshot tạo,
 > 149live, registry242/controlReclaims483310. HID connected1/styles63 và sampling
 > tăng thật. MOVIE_INIT/MoviePlayerThread đều finished1; không kết luận decoder
