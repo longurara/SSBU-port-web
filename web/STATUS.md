@@ -1,5 +1,144 @@
 # Verified status — 21 October 2026
 
+## Old snapshot boundary crossed; one actual A press verified — boot23
+
+At1104s:103132603imports/103196draws/4559presents,66737snapshots created but159live,
+heap1324744704,allocated1220202608bytes. Registry242lists/13204bindings;
+controlReclaims117178, modeled command bytes702944. This crosses the old65536-live
+snapshot failure by cumulative creations, with retained snapshots and registry far
+below their old counts. Does not prove permanently bounded allocation or gameplay.
+Evidence: codex-boot23-live-observation.json and observations.jsonl in build/.
+
+Across samples448..1104s, draw delta82968/present delta3457 is exactly24/frame.
+That matches the native sequence's movie range, but draw counts can also differ
+because web glyphs are empty: movie state is an inference, not established.
+One real focused/visible Z/A press at1248..1250s held10presented frames, then24more
+frames observed. Actual C shared input words contained buttons1, sequence222336;
+no input timeout. Subsequent draw/present ratio23.9167, no visible menu established.
+Receipt build/codex-boot23-press-a.log. Shared input arrival is not proof guest
+consumed it or that input controls gameplay correctly.
+At1504s the run is still live:148606053imports/164040draws/7095presents,
+102234snapshots created/149live. Heap remains1324744704bytes, allocated1220026752,
+system1222093504 (same system size as1104s); texturesCreated533 unchanged.
+This verifies stable ownership across the old boundary over the observed interval,
+not the unfinished UI/input/match. Preserve this run for producer/state diagnosis.
+
+Correction to the earlier media comparison: runtime/boot.c registers
+register_movie_mf_imports after register_movie_imports, so native normally replaces
+nnmovie.c's failing placeholder unless SSBU_MOVIE=0. tests/DEBUG_MODE.md states
+native skip mode lets12actual samples pass before EOS; zero-sample EOS stalls.
+Matching web's0x4000 return to the old placeholder alone did NOT establish parity
+with the working native movie path. Need actual movie/input/UI state or call
+evidence before changing semantics; no runtime C/clock/matrix patches made.
+
+## Actual UI matrices are zero before upload — boot23
+
+Initial11passes archived in codex-boot23-live-pass-probe.json. General pool
+diagnostics hit their256-attempt cap before UI handles348/361 appeared. A targeted
+upload-time registry read mapped both in1attempt, errors[]:348 CPU memory0x804a64c000,
+4096bytes;361 CPU memory0x8010600000,150994944bytes. Only diagnostic metadata changed.
+Late10passes (codex-boot23-late-pass-probe.json) have actual addresses, but every
+direct guest comparison reports busy mapping lock. Do not reinterpret busy as equal.
+
+Added a bounded live upload observer in codex-boot23-install-upload-source.cjs:
+copies completed serialized operation2 staging bytes before C receives its reply,
+for handles348/361 only,64entries/max1024bytes each. These bytes come from actual
+gm_read in host_gpu_resources.c:transfer/web_gpu_draw_range. Latest overlapping
+writes are composed; oversized writes clear history, failed writes are excluded,
+destroy/close invalidates it. Eight offline contracts pass; no guest memory writes.
+
+Actual codex-boot23-upload-pass-probe.json contains10passes atframes3934..4057.
+Eight UI uniform slot0 captures are complete560bytes and equal the actual C upload
+source (one completed write each), with target87 readbacks black. The two fullscreen
+passes use handle1, outside this upload observer, explicitly unavailable.
+codex-boot23-upload-uniform-analysis.json confirms all8UI vertex sources exactly
+match the earlier analyzed Maxwell source. World X/Y rows are all zero, world Z
+row[0,0,1,-1], already in guest-derived upload data. This narrows those samples to
+the guest UI data/producer/state; it does not explain every draw, establish a font/
+clock cause, or prove menu/input/match. The live run must be preserved.
+
+## Control-reuse Wasm published; actual boot23 started — 23 October 2026, 03:13 Vietnam
+
+New exact file SHA f40835ac644406c5a6d43efae4ef3816b5de73e34a1fb826db5c53627855b431,
+281992236bytes/99138functions/maxlocals10812. Actual shared-memory maximum65536pages
+and306constructors pass for this sameSHA. Build/compiler/coordinator are terminal.
+Coordinator stopped only at the deliberately closed browser; manual recovery reopened
+ssbu-web/PID149760 and the existing guarded harness confirmed started:true with all
+target/pass/guest-pool probes ready. No rebuild. Receipt/logs:
+codex-control-reuse-build.json, memory-limits.json, node-report.json,
+codex-control-reuse-browser-recovery.json, boot-start-recovery.log (all in build/).
+
+Bounded GuestMemory reader found the new mapping at19503496 (old f37e address invalid).
+32bytes at guest0x7100000000 independently match the original ELF PT_LOAD prefix.
+Actual game resource table20765584 maps5GPU pools at the initial observation, errors[].
+Report codex-boot23-guest-reader-check.log; this is actual game mapping, not fixture data.
+No live guest/GPU comparison/menu/input/match result yet. Preserve this run and archive
+matching-SHA livePassProbe reports before any other /__report writer. Do not reload.
+First observed114s:11537005imports,heap820969472,allocated742350520bytes,
+registry1list/controlReclaims6;0draws/0presents/0snapshots. Viewed canvas is black
+before any submitted draw. This verifies the new reclaim path executes in the game,
+not sustained bounded ownership or a rendered menu. Full observation saved under
+build/codex-boot23-live-observation.json; later compact samples append to
+build/codex-boot23-observations.jsonl (GPU live/created snapshot counts included).
+At324s:11537draws/520presents,heap1022427136,allocated817759048bytes;
+10308snapshots created and154live. Actual loading logo visually confirmed and
+archived as output/playwright/codex-boot23-loading-logo.png. Early reclamation is
+working, but the former65536snapshot boundary and a playable menu/match remain
+unverified. No uniform-specialized draw or live pass comparison at this sample.
+
+## Bounded guest/GPU uniform comparison prepared for next run — 23 October 2026
+
+The future-read codex-start-integrated.cjs and manual live-pass installer now add
+guestComparison only for vertex-stage NVN uniform slot0 (shader binding3), up to1024bytes per draw.
+They compare the captured GPU prefix against the existing bounded guest reader,
+reporting missing reader, busy lock or errors explicitly. Only difference counts
+and the first differing byte are added; no extra bulk capture. Timing scope is
+after GPU readback: other guest writers may run concurrently, so a mismatch alone
+does not prove an upload bug. No guest rendering state is modified.
+
+After the new module is validated and booted, install codex-install-live-guest-reader.cjs
+once the diagnostic module/guest mapping is available, and validate its ELF bytes
+against the original file. Otherwise captures will explicitly say reader unavailable.
+Both probe files pass syntax checks and the existing13startup guard checks still pass.
+No real new-game comparison yet, no production C/flags/roots/manifest changes.
+Offline check of the exact snippet passes6cases using archived boot22's560-byte
+GPU prefix and simulated guest reads (match, one changed byte, busy, missing reader,
+unmapped range, invalid length). The initial slot3 selector found no capture and
+was corrected: CB3 is shader binding3, mapped to NVN uniform slot0 by this renderer.
+Report build/codex-guest-upload-comparison-offline.json; this is not a live guest
+comparison or evidence of the new game's matrix values.
+
+## Optional compiler tracing adds validation work — 23 October 2026
+
+Installed wasm-opt reports133/version_133-60-g93d6e9de7. The matching upstream
+[pass runner](https://github.com/WebAssembly/binaryen/blob/93d6e9de7/src/passes/pass.cpp#L863)
+confirms BINARYEN_PASS_DEBUG=1 adds per-pass and pass-group validation, excluded
+from printed pass timings. Our --trace-asyncify sets that variable. Normal
+[wasm-opt input/output validation](https://github.com/WebAssembly/binaryen/blob/93d6e9de7/src/tools/wasm-opt.cpp#L319)
+exists separately. For the next necessary build, prefer the existing default
+without optional tracing, preserving normal validation, jobs8, the required
+Binaryen optimization option and all exact-SHA execution checks. No speedup was
+measured and no invocation changed during the active build. Source receipt:
+build/codex-binaryen-trace-source-review.json. Current build has completed Asyncify
+and its pass validation; optimizer90200/exec8095 remains in final validation.
+
+## Font backend gap confirmed from source — 23 October 2026
+
+Control-reuse build remains live (optimizer90200, coordinator183220, exec8095);
+CPU12301s at the source-review check. No new Wasm or real-game run yet.
+Read-only findings saved in build/codex-web-font-source-review.json. Web shared-font
+imports return a fixed address/4096 bytes, and AcquireGlyphmap returns a cleared
+0x28-byte header with advance/type but zero width/height and no glyph pixels.
+Metrics and glyph existence are synthetic. Native nnpl.c/nnfontll.c load actual
+TTFs and rasterize outlines; seven extracted fonts exist in build/native/sysdata/fonts.
+Native rasterization depends on Windows GDI and cannot be linked unchanged into Wasm.
+No font binaries copied/committed, and no production build inputs changed.
+
+This establishes an incomplete text backend, not the cause of the observed black
+target or collapsed non-text geometry. No actual font-call trace tied to those
+passes was collected. Validate the pending lifetime fix on the real game first;
+real font loading/glyph rendering remains required before claiming faithful text.
+
 ## Same optimizer verified; media source limits recorded — 23 October 2026, 01:44 Vietnam
 
 Previous goal turn was verified wait on live90200/exec8095. This turn revalidated

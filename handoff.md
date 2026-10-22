@@ -1,5 +1,45 @@
 # Bàn giao AI: SSBU 13.0.4 WebAssembly / WebGPU
 
+> **BOOT23 VẪN LIVE — bằng chứng mới sau25phút, không reload.**
+> SHA f40835ac..., ssbu-web/PID149760. Snapshot đã tạo102234, còn149live;
+> heap1324744704bytes giữ nguyên từ1104s tới1504s. Đã vượt ngưỡng lỗi65536 cũ.
+> Registry242/controlReclaims117178 ở1104s. Chưa có menu/input/trận đấu chơi được.
+> Quan trọng:8mẫu UI khớp đủ560byte giữa GPU và bytes C đã gm_read để upload;
+> world X/Y đều0 ngay trong nguồn guest. Source vertex trùng shader đã phân tích.
+> Artifact codex-boot23-upload-pass-probe.json và upload-uniform-analysis.json.
+> Upload cache chỉ handles348/361,64đoạn<=1024byte; không tranh gm map_lock.
+> Direct guest comparisons của late probe đều busy, không coi như khớp dữ liệu.
+> Mapping UI361:pool0x8000423fd0,CPUbase0x8010600000,size150994944;348 làquad.
+> Z/A đã thử tại1248s, canvas focus/visible, C input buttons1, giữ10frames rồi thả;
+> chưa thấy chuyển menu. Draw delta448..1104s đúng24/frame, chỉ gợi ý movie.
+> Native thực tế override placeholder bằng nnmovie_mf.c (boot.c), skip mode12sample
+> rồi EOS; so với nnmovie.c placeholder trước đây là chưa đủ. Không sửa clock/
+> matrix hoặc giả EOS khi chưa có call/state evidence. Xem STATUS.md mới nhất.
+> Browser-report hiện có thể là liveUploadPassProbe; archive đúngSHA trước writer.
+
+> **MỚI NHẤT — BOOT23 ĐANG LIVE,23/10 khoảng03:13 Việt Nam.**
+> Build control-reuse đã publish SHA f40835ac644406c5a6d43efae4ef3816b5de73e34a1fb826db5c53627855b431,
+> 281992236bytes/99138functions/maxlocals10812. Actual hash, shared max65536pages
+> và Node306 đều pass đúngSHA. Không còn optimizer/builder/coordinator đang chạy.
+> Coordinator kết thúc ở bước browser vì session đã đóng để giảm RAM; đã mở lại
+> ssbu-web (PID149760) và guarded boot thành công, target/pass/pool probes ready.
+> Receipt build/codex-control-reuse-browser-recovery.json, log boot-start-recovery.
+> Preserve game này; KHÔNG rerun coordinator/reload/boot thêm. Các note linker phía
+> dưới là lịch sử. Guest reader đã cài,32byte khớp ELF gốc;5pool game thật ánh xạ
+> được, không lỗi ở kiểm tra đầu. Capture sắp tới so VS NVN uniform slot0 (shader
+> binding3/CB3) với guest prefix<=1024bytes. Chưa có kết quả live comparison/menu/
+> input/trận đấu. Archive pass report đúngSHA trước mọi helper ghi /__report.
+
+> **Bổ sung sau Asyncify:** pass Asyncify đã xong4451.41s; optimizer90200 vẫn
+> validation, coordinator183220/builder179628/exec8095 còn sống. Preserve build.
+> Đã đóng riêng browser session ssbu-web bằng CLI sau khi xác nhận tab idle,
+> không game/Worker, để giảm bộ nhớ. Sau compiler hoàn tất cần mở lại session
+> trước guarded boot. Nếu coordinator báo thiếu browser thì dùng publication/Node
+> reports hợp lệ và boot thủ công; KHÔNG chạy lại coordinator vì nó sẽ build lại.
+> Xem build/codex-control-reuse-build-health.json cho CPU/memory mới nhất.
+> Font web còn glyph width/height0; source review trong STATUS.md, chưa chứng
+> minh là nguyên nhân màn hình đen. Không sửa production C trong linker này.
+
 > **Bổ sung01:28:** vẫn optimizer90200/exec8095, CPU4422.77s; chưa publish/boot.
 > Source a3fd877 thêm guest-pool metadata tracing,18JS checks và3502C/WebGPU
 > fixture checks pass. Harness tương lai tự cài probe và ghi buffer.guestSource
