@@ -31,7 +31,7 @@ def main():
       '-sENVIRONMENT=worker,node','-sASSERTIONS=1',
       '-sEXPORTED_FUNCTIONS=["_gpu_probe_start","_gpu_probe_join","_gpu_complete"]',
       '-sEXPORTED_RUNTIME_METHODS=["PThread","HEAPU8"]','-o',str(output/('gpu-texture-probe.mjs' if args.with_sdk else 'gpu-probe.mjs'))],check=True)
-    for name in ['gpu-probe-worker.mjs','gpu-backend.mjs','gpu-programs.mjs','gpu-textures.mjs','gpu-samplers.mjs','gpu-render.mjs','gpu-draw.mjs','gpu-depth-sampling.mjs','gpu-logical-sampling.mjs','spirv-uniform-branches.mjs','gpu-depth.mjs','wgsl-interface.mjs','test-gpu-resources.mjs','test-gpu-samplers.mjs','test-gpu-render.mjs','test-gpu-depth.mjs','test-gpu-present.mjs','test-gpu-depth-clear.mjs','test-gpu-draw.mjs']:
+    for name in ['gpu-probe-worker.mjs','gpu-guest-pool-diagnostics.mjs','gpu-backend.mjs','gpu-programs.mjs','gpu-textures.mjs','gpu-samplers.mjs','gpu-render.mjs','gpu-draw.mjs','gpu-depth-sampling.mjs','gpu-logical-sampling.mjs','spirv-uniform-branches.mjs','gpu-depth.mjs','wgsl-interface.mjs','test-gpu-resources.mjs','test-gpu-samplers.mjs','test-gpu-render.mjs','test-gpu-depth.mjs','test-gpu-present.mjs','test-gpu-depth-clear.mjs','test-gpu-draw.mjs']:
         shutil.copy2(WEB/name,output/name)
 
 

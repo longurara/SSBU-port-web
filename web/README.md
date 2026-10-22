@@ -167,6 +167,15 @@ bridge to WebGPU allocation, flush/invalidate, readback and queue completion.
 It does not render the game. `test_gpu_capabilities.mjs` separately checks the
 98-field capability mapping and unsupported feature flags.
 
+For optional upload-source diagnostics, call `testGpuResources` with
+`{withSdk:true, graphicsFixture:true, inspectGuestPools:true}`. The read-only
+`gpu-guest-pool-diagnostics.mjs` inspector validates the pinned Wasm32 resource
+registry against actual GPU buffer handles and sizes while an upload waits for
+its reply. Captured guest addresses use the pool's CPU backing plus the buffer
+offset; a GPU-only pool has no guest CPU address. Validation failures are recorded
+without preventing the upload. This option is disabled in the normal fixture.
+Run `node web/test_gpu_guest_pools.mjs` for the metadata and range checks.
+
 On the page, select main.elf and the extracted romfs directory, then use
 **Thử boot game** for the current diagnostic boot. It stops on unported host/GPU
 operations. **Khởi tạo runtime** runs constructors only. **Chạy kiểm tra** also

@@ -1,6 +1,6 @@
 import {WebGpuBackend,dispatchGpuRequest} from './gpu-backend.mjs';
 self.onmessage=async({data})=> {
-  let module,device,backend;
+  let module,device,backend,guestPools;
   try {
     const adapter=await navigator.gpu?.requestAdapter();
     if(!adapter)throw new Error('No WebGPU adapter for resource integration fixture');
@@ -11,6 +11,7 @@ self.onmessage=async({data})=> {
     let complete,failed;const done=new Promise((resolve,reject)=>{complete=resolve;failed=reject;});
     module=await create({webgpuDevice:device,webgpuBackend:backend,graphicsFixture:!!data.graphicsFixture,
       webgpuDispatch:request=>dispatchGpuRequest(module,request).catch(failed),onGpuProbeReport:text=>complete(JSON.parse(text))});
+    if(data.inspectGuestPools===true)guestPools=(await import('./gpu-guest-pool-diagnostics.mjs')).installGuestPoolDiagnostics(backend,()=>module.HEAPU8);
     if(module._gpu_probe_start())throw new Error('Cannot start resource fixture pthread');
     const result=await done;
     module._gpu_probe_join();
@@ -20,10 +21,11 @@ self.onmessage=async({data})=> {
     }
     if(backend.programs.snapshots.size)throw new Error('Program command snapshots leaked after queue finalization');
     result.statistics={...backend.statistics};
+    if(guestPools)result.guestPoolDiagnostics=guestPools.report();
     result.scope='Self-authored guest NVN calls -> pthread/owner-Worker bridge -> actual WebGPU upload/readback; not game draws';
     result.withSdk=!!data.withSdk;
     if(data.graphicsFixture)result.graphicsFixture='Self-authored WGSL compiler injection in fixture Worker only; real C recording/bridge/GPU draws; not Maxwell translation or game pixels';
     self.postMessage({result});
   }catch(error){self.postMessage({error:String(error)});}
-  finally{if(module){module.webgpuBridgeClosed=true;module.PThread.terminateAllThreads();}backend?.close();device?.destroy();self.close();}
+  finally{guestPools?.close();if(module){module.webgpuBridgeClosed=true;module.PThread.terminateAllThreads();}backend?.close();device?.destroy();self.close();}
 };
