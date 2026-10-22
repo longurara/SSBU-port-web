@@ -1,0 +1,2328 @@
+# Verified status — 21 October 2026
+
+## USER REQUESTED STOP / FULL HANDOFF — 22 October 2026, 05:27 UTC
+
+User: "dừng lại và viết bàn giao đầy đủ đi". Goal work stops at this handoff.
+Stopped coordinator PowerShell144168 after verifying its exact command line, preventing
+automatic Node checks/browser boot. Preserved expensive in-flight builder172172 and
+optimizer168312; both verified alive after coordinator stop (CPU14922.50s,
+private15058853888). Asyncify4690.99s completed; log final validation, no new publication.
+Server155412/171544 remains. Old Playwright Node167376 absent; do not assume session live.
+build/codex-user-stop-handoff.json records manual stop. Original followup state remains
+building-4gb and is stale after coordinator stop; no automatic browser-running transition.
+Compiler can still finish/publish; resume validation manually only when user resumes work.
+
+Canonical web/HANDOFF.md and root handoff.md refreshed identically with stop state,
+exact process ownership, manual validation commands, evidence, diagnostics, missing
+menu/input/match proof and next actions. Previous full handoff is preserved as
+web/HANDOFF_HISTORY_2026-10-22.md. Earlier live-coordinator notes below are history.
+
+## Archived heap trend narrows next measurements — 22 October 2026
+
+Previous turn made progress (bounded telemetry history) and verified live validation.
+This continuation revalidated session6115/optimizer168312 and derived
+build/codex-boot20-memory-trend-analysis.json from four archived actual observations.
+During352001..486000ms, GPU buffer liveBytes239562752 and liveTextures234 stay fixed,
+but Wasm heap capacity grows302252032bytes and liveProgramSnapshots grows11839 across
+762presents. This correlation is not proof of a leak: old reports lack allocator
+live/free counts and command registry counts, supplied only by the pending4GiB build.
+
+Source review found native runtime/nvn_gl.c:list_collect expires unused lists after
+120frames, while web registry ownership is explicitly released by FinalizeCommandHandle.
+Do not copy native's age heuristic as a fix: legal command/resource lifetime still
+needs evidence. No C/roots/headers/lifetime changes made during the active build.
+New boot should compare allocator allocated/free/system and registry lists/bindings/
+drawRecords with these snapshot counters before choosing a lifecycle change.
+
+## 4GiB Asyncify pass completed; validation live — 22 October 2026, 05:19 UTC
+
+Actual build log now reports asyncify4690.99seconds followed by `(validating)`.
+Optimizer168312 remains alive and advancing (CPU14476.80seconds/private17750343680
+at the subsequent check). No new publication or boot yet. Preserve exec6115 and
+the existing build; this is verified wait, not a hung-process inference.
+Current health JSON records the latest live validation snapshot.
+
+## Bounded allocation history for the next boot — 22 October 2026, 05:17 UTC
+
+Previous handoff turn made progress by publishing the current handoff and preserving
+the original history. This continuation revalidated live optimizer168312 (CPU14345.625s,
+private15157309440 bytes), session6115/parent144168/builder172172 still active.
+No new Wasm publication or boot; served2adc remains the old2GiB module.
+
+Added opt-in allocationTimeline in app.mjs using existing diagnostic progress fields:
+one compact sample per10seconds, at most128 entries, preserving first and recent127.
+Includes heap/allocator/command counts, imports/draws/presents; excludes frame captures.
+Available live as window.__ssbuAllocationTimeline, reset at start, attached to both
+normal and error terminal reports. No additional C calls/timers or guest behavior.
+Node syntax check passed; served build/web-poc/app.mjs matches source. Real telemetry
+and end-to-end game verification await the currently running4GiB linker.
+
+
+## Live memory readers include new telemetry; staging paths reviewed — 22 October 2026
+
+4GiB exec6115/optimizer168312 remains live, CPU advancing (latest actual snapshot
+build/codex-4gb-build-health.json). No C changes/restart/new boot during this wait.
+
+Reviewed temporary staging in transfer/web_gpu_pool_copy/web_gpu_draw_range,
+submit_draw, color/depth clear packets and copy-source preparation. These inspected
+normal/error paths release their temporary blocks. This is NOT an all-allocation
+leak audit and does not identify the actual2GiB growth cause. Retained command
+metadata and allocator free/allocated counts still need live4GiB evidence; no
+heuristic GC or speculative staging-size reduction was added.
+
+Updated codex-read-live-target-probe.cjs to save/print allocationInfo and commandInfo
+alongside heapBytes, and codex-follow-visible.cjs to print these fields for live or
+terminal results. Previously the new C telemetry existed in the Worker but the
+compact target reader dropped it. Both scripts syntax-checked; backward compatible
+when old module has no exports. Archive immediate pass report before running
+another /__report writer. Actual new-game verification remains pending publication.
+
+
+## Durable probe smoke verified; 4GiB optimizer remains live — 22 October 2026
+
+Previous goal turn made concrete progress in diagnostic capture/startup control;
+this turn verified the actual captureInputs path with mocked GPU readbacks and
+server responses. build/codex-durable-pass-probe-smoke.json records16 captures/
+16 immediate posts, two phases of8, duplicate suppression, optional-resource gate,
+nonfatal HTTP500 and idempotent install. No GPU/game claim from this mock.
+
+Actual optimizer168312 alive at 2026-10-22T04:11:55.8929910Z, CPU3351.50sec,
+private5872099328bytes; parent exec6115/builder172172 unchanged.
+No new linker, publication or game boot. Preserve this live process; source2adc
+remains old2GiB served Wasm. Current health JSON contains this snapshot.
+
+After eventual guarded new boot, inspect browser-report.json BEFORE other
+/__report helpers. Only archive as live-pass evidence when results.livePassProbe
+is present and its metadata-associated SHA matches the new published build.
+The old fixture/browser report is not evidence from a new boot. Auto-installed
+probes are ready; no manual repeat startup should occur while runtime is active.
+
+
+## 4GiB optimizer LIVE; guarded next boot now auto-installs durable probes — 22 October 2026
+
+Preserve exec6115. Finalizer161616 finished and handed off to wasm-opt168312,
+verified alive at04:07UTC CPU2213.61sec/private5.82GB. Builder172172 and primary
+144168 alive; no build failure/publication yet. Log still running passes; silence
+is not terminal. Do not start another linker or boot the old served2adc module.
+Browser remains idle. Old finalizer PID in previous section is historical.
+
+Improved diagnostic tooling while the existing link continues (no further C or
+protected-header changes): codex-start-integrated.cjs now wraps the archived exact
+plain start harness, then optionally installs both live target/pass probes once
+backend is ready. The already-running PowerShell script invokes that same filename
+after successful publication/65536-page check/Node306, so new boot will auto-install
+without a human needing to race the Worker closure. Optional probe failure is
+reported in diagnosticProbes; it does not restart or stop a successfully started
+runtime. Active-run refusal/reload guard remains first. Node control-flow mock
+verified one boot, both probes installed and a second start refuses active run;
+this is not actual game boot verification. Plain original preserved in
+build/codex-start-integrated-plain.cjs. New generated harness syntax checked.
+
+Pass probe now waits until actual uniformSpecializedDraws>0, samples up to8 module
+pairs immediately and up to8 again after120 presented frames. Each capture budget
+32KiB (16 total <1MiB HTTP limit); this compares initial/settled UI transforms.
+Each successful readback/capture immediately POSTs /__report and records save status,
+so data survives a later Worker termination. Latest saved file is
+build/web-poc/browser-report.json; ARCHIVE IT before another /__report helper or
+fixture overwrites it. Runtime terminal report remains a different file. New boot
+metadata SHA tags the pass report, with explicit metadata-association scope.
+
+Offline real-input analysis: codex-ui-early-records.json was extracted from boot20
+full runtime archive. Actual Maxwell->GLSL outputs are codex-ui-<draw>-<stage>.glsl.
+Three early solid-color quads (1973,1975,1981) have valid nonblack FS uniform colors,
+but their captured vertex transform places every corner beyond x>w (minimum NDC
+x1.009375/1.039583). CPU approximate arithmetic archived in
+codex-early-ui-clip-analysis.json. This explains why those FIRST quads cannot paint;
+it does not prove why persistent later frames remain black, or authorize altering
+game matrices. Two-time pass probe is intended to inspect their later transforms.
+Do not treat the first12 captures as settled UI. No menu/input/match verified.
+
+
+## 4GiB build LIVE after verified >2GiB GPU bridge; preserve linker — 22 October 2026
+
+NEW build exec6115, primary powershell144168, Python launcher173924/actual172172,
+finalizer161616 verified alive CPU129.86sec/private6.76GB. Health snapshot:
+build/codex-4gb-build-health.json. Only host_allocation_stats.c and host_gpu_commands.c
+compiled; remaining objects reused. Corrected native-stderr wrapper kept builder
+alive after harmless warning. Do not restart due silent validation or formatted
+NativeCommandError warning. No second linker. Logs codex-runtime-4gb-heap-build.log;
+state codex-4gb-heap-followup.json is building-4gb. Finalizer may hand off to a NEW
+wasm-opt PID; inspect current processes/exec handle, not a stale PID alone.
+
+Source build_runtime.py maximum now4294967296, initial32MiB unchanged. Graph still
+70279/1096 units; no roots/manifest/protected-header edits. Existing Binaryen flags
+and --jobs8 preserved. Script build/codex-finish-4gb-heap.ps1 checks roots/manifest/
+protected-header hashes, actual shared memory maximum65536 pages in the new binary
+(web/check_memory_limit.py), publication SHA, Node306 exact SHA, then guarded boot.
+Expected output codex-4gb-heap-build.json/codex-4gb-memory-limits.json/
+codex-4gb-heap-node-report.json and boot-start.log. No manual boot while link lives.
+Served2adc is still OLD2GiB binary; actual parser confirmed32768-page shared maximum.
+
+Browser ssbu-web was recycled AFTER boot20 archive/fixtures, now idle `/`, dedicated
+Node167376, preserving memory for linker. Avoid game boots during heavy validation.
+
+Boot20 exact final:65,999,693 imports,41,389 draws/2322 presents,723 specialized
+actual game draws/5784 removed arms, stopped graphics staging allocation failed
+at wasmHeapBytes2147483648. Archive codex-boot20-staging-allocation-report.json.
+Heap progression snapshots: codex-boot20-heap-early.json (1.022GB208sec),
+heap-loading (1.325GB352sec),heap-before-ui (1.425GB416sec),heap-post-loading
+(1.627GB486sec). codex-boot20-live-target-probe.json at550sec1.829GB stores actual
+before-present readback: frame1599/24051draws, BOTH window3 and intermediate87
+are1920x1080 RGBA8sRGB,0nonblack/allalpha255. Last composite samples87 into3.
+It proves black originates before canvas presentation, not why. Captured real
+composite shader sources/options/layout/packet are in this same probe archive.
+Separate per-pipeline pass probe was installed late but runtime ended before
+collection; codex-boot20-live-pass-probe.json explicitly says unavailable. Do NOT
+claim it contains draw records. No menu/input/match verified.
+
+4GiB fixture web/large_memory_probe.c + build_large_memory_probe.py allocates a
+padding block without touching it, obtains pointer2164332024 (>2GiB), writes native
+bytes, uploads/reads real WebGPU through production dispatchGpuRequest, checks
+unsigned callback token.7checks PASS, including allocator telemetry before/after
+free: allocated2164266584 ->1608 bytes. Report codex-large-memory-allocator-report.json.
+This verifies shared pointer handling/ABI, not full game footprint or playable game.
+Pinned Emscripten settings.js explicitly supports opting into >2GiB via max4GiB.
+
+New host_allocation_stats.c exposes pinned dlmalloc size_t mallinfo ABI as JSON;
+verified by above large-block allocation/free fixture. New web_gpu_command_info in
+host_gpu_commands.c reports registry lists/bindings/record counts using trylock,
+skips when busy (owner Worker must not deadlock waiting on a guest GPU lock).
+Worker progress/final includes these only under diagnosticFrames, with typeof
+compatibility for old Wasm. C NVN integration3295 checks/2fixture GPU draws PASS,
+all registry/program/resource counts zero after finalization, archived
+codex-command-diagnostics-report.json. Capacity alone is not a claim that growing
+command lifetimes or black rendering are fixed; new metrics are for that diagnosis.
+
+Ready live diagnostic harnesses for NEXT boot, install EARLY while Worker alive:
+- codex-install-live-target-probe.cjs exposes/captures real textures immediately
+  before first presentation after a specialized draw; codex-read-live-target-probe.cjs
+  saves via /__report. Uses existing opt-in self.__ssbuDiagnosticGpu.
+- codex-install-live-pass-probe.cjs captures successful target87 draws by actual
+  module pair (max8); codex-read-live-pass-probe.cjs MUST run before Worker closes.
+  For reliability, add bounded immediate server save inside its capture callback
+  or integrate final/progress capture before the next end. Its data was lost in20.
+- No active game now; do not call any installer on a terminated Worker (evaluate
+  can hang). Check window.__ssbuRuntimeDone first. Existing start harness is plain,
+  does NOT auto-install these probes; after new guarded boot install them early.
+
+
+## Boot19 passed texture stop, then hit 2GiB heap limit; boot20 diagnostics live — 22 October 2026
+
+Boot19 ended at graphics staging allocation failed after64,728,369 imports,
+43,761 draws/2,239 presents (exact final counters in archived report),958 successful
+uniform-specialized draws /7,664 removed branches. Same2adc Wasm. Full report:
+build/codex-boot19-staging-allocation-report.json. Prior live success evidence:
+build/codex-boot19-passed-unbound-progress.json. This proves the old texture stop
+was passed in the actual game, not just fixtures. Presentation source stayed black
+after loading; no menu/input/match verified. A/KeyZ was sent once with canvas/document
+focused at~560sec; no clear visible response or resource progression was observed.
+
+Browser console has explicit allocation failures requesting2147508224/2147545088
+bytes against limit2147483648. The current build_runtime.py max is2GiB; allocation
+limit is confirmed. Root memory composition/lifetime still needs investigation;
+do not merely reduce staging size, add arbitrary command-list age GC or claim a
+4GiB build fixes rendering. Program snapshot lifetime remains34675 live at stop.
+Native backend's 120-frame list GC is a heuristic, not faithful lifetime evidence.
+No maximum-memory/config/C/header change or linker has been started yet.
+
+The attempted read-only Worker instrumentation was requested after the runtime
+had already ended; Worker.evaluate remained pending on its closed context. Separate
+page status confirmed done=true and report was archived. Dedicated browser recycled;
+this is not a reason to restart any live runtime. Old CLI94761 may resolve on close.
+
+Added opt-in self.__ssbuDiagnosticGpu while diagnosticFrames=1, removed at shutdown;
+progress/final reports now include wasmHeapBytes. It allows serialized readback of
+actual render targets from the live Worker without waiting for another trap.
+Production behavior/rendering unchanged; no raw Wasm memory is exposed by this field.
+
+**BOOT20 STARTED03:30UTC**, same2adc Wasm/branch fix + new Worker diagnostics;
+ssbu-web dedicated Node173116. Preserve run, poll and inspect the live Worker early.
+Next inspect intermediate target pixels vs presented5 to locate persistent black,
+and heap growth to characterize2GiB exhaustion before choosing C/config changes.
+No linker pending. Source proof guard now also invalidates CB knowledge on possible
+memory-writing calls/copies/atomics/ExtInst pointer outputs;26 self-authored CPU
+proof checks passed, actual shader still removes8 arms with dependency0/43/1.
+
+
+## Actual optional texture branch proved; boot19 started with JS fix — 22 October 2026
+
+Boot18 reproduced Unbound shader texture1/2 at40,142,126 imports,
+16,601 draws/906 presents,293 textures/19 pipelines. Archived exact served2adc
+SHA in build/codex-boot18-unbound-capture-report.json. New bounded failure capture
+worked: it retained BOTH actual Maxwell stages, layouts/active bindings, immutable
+packet and complete small vertex/index/CB buffers after evicting12 early captures.
+Actual loading canvas separately visually verified/saved in
+output/playwright/codex-boot18-loading-logo.png; metadata-associated progress
+build/codex-boot18-loading-progress.json. No menu/input/match verified.
+
+Actual fragment GLSL (build/codex-unbound-stage1.glsl) reads texture2 only under
+p0 = (float(CB3 word1) != 0). Captured CB3 word1 is0. Other real slots0/1 stay
+sampled. This is a disabled optional branch requiring a static WebGPU binding,
+not evidence of a missing upload. No replacement texture was added.
+
+New web/spirv-uniform-branches.mjs conservatively evaluates scalar constants,
+read-only uint CB loads, local predicates and simple untaken single-block ifs.
+It only removes proven false arms; unknown branches stop the proof walk;
+loops/Phi refuse optimization, calls/unknown pointer stores invalidate mutable
+state. Validated zero offset/stride4/NonWritable CB layout; unknown values retain
+texture requirements. Actual shader removes8 disabled arms and reflected binding
+42/298, with proof dependency0/43/1. Original shader instructions outside removed
+arms stay intact. game-shaders.mjs applies proof before existing lowering.
+
+Production gpu-draw first compiles normally. Only if a used texture slot is
+missing, it reads real bound CB ranges in the serialized GPU queue (64KiB budget)
+and recompiles with those exact words. Active missing resources still fail.
+Cache keys include the actual words; specialized variant cache bounded256.
+New successful-draw counters uniformSpecializedDraws/uniformBranchesRemoved.
+All3 builder scripts copy the production helper. No C/header/Wasm change.
+
+Validation: build/codex-uniform-branches-integration-report.json,289 checks:
+actual captured fragment GPU pixel parity (zero,-zero,enabled), NaN/nonzero/
+unknown retain binding; production packet with missing2 renders correct pixels,
+changing uniform to enabled rejects without drawing, restoring zero succeeds,
+and binding2 executes the original enabled effect. Existing full GPU draw suite
+714 checks/20 draws passed: codex-uniform-branches-draw-regression-report.json.
+Failure capture late-record/budget smoke check passed. Initial fixture entry name
+was corrected to actual Naga main; final tests above succeeded.
+
+Boot19 started03:13UTC on SAME2adc Wasm with new JS. Dedicated ssbu-web Node118640.
+Preserve this run, poll without reload/start. No linker pending. Passing the old
+unbound-texture stop and menu/input/match remain unverified for this new run.
+
+
+## Boot17 archived at unbound texture; boot18 diagnostic run started — 22 October 2026
+
+Boot17 on served 2adc6457768e552013c47438b670be9e036010f1485bd50895fe5f046d6e65dc
+ended at `Unbound shader texture 1/2`, nnMain fn71002c48f0/LR71037f0b40,
+37,935,280 imports,13,979 draws/798 presents,293 textures/19 pipelines.
+Full SHA-tagged archive: build/codex-shared-family-unbound-texture-report.json.
+It passed the former shared-callback stop; menu/input/match remain unverified.
+Frame diagnostics show loading-logo-sized pixels through frame540, black at600+.
+The prior first12 successful draw captures do not include failing program13731.
+Its packet binds fragment units0/1, but required unit2 is absent; cause unknown.
+
+Added bounded failing-draw capture (same192KiB budget, evicts early successful
+captures on failure) including actual Maxwell source/options/layout/active bindings
+and buffer prefixes. No substitute texture or game behavior change. JS copied to
+build/web-poc. Recycled only terminal dedicated ssbu-web after archive; boot18
+started02:55UTC, same Wasm/new diagnostic JS, CLI session8832. Preserve active
+run, poll without reload/start. No C rebuild/linker pending. Older boot17-live
+notes below are historical.
+
+
+## Shared-family runtime published; boot17 CONFIRMED LIVE — 22 October 2026
+
+Exec13599 completed successfully, including publication, exact-SHA Node306/306 and
+guarded Chrome startup. **No linker remains pending** from this build. Served SHA:
+`2adc6457768e552013c47438b670be9e036010f1485bd50895fe5f046d6e65dc`,
+281989948 bytes,99134 Wasm functions,max numeric locals10812. It includes the shared
+71017f3010 callback family (native graph70279 /1096 units) and prior renderer/input.
+Archives `build/codex-post-clone-build.json`, `codex-post-clone-node-report.json`.
+State codex-post-clone-followup.json is browser-running; terminal exec13599 exit0.
+Old optimizer150676 /builder31884 /primary119964 are historical; do not restart them.
+
+**Boot17 is confirmed LIVE** in ssbu-web:306 constructors,1,307,267 imports at36sec,
+threadFailed0. Preserve this run. Do NOT reload or invoke start harness again.
+Use codex-follow-visible.cjs /codex-poll-compact.cjs. No visible image/menu/input/match
+from this new module has yet been verified, nor passing the former shared callback
+failure. Previous loading-logo screenshots prove only their explicitly tagged runs.
+
+Asyncify took4636.45 seconds; per-pass and final validation completed. Peak observed
+optimizer private memory exceeded20GB on16GB RAM, with Windows expanding paging;
+no user applications were closed and no system settings changed. Corrected native
+stderr handling worked through the entire real build, with no orphan recovery needed.
+The builder rebuilt257 objects and reused the remaining cache; protected headers
+were not changed. Older validation/link-live notes below are historical.
+
+
+## Shared-family Asyncify finished; post-pass validation live — 22 October 2026
+
+Optimizer150676 completed Asyncify in4636.45 seconds, then entered validation.
+This is a real pass transition in codex-runtime-post-clone-build.log, not a
+publication/constructor/game success. Primary119964 and builder31884 remain live
+in exec13599. Do not restart the linker. Wasm is still old f2d5058... .
+
+Validation currently has high memory pressure: optimizer private memory about19.1GB,
+physical RAM16GB, free physical16MB, virtual commit free about2GB with Windows
+having expanded commit capacity to~42GB. CPU continues advancing. Only the dedicated
+idle test browser remains; no large stale test Chrome process was found. Preserve
+the existing run, keep browser idle, and avoid concurrent GPU/game boots. No user
+applications were closed or system settings changed. Await actual exit/publication;
+slow/silent validation is not terminal. Guarded script will check Node306 +SHA and
+boot only after successful publication. Menu/input/match remain unverified.
+
+
+## Boot16 archived; shared virtual callback family prepared and new build live — 22 October 2026
+
+Boot16 on f2d505827159c1c4... ended at missing callback71017f3010 after39,236,695
+imports,17,741 actual draws/964 presents,255 textures. Full SHA-tagged archive:
+`build/codex-post-clone-callback-report.json`. Its actual loading logo was separately
+captured/visually inspected in `output/playwright/codex-boot16-loading-logo.png`;
+live metadata-associated archive `codex-boot16-loading-progress.json`. No menu/input/
+match verified. Prior clone trap7102363140 did not stop this run; no per-callback
+counter is present, so do not invent a direct callback counter claim.
+
+Reported guestFunction7103723360 is stale from its initializer. LR7103725c7c identifies
+the ACTUAL call in f_7103725c30 at7103725c78:load object[0] then vtable+16 and call.
+Missing f_71017f3010 is a real virtual trampoline loading vtable+136 and tail calling.
+Source/relocation evidence `codex-post-clone-callback-discovery.json` and
+`codex-post-clone-actual-caller.c`; this is not a substituted stub.
+
+The observed target appears in107 bounded relocation groups, largest21 entries,
+664 distinct targets. Added only observed71017f3010 to runtime_roots.json; existing
+--main --pointer-tables --callback-tables prepare completed in OBSERVED mode,
+not --all-pointer-tables. Graph62442 ->70279 functions,1079 ->1096 units,
+source370460388 ->494114202 bytes through real direct dependencies and discovered
+tables;377 callback groups/2438 targets, no missing definitions. Prior manifest
+`codex-manifest-before-71017f3010.json`. No protected header change.
+
+Boot16 was archived before recycling only the dedicated ssbu-web browser; it is
+now idle `/` to preserve memory. Served Wasm is STILL f2d5058..., without this new
+family. Do not boot the old module during the current link.
+
+**NEW BUILD LIVE**: exec13599, primary pwsh119964, Python launcher145536 and actual
+builder31884 both confirmed alive AFTER the native stderr warning. Native invocation
+wrapper correction is working in the real build (not merely its3 fixture checks).
+Script `build/codex-finish-post-clone.ps1`, state `codex-post-clone-followup.json`,
+log `codex-runtime-post-clone-build.log`, required --jobs8/trace-asyncify. Source
+compilation rebuilt257 objects; finalizer135076 completed and wasm-opt150676 is live. Preserve current process;
+no second linker or recovery watcher was started. Original loading-callback scripts
+and exec27080/30476 are HISTORICAL and terminal; do not rerun them.
+
+Current script will verify unchanged roots/manifest, publication SHA/new module,
+Node306 constructors against exact SHA, then guarded boot. Expected artifacts:
+codex-post-clone-build.json,codex-post-clone-node-report.json and boot-start.log.
+Check state/process before manual work; once browser-running poll without reload.
+
+
+## Callback Wasm published and boot16 CONFIRMED LIVE — 22 October 2026
+
+Existing emcc92808 finished successfully. Recovery exec30476/pwsh101536 completed
+validation/publication, Node constructors and guarded browser boot. **No linker is
+pending** from this build; both exec27080 and30476 are terminal. Served runtime:
+`f2d505827159c1c4f9c0081a07ec24a27819c2d47330f41983803f426f50e8b1`,
+215296600 bytes,87047 functions,max numeric locals10812. Metadata:
+`build/codex-loading-callback-build.json`. Node306/306 for EXACT same SHA:
+`build/codex-loading-callback-node-report.json`. This module includes observed
+callback7102363140/vtable group, prior refill+input, and current shader/view JS.
+
+**Boot16 confirmed live**,306 constructors and317408 imports at18 seconds. Preserve
+Playwright session ssbu-web; do not reload/start the harness again. Poll compact or
+codex-follow-visible.cjs. Real menu/input/match and passing the loading callback
+are unverified. Boot15's actual loading screenshot remains preserved separately.
+All old notes saying linker148724 is live /served966 are now historical.
+
+Primary exec27080 ended with Windows PowerShell NativeCommandError on a harmless
+emcc stderr warning (-pthread+ALLOW_MEMORY_GROWTH). This explains the missing
+build_runtime parent while emcc survived; it was not an emcc link failure.
+Recovery confirmed emcc exit0 before publishing the existing staged pair. State
+`codex-loading-link-recovery.json` is browser-running; primary failed state is
+historical and must not trigger another link. Publication log is retained.
+
+For future reuse, codex-finish-loading-callback.ps1 now wraps native invocations
+with temporary Continue, checks actual exit code, restores Stop. Original script
+archived as codex-finish-loading-callback-original.ps1. Windows PowerShell fixture
+passes3 checks:stderr warning exit0 accepted,exit7 rejected,preference restored.
+Evidence codex-native-stderr-policy-report.json. The edited script was NOT rerun;
+only its function was extracted for tests. Do not rerun historical continuations.
+The live-progress helper now obtains published SHA metadata instead of hardcoding
+old966; its SHA association scope is explicit. No C/header change in this step.
+
+
+## Callback link moved to wasm-opt148724 — 22 October 2026
+
+Finalizer104356 finished; optimizer148724 started2026-10-21T23:15:44.7409453Z.
+Confirmed alive with CPU172.625 seconds at23:17:07Z; primary119308 and recovery
+101536 also live. Health snapshot `build/codex-loading-build-health.json`.
+Preserve exec27080 and30476; keep polling the same handles despite silent logs.
+Original build_runtime154480 remains missing; recovery watcher holds existing
+emcc92808 and primary119308 handles and can publish ONLY after both terminate
+and emcc exit0. Served Wasm is still9668733f..., not the callback build.
+Browser remains idle at `/`; do not boot the old module again while linking.
+No other linker was started. Menu/input/match remain unverified.
+
+
+## Boot15 archived at missing callback; callback link live — 22 October 2026
+
+Boot15 ended at `uncompiled indirect target7102363140`, caller7103726120,
+LR7103726294,36,568,949 imports,14,417 actual draws/823 presents,255 textures.
+Full SHA-tagged archive: `build/codex-loading-callback-report.json` (runtime9668733f...).
+Loading logo/animation was actually visible before failure, but menu/input/match
+remain unverified. Preserve `output/playwright/codex-first-loading-logo.png`.
+Browser ssbu-web has been recycled AFTER terminal archival and is idle at `/`
+to reclaim memory for linking. Older notes saying boot15 is live are history.
+
+Caller loads a vtable slot+32. Actual relocation group71050b7cc0 contains five
+callbacks:7102363050,7102363120,71017f5230,7102363130,7102363140; target's clone body
+also constructs an object with this same table. Evidence:
+`build/codex-loading-callback-discovery.json` plus extracted f_*.c in build/.
+Added only observed7102363140 to runtime_roots.json. Prepare completed with
+--main --pointer-tables --callback-tables (no broad/all scan):62442 functions,
+1079 emitted units, observed mode,270 callback groups/1774 targets. Previous
+manifest archived in codex-manifest-before-7102363140.json. Only runtime_c02f2.c
+and runtime_table.c recompiled. Protected headers unchanged.
+
+**Existing full link must be preserved.** Started --jobs8 --trace-asyncify via
+`build/codex-finish-loading-callback.ps1`, exec27080, primary pwsh119308.
+Emcc92808 (launcher156332), current finalizer104356 confirmed live; CPU141 seconds
+at last observation. Log: `build/codex-runtime-loading-callback-build.log`.
+Asyncify/validation can be silent for a long time; do not start another linker.
+Current served module is STILL old9668733f...; callback fix not published yet.
+
+Important orchestration evidence: original build_runtime PID154480 is missing,
+although its emcc child92808 and primary119308 remain live. Recovery watcher
+`build/codex-recover-loading-link.ps1`, exec30476/pwsh101536 holds emcc/primary
+process handles and waits for BOTH. State `build/codex-loading-link-recovery.json`.
+It never compiles/links: if emcc succeeds but primary did not publish, it validates
+and publishes the existing staged pair using build_runtime.publish_module, checks
+root/manifest hashes, Node306 constructors+SHA, then starts guarded Chrome boot.
+If primary already published it preserves primary result. Primary state:
+`build/codex-loading-callback-followup.json`. Check BOTH states before manual work;
+never run either continuation a second time. If an execution observation times
+out, poll the same handle/process; no restart based on a silent log.
+
+After success, archives will be codex-loading-callback-build.json and
+codex-loading-callback-node-report.json, and boot-start.log in build/.
+Only after state browser-running poll the browser without reload.
+
+
+## FIRST VISIBLE GAME LOADING LOGO verified in boot15 — 22 October 2026
+
+Boot15 is live; do not reload it. At230 seconds,1185 actual draws/180 presents,
+source frame180 had7997 nonblack pixels at bounds[1759,955,119,111]. Actual canvas
+screenshot was captured while worker remained live and visually inspected:
+`output/playwright/codex-first-loading-logo.png` shows the Smash logo with a loading
+arc in the lower-right. This is the first verified game image, not a menu or match.
+Live SHA-tagged progress archive `build/codex-first-loading-logo-progress.json`
+(saved at252 seconds) is separate from any terminal report.
+
+Actual runtime confirms new paths:24 array sampling views and46 logical compressed
+snapshots by frame180,30 compiled shaders,15 pipelines. No current error observed.
+Keep following the live run to menu and verify input/playability before completion.
+The observer `build/codex-follow-visible.cjs` waits at most50 seconds, returns a
+compact status and captures `output/playwright/codex-latest-game.png` while live.
+It preserves the first loading screenshot. Default startup has no time limit.
+
+Additional selected mip/layer pixel checks pass through the promoted array view:
+714 checks/20 draws; `build/codex-array-view-selected-slice-report.json`.
+Shader-lowering draw checks are opt-in via testGpuDraw(device,{shaderLowering:true})
+so the dump-free C fixture compiler import does not require shader Wasm assets.
+
+
+## Boot15 live with shader-declared single-layer array views — 22 October 2026
+
+Boot14 passed swizzle and submitted one real logical compressed sampling snapshot
+(counter1/subresource1). It then failed binding an R8 atlas 2048x4096 as2D when the
+shader declares2DArray. Archive `build/codex-refill-array-view-report.json` contains
+761 draws/152 presents,26 compiled shaders, actual texture117/view166 with swizzle
+[1,1,1,2]. Presentation-source samples still black; no menu/input proof.
+
+SPIR-V reflection now retains image dimensionality in layout.textureDimensions.
+The draw path creates a2DArray view of the original selected single2D layer when
+required by the shader, preserving format/aspect/mip/layer range. Other mismatches
+still fail explicitly. The adapted descriptor also reaches logical/depth snapshot
+helpers. Counter arraySamplingViews records actual adaptations.
+
+GPU draw fixture now exercises a real shader-declared2DArray with native2D packet
+and (1,1,1,R) mapping:649 checks/19 draws, arraySamplingViews1, logical copy1. Report
+`build/codex-array-view-draw-report.json`. Existing SPIR-V contracts still pass.
+The new array GLSL fixture is included in build_shader.py. JS copied to web-poc;
+no C/header/relink. Boot15 started successfully via guarded harness in ssbu-web.
+Preserve current run and poll compactly. No linker running; game unverified.
+
+
+## Boot14 live after shader component-swizzle lowering — 22 October 2026
+
+Boot13 stopped at NVN texture swizzle needs shader lowering after835 indexed draws,
+167 presents,23,024,744 imports. Texture129/view178 requests [1,1,1,2] = (1,1,1,R).
+Full SHA-tagged archive: build/codex-refill-swizzle-report.json, runtime9668733f... .
+All source samples remain black. Logical copy count0 does not verify in-game logical
+compressed snapshots; removal of the former bounds guard alone is not that proof.
+
+gpu-draw.mjs now forwards per-stage descriptor maps as immutable compiler variants.
+spirv-compat.mjs maps typed sample/fetch results and gather component selectors.
+Identity, signed/unsigned constants, invalid maps and unresolved/comparison forms
+have explicit handling. No texel substitution or guessed shader replacement.
+Validation:1430 GPU checks/22 variants,648 draw checks/19 draws including the actual
+packet/compiler/cache path and identity reversion,20 actual captured Maxwell sources
+compile to validated WGSL with mappings. Reports in build/:codex-swizzle-pixels-report,
+codex-swizzle-draw-report,codex-game-swizzle-compile-report (all .json).
+Reference: https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html
+New swizzle-test.frag fixture is generated by build_shader.py.
+
+Logical sampling fixture harness had used a wrong report envelope; the returned
+864 checks were real but archived file was stale. Fixed results envelope, checked
+HTTP save status and reran; codex-logical-sampling-report.json now holds864 checks.
+No C/protected header change or relink. JS is copied to web-poc.
+
+Boot14 confirmed live in Playwright ssbu-web on same Wasm/new swizzle JS. Preserve
+active tab; poll without reload. No linker running. Visible game/input unverified.
+
+
+## Boot13 live with logical compressed-texture sampling — 22 October 2026
+
+Boot12 on runtime `9668733fd5cc2e1b75ec0109f6e688d638884b022dc75fd9a05d00d27a411830`
+passed the negative minimum sampler LOD case, then stopped at **Compressed texture
+logical bounds need sample-coordinate lowering** (785 indexed draws /157 presents).
+Full SHA-tagged archive: `build/codex-refill-compressed-bounds-report.json`.
+Presentation-source samples were still black; no visible game or input verified.
+
+New `gpu-logical-sampling.mjs` decodes padded compressed GPU storage into exact
+logical mip/layer extents in RGBA32float before sampling, preserving decoded signed
+values, sRGB conversion and the guest sampler/coordinates. It is wired into real
+`gpu-draw.mjs`, copied to web-poc and included in the three builder copy lists.
+No C change or relink. GPU fixtures: **864 logical sampling checks**, plus
+**518 draw checks /17 draws** including the real draw path with a 3x3 BC1 source.
+Reports: `build/codex-logical-sampling-report.json`, `build/codex-logical-draw-report.json`.
+These fixtures do not establish game parity. Cube/HDR cases are not yet pixel-tested.
+
+**Boot13 is confirmed live** through Playwright session `ssbu-web`: 306 constructors,
+16,789,257 imports at144 seconds in nnMain. Preserve this run; poll compactly without
+reload. No linker was started. Completion still requires visible game and input.
+
+
+## Boot11 retained real draw inputs; negative minimum sampler LOD fixed — 22 October 2026
+
+The first refill-enabled boot ended at `WebGPU graphics draw failed`, with
+GPU error **Sampler LOD range requires unsupported clamp semantics**, 22,519,718
+imports. SHA-tagged full archive: `build/codex-refill-first-boot-report.json`,
+runtime9668733f... . It retains **9 real draw-input records**, including a later
+flat-color rectangle draw788, plus the failing draw packet (6 indexed vertices,
+texture123/view172). All sampled presentation-source pixels remain black.
+Do not claim callback execution, a visible game or actual input from this report
+alone; it does not include a refill-event counter.
+
+The actual failing sampler is min3 /mag1 /nearest mip with LOD **[-1000,1000]**.
+`gpu-samplers.mjs` now accepts finite negative lower clamps when the upper clamp
+is nonnegative, mapping the lower endpoint to0 while retaining min/mag/mip
+filters and all positive LOD behavior. Reversed/nonfinite ranges and negative
+upper clamps still reject explicitly. A GPU counterexample showed that blindly
+normalizing a negative upper clamp can change min/mag selection at positive
+explicit LOD; that attempted generalization was removed, not shipped.
+Counterexample: `build/codex-negative-upper-lod-counterexample.json`.
+
+Validation: CPU descriptor/cache contracts pass, and **212 actual GPU pixel
+checks** pass, covering the game's interval, mixed min/mag filters, negative
+input LOD and fractional lower clamps, together with existing mip/wrap/compare
+cases. Evidence `build/codex-negative-lod-report.json`. Primary LOD/filter
+reference reviewed: Khronos Vulkan textures.adoc sections LOD Operation,
+Image Level(s) Selection and Texel Filtering:
+https://raw.githubusercontent.com/KhronosGroup/Vulkan-Docs/main/chapters/textures.adoc
+No C/header/linker change was needed; source sampler JS was copied to web-poc.
+
+Actual draw sources can now be inspected independently: Node helper
+`build/codex-extract-draw-inputs.mjs` replayed captured Maxwell inputs/options
+through the real compiler and emitted **14 unique GLSL/SPIR-V variants** plus
+`captures.json` in `build/codex-game-draw-inputs/`. Buffer decoding is in
+`decoded-buffers.jsonl`; ranges retain explicit completeness flags. This is
+input/compiler evidence, not a complete textured draw replay or pixel parity.
+
+**Boot12 is live** on the same9668733f... Wasm with the sampler JS correction.
+The completed browser session was recycled after full archival, then the guarded
+harness started the new run. Poll compactly without reload. No linker is live.
+
+## Refill-enabled Wasm published; real Chrome boot11 is live — 22 October 2026
+
+Refill builder162384 /wasm-opt152332 and continuation exec80349 have completed
+successfully. **No linker is currently pending from this continuation.** Served
+runtime SHA `9668733fd5cc2e1b75ec0109f6e688d638884b022dc75fd9a05d00d27a411830`,
+215,293,168 bytes, 87,044 functions, max numeric locals10,812. It includes C
+input and command/control-memory refill. Metadata `build/codex-refill-build.json`;
+Node **306/306 constructors** pass for that exact SHA in
+`build/codex-refill-node-report.json`. Continuation state is `browser-running`:
+`build/codex-refill-followup.json`.
+
+The guarded harness started Chrome at `?runtime=fibers-compact&diagnosticFrames=1`.
+Boot11 has passed constructors and is in nnMain startup. **Do not reload or run
+the start harness again.** Poll `build/codex-poll-compact.cjs` through session
+`ssbu-web`; it omits capture base64 data. On failure archive the full
+`build/web-poc/runtime-browser-report.json` before another attempt, then inspect
+`drawDiagnostics` and `frameDiagnostics`. Actual callback execution, nonblack
+presentation, menu and game input remain to be verified; the prior game reports
+were from old f0a35422... and do not verify this new module.
+
+## Input module published and constructors verified; refill link started — 22 October 2026
+
+The previous input build finished successfully; old builder137664 and
+wasm-opt160196 are terminal. Published Wasm SHA:
+`3cf87b20c979dec0f666c87d7d8fc2f8d90d75c6c4ab96e7f37bfb2925041184`,
+215,292,029 bytes, 87,043 functions, maximum numeric locals 10,812.
+Metadata: `build/codex-input-build.json`. Node **306/306 constructors** pass for
+that exact SHA (`build/codex-input-node-report.json`). Binary export inspection
+also verifies `web_input_pointer` exists as a function export, index86494:
+`build/codex-input-export-report.json`. Export presence/constructors do not
+establish actual browser input or visible gameplay.
+
+Continuation exec80349 /pwsh96676 automatically moved to **linking-refill**.
+New builder PID162384 (launcher167992), same required `--jobs 8`, log
+`build/codex-runtime-refill-build.log`. It links the tested refill C source SHA
+`1534F068096ACAB56228F904EC95D35EB6727DD1619075F7428D11DD80E970FA`.
+Finalizer108740 completed; current **wasm-opt152332** runs the refill Asyncify
+validation. Its Asyncify pass completed in **3,623.06 seconds**; post-pass
+validation is live. This is the only linker; preserve it during long silent
+periods. Publication and constructor/browser checks have not happened yet.
+Do not start another linker or re-run the continuation. Inspect actual current
+wasm-opt PID rather than reusing old160196. State:
+`build/codex-refill-followup.json`. It will verify the new publication/SHA and
+constructors, then boot Chrome with frame/draw-input diagnostics enabled.
+
+**Served module is now the input SHA3cf87b20..., still without refill.** Historical
+game reports from f0a35422... must not be attributed to it. Browser remains idle
+at `/` to avoid repeating the large memory pressure during this new link.
+
+## Bounded actual draw-input capture ready for next boot — 22 October 2026
+
+Opt-in `diagnosticFrames=1` now also records input evidence for the first 12
+distinct pipeline keys. It retains the parsed immutable actual draw packet,
+actual retained Maxwell control/data (at most 32 KiB per stage), exact compiler
+options/metadata, and up to 4 KiB prefixes read back from used vertex/index and
+active uniform/storage GPU ranges. Each range records its original bounds,
+captured size and whether it is complete. Total serialized capture is capped
+at 192 KiB, leaving room for shader-failure data in the 1 MiB runtime report.
+It is explicitly **not** a complete replay (textures and omitted range tails
+are not captured). Diagnostic failures do not stop game drawing; feature is
+off by default. No protected header or C source changed in this step.
+
+Physical GPU draw fixture now passes **453 checks /16 draws**, including exact
+vertex and unaligned-uniform byte capture, oversized-range prefix labeling,
+report budget enforcement and injected capture failure. Report:
+`build/codex-draw-input-capture-report.json`. Served JS was updated; compact
+poll prints capture metadata only, not base64 bytes. Next guarded boot already
+uses the opt-in query. Do not reboot the old module while the linker is live.
+
+Source buffer staging review found `web_gpu_draw_range` uploads CPU-visible
+pool data at submission. Winding review found no evidence warranting a face
+flip: WebGPU's polygon-area formula and native GL_UPPER_LEFT both negate the
+ordinary framebuffer-coordinate shoelace sign; existing strip/back-cull GPU
+tests also pass. Primary references inspected:
+https://raw.githubusercontent.com/gpuweb/gpuweb/main/spec/index.bs
+(rasterize polygon), and Khronos ARB_clip_control sections 13.6/14.6.1:
+https://raw.githubusercontent.com/KhronosGroup/OpenGL-Registry/main/extensions/ARB/ARB_clip_control.txt
+These checks do not identify the source of the black game textures. The next
+actual draw-input capture is intended to provide evidence for that analysis.
+
+## Black presentation sources confirmed; completed browser session recycled — 22 October 2026
+
+Boot10 terminated at the same unported command-memory callback after **813
+indexed draws /164 presentations**, 23,519,585 imports. SHA-tagged archive:
+`build/codex-black-source-report.json`. Real GPU source readbacks of the full
+1920x1080 crop at presentations 1,2,3,4,60,120 all have RGB minimum/maximum zero
+and zero nonblack pixels. Frame60 was sampled after 288 actual draws. Thus
+black pixels already exist upstream of the canvas presentation step. This does
+not yet identify whether startup content, rendering state, data or shaders are
+responsible; do not invent a culling/shader fix without further evidence.
+
+After terminal confirmation and archival, the dedicated Playwright Chrome
+session was closed/reopened at `/` with no runtime. Its renderer171440 had
+14.39 GB private committed memory; Windows had only ~484 MB physical RAM and
+~2.83 GB commit headroom left while wasm-opt privately held ~10.28 GB.
+The renderer belonged to the isolated `playwright_chromiumdev_profile-jqKiWA`
+profile; its sole tab was this completed test. Recycling freed commit headroom
+to ~9.87 GB immediately, without touching the linker or user browser sessions.
+**Do not reboot the old Wasm again while linking** without a concrete need;
+leave the fresh `ssbu-web` session ready for the guarded refill-build follow-up.
+Input linker160196, builder137664 and follow-up96676 /exec80349 remain live.
+
+## Opt-in presentation-source pixel diagnostics — 22 October 2026
+
+`?diagnosticFrames=1` enables bounded raw GPU readbacks of the actual presented
+texture/crop on frames 1..4 and every 60th presentation. Reports retain at most
+8 samples (first plus recent): RGB extrema at native 8/10-bit precision,
+nonblack pixel count/bounds and raw cropped-byte hash. Alpha alone does not
+count as nonblack. These are source pixels, not proof of canvas visibility or
+gameplay. Diagnostic readback failures are reported separately and do not fail
+normal presentation; the feature is off by default.
+
+Actual GPU validation passes **125 presentation checks +22 diagnostic checks**,
+covering crop/sRGB display pixels, matching source crops/hashes, alpha-only
+black, cropped-out color, BGRA ordering, RGB10 precision and injected readback
+failure with continued presentation. Evidence:
+`build/codex-frame-diagnostics-fixture-report.json`. Source modules were copied
+to the served directory. Existing color-clear cancellation test also passes.
+
+A tenth boot is live with `diagnosticFrames=1` on the same old f0a35422... Wasm,
+to investigate black presentation sources while the input linker continues.
+Poll `build/codex-poll-compact.cjs` without reload. The guarded start harness now
+uses this query for the future refill-enabled boot too. The diagnostic heap
+from boot9 was archived before starting boot10; it is no longer in the page.
+Sequential continuation exec80349 / pwsh96676 remains live and waiting on input
+builder137664 / wasm-opt160196. No second linker has started.
+
+## Command-memory refill implemented; diagnostic boot reached 948 draws — 22 October 2026
+
+Boot8 completed 803 actual indexed game draws / 162 presentations, but its
+captured canvas was black (`output/playwright/codex-first-game.png`). The
+subsequent opt-in diagnostic boot completed **948 indexed game draws**, 191
+presentations, 12 compiled shaders and 8 pipelines before the same terminal
+`NVN command memory refill callback not ported` at command buffer
+`8004da1280`, guest function `71000322b0`, LR `71000567d8`, 24,454,361 imports.
+Neither draw counts nor presentations establish a visible game or usable input.
+Archive: `build/codex-diagnostic-refill-runtime-report.json`, still runtime SHA
+`f0a354229b00b559b4550675fcc545382ceeb2869665abfb34832db842d5df85`.
+
+The diagnostic shared heap was preserved after failure, without reloading the
+page. `build/codex-refill-memory-report.json` identifies the live host command
+buffer with command size 512 / used 496, callback `7100031be0`, user
+`8004da1268`. Guest page-table lookup additionally found command/control
+callbacks `710363eb60` / `710363ebe0`; all three already exist in
+`runtime_table.c`, so no graph widening is needed. Their lifted bodies confirm
+event 0/1 and the pointer to the requested minimum size passed by the wrapper.
+Lookup evidence: `build/codex-refill-targets-report.json`.
+
+`host_gpu_commands.c` now invokes the guest refill callback on exhausted command
+or control space, releases the command registry mutex during reentry, restores
+the pending call's registers while retaining exclusive-monitor effects, and
+validates the returned capacity. Command-callback disabling does not disable
+control refill. Recursive exhaustion, finalization/recording lifecycle changes
+inside callbacks, callback traps and insufficient replenishment stop explicitly.
+The same path covers all six previously guarded recording branches and control
+space at EndRecording.
+
+Validation: SDK-backed C/Worker/WebGPU fixture **3,295 checks**, zero failures,
+2 fixture draws, including callback reentry without deadlock, command/control
+refill, rounded minimum size, argument restoration, callback-disabled behavior,
+insufficient memory and callback failure cleanup. Report:
+`build/codex-refill-probe-report.json`. Compile-only with `--jobs 8` succeeded:
+`build/codex-refill-compile.log`. Protected headers were not changed. This source
+change is **not yet in the served runtime or the currently linking input build**.
+
+Sequential continuation is live in exec **80349**, script
+`build/codex-finish-refill.ps1`, state `build/codex-refill-followup.json`. It
+verified input builder PID 137664 with exact start time and waits for that
+existing build to exit. It then checks the input publication and 306 constructors,
+links the refill source with `--jobs 8 --trace-asyncify`, checks its publication
+and constructors by SHA, and starts the guarded Chrome boot. **Do not launch a
+second linker or rerun this continuation while it is live.** Old follow-up
+`codex-finish-integration.ps1` is obsolete. Poll the new continuation and actual
+processes; after `browser-running`, use `codex-poll-compact.cjs` without reload.
+Last observed input wasm-opt PID 160196 remains live, CPU >8,072 seconds.
+
+## Seven real draws; proven viewport-zero output lowered — 22 October 2026
+
+The seventh boot completed **7 real indexed game draws**, 10 compiled shaders,
+7 pipelines and 2 depth snapshots, then stopped at the next vertex shader's
+`ShaderViewportIndexLayerEXT` capability. Archive
+`build/codex-integrated-seven-draws-report.json`, 19,963,284 imports, runtime
+SHA f0a35422... . Present count is still the 3 pre-draw presentations, so this
+does not yet demonstrate a visible rendered game frame or menu.
+
+The actual captured shader (`game-layer-failure.json`, source/replay in
+`build/codex-game-layer-shader.json` and `.vert`) writes
+ViewportIndex = InstanceIndex - BaseInstance. Its packet draws one instance
+at base 0 into one layer/viewport. The SPIR-V lowerer now proves all Layer/
+ViewportIndex stores are exactly zero before removing those outputs and their
+capability. It uses the fixed single-instance draw context, constant expression
+evaluation and CFG reachability to select an unoverwritten dominating local
+store; pointer escapes, branch overwrites, unknown/nonzero outputs, uninitialized
+outputs and proof-budget exhaustion remain explicit errors. No blanket
+viewport/layer suppression or multi-viewport emulation is claimed.
+
+Validation: CPU contracts include unsafe branch writes and pointer aliases;
+**132 GPU checks** cover actual pixels at firstInstance 0 and 9, plus rejection
+of nonzero/unproven output (`build/codex-viewport-report.json`). The exact
+captured game vertex shader passes Wasm compilation and WebGPU shader
+validation with the zero proof (`build/codex-game-layer-compiled-report.json`).
+Existing draw fixture still passes 444 checks / 16 draws.
+
+An eighth real boot is starting with the proven specialization. Poll compactly
+without reload. C input link exec 10084 / wasm-opt160196 is still separate and
+live; do not start another linker. Game frame/menu/input remain unverified.
+
+## No depth/stencil attachment state corrected — 22 October 2026
+
+The sixth boot compiled the formerly failing dynamic-gather shader in-game
+(4 shaders compiled) and reached a later renderer guard: depth/stencil test
+enabled with **no depth attachment**. Archive:
+`build/codex-integrated-no-depth-attachment-report.json`, 19,831,791 imports,
+same f0a35422... runtime, 2 completed indexed draws.
+
+The renderer no longer rejects that native state or invents a depth buffer:
+when the attachment is absent, it omits WebGPU depth/stencil state. Native
+OpenGL semantics make those unattached tests pass. The GPU fixture verifies
+actual color writes with both depth and stencil NEVER enabled and no matching
+attachment. It now passes **444 checks / 16 draws**. The fixture's preserved
+original program token array was also separated from mutable draw state so
+this test really uses its intended shader pair, not a previous flat-color pair.
+Report `build/codex-draw-report.json`.
+
+A seventh real boot is starting with this JS correction. Poll compactly,
+without reload. Input C link exec 10084 / wasm-opt160196 remains live; do not
+start a second linker. A game frame/menu/input remains unverified.
+
+## Actual dynamic-gather shader reproduced and lowered — 22 October 2026
+
+The fifth boot retained the **actual failing fragment source**: 1,824 control
+bytes / 2,388 data bytes, shader stage 5, four dynamic offset gathers. It stops
+at the explicit `0x10` guard after the same 2 completed draws. Archive:
+`build/codex-integrated-gather-dynamic-report.json`. Local replay capture:
+`build/web-poc/game-gather-failure.json`; generated GLSL/SPIR-V evidence:
+`build/codex-game-gather-shader.json` and `.frag`.
+
+`spirv-compat.mjs` now lowers signed/unsigned 32-bit 2D/2D-array gather offsets
+into the same base-mip gather footprint. It queries the real view's mip-0
+extent, computes floor(uv*extent - 0.5) + offset, and centers the new gather
+coordinate on that texel quad; array layer is retained. The original gather
+and sampler preserve component ordering and address modes. ConstOffset uses
+the same path, avoiding WGSL's narrower constant-offset range. Unknown masks,
+including ConstOffsets arrays, still reject explicitly. SPIR-V ImageQuery
+capability/imports/types are added only as needed. No unsupported offset is
+silently dropped by Naga.
+
+Validation: **576 GPU pixel checks** for constant/dynamic alpha gather, signed
+offsets including (31,-32), clamp-to-edge and non-power-of-two extents, in
+`build/codex-gather-report.json`. The exact captured game shader now compiles
+all 4 gathers and passes WebGPU shader validation (126,072 WGSL bytes):
+`build/codex-game-gather-compiled-report.json`. Existing 16 captured shader
+compilations and Wasm compute/readback tests still pass. These prove compiler
+and fixture behavior, not a complete game frame. The sixth real boot is now
+starting; poll **`build/codex-poll-compact.cjs`** to avoid printing shader bytes.
+
+## Input integration link running — 22 October 2026
+
+Exec **10084** runs `build_runtime.py --fibers --compact-codegen --jobs 8
+--trace-asyncify`, log `build/codex-runtime-input-build.log`. The previous link
+and follow-up were terminal before it started; this is the only live linker.
+Latest verified wasm-opt PID **160196**, CPU >321 seconds. It integrates the
+already tested C input snapshot/export; no protected cache header changed.
+**Do not start another linker into this staging path.** Served runtime remains
+SHA f0a35422... until this build publishes. The browser currently boots that
+earlier module with the updated JS/compiler. Do not attribute its reports to
+the future input-enabled Wasm. The old follow-up script hardcodes the previous
+builder PID and must NOT be rerun for this build without updating its identity.
+
+## First two actual game draws completed — 22 October 2026
+
+The fourth integrated boot completed **2 actual indexed game draws**, with
+3 compiled game shaders, 2 pipelines, 2 samplers and 1 real depth-sampling copy.
+It then stopped compiling the next fragment shader at unsupported capability
+`ImageGatherExtended`. Evidence `build/codex-integrated-two-draws-report.json`,
+19,845,595 imports, same runtime SHA. The ordinary filtered depth adaptation
+is therefore verified through actual game draw submission. 3 presentations
+precede these draws; a rendered game menu/image is still not proven.
+
+SPIR-V lowering now admits the ImageGatherExtended declaration only with
+gather operands already supported by Naga (constant components and constant
+offsets). Dynamic offsets and other unsupported image operand masks fail
+explicitly before Naga, whose parser otherwise ignores unknown masks.
+GPU readback verifies the four gathered alpha texels, ordering and constant
+offset in **64 checks**, including the explicit capability declaration:
+`build/codex-gather-report.json`. CPU negative operand contracts also pass.
+The GLSL fixture itself does not require that capability, so this does NOT
+claim dynamic gather offsets are implemented or that the game shader passed.
+
+Future translator failures now include bounded actual retained Maxwell
+control/data captures (base64, <=512 KiB combined) plus compile options in
+`lastShaderFailure`. This makes a failing game shader reproducible without
+rebooting for each compiler experiment. Larger captures are explicitly omitted
+to preserve the local report's 1 MiB limit.
+
+A fifth real boot is starting with the gather gate and shader capture. Poll
+without reload. The goal still requires an actual visible game and input;
+fixture tests or two submitted draws are not completion.
+
+## Ordinary filtered depth sampling adapted — 22 October 2026
+
+The third boot passed the unused-binding gate and reached a real D24S8 texture
+binding. WebGPU rejected the native ordinary float sampler's expected Float
+sample type against Depth/UnfilterableFloat. Evidence:
+`build/codex-integrated-depth-sampling-report.json`, 19,775,101 imports,
+2 compiled shaders / 1 pipeline, still 0 completed game draws.
+
+`gpu-depth-sampling.mjs` now copies ordinary sampled depth views on GPU into
+`r32float`, keeping the original shader and sampler. The copy uses textureLoad
+and r32float storage, preserving the sampled f32 depth value; it copies each
+selected mip/layer before draw, with temporaries released afterward. Repeated
+bindings of the same view within a draw share one snapshot. Shadow/comparison
+image types are identified by SPIR-V reflection and keep their original depth
+view. `float32-filterable` is required (available and requested on this adapter)
+instead of silently replacing linear filtering or reducing depth precision.
+The new module is in runtime, GPU probe and Maxwell builder copy lists.
+
+A prototype direct-depth type rewrite exposed that noncomparison depth
+sampling requires a nonfiltering binding; that prototype was removed from
+production rather than changing the guest's filtering. The actual GPU test
+uses the retained ordinary GLSL/SPIR-V shader with simultaneous color/depth
+sampling and verifies linear interpolation across depth 0.25/0.75. Both
+D32 and D24S8 pass **66 checks each**; report
+`build/codex-depth-sampling-report.json`. Existing draw fixture remains
+**380 checks / 15 draws**; CPU interface/SPIR-V contracts also pass.
+
+A fourth boot of the same runtime Wasm is starting with these JS changes.
+Poll `codex-poll-boot.cjs` without reload. Game draw/menu/input remain unverified.
+
+## Automatic-layout binding usage reflected from Naga — 22 October 2026
+
+The second integrated boot passed pipeline creation (graphicsPipelines = 1)
+but stopped before submission because metadata cbuf2 produced binding 42 while
+WebGPU's actual automatic layout contained only 41 and 43. Evidence:
+`build/codex-integrated-bind42-report.json` (19,942,123 imports, same source SHA,
+2 compiled game shaders, 0 completed draws). The absent-fragment-output fix
+therefore passed the actual pipeline gate, not yet the full game draw.
+
+The Wasm Naga compiler now exports active resource bindings from validated
+entry-point call-graph global usage. Existing code-only compile remains
+compatible; `compileWithBindings` supplies code plus reflection to the real
+Maxwell compiler. Draw binding creation intersects native declarations with
+that usage for constant/storage buffers, texture/sampler halves, push constants
+and draw parameters. Unused metadata no longer creates bind group entries or
+requires an unused guest range. Automatic WebGPU layout is retained.
+
+Validation: 4 Rust compiler tests, including an unused binding 42 beside a
+helper-function read of 41 and a write to 43; real Wasm compiler reflection
+and WebGPU compute readback; **16/16 captured Maxwell shader compilations**.
+Report `build/codex-shader-bindings-report.json`. GPU draw fixture still passes
+380 checks / 15 draws and deliberately declares unused binding 42 in both
+WGSL/native metadata while reflecting it inactive. No runtime C relink needed;
+`build_shader.py` rebuilt the small independent compiler module successfully.
+
+A third real boot is now starting with the updated renderer/compiler. Poll
+`codex-poll-boot.cjs` without reload. No game/menu/input success is claimed.
+
+## First actual game draw reached; absent fragment output fixed — 22 October 2026
+
+The integrated module's first boot finished at **19,939,376 imports**, nnMain,
+`WebGPU graphics draw failed`, guest `71002c48f0`, LR `71037f0b40`.
+Two actual game shaders compiled; pipeline creation rejected a bound color
+target whose fragment entry point had no corresponding color output while
+its writeMask was nonzero. 3 presentation calls occurred, but no game draw
+completed (draws = 0). Do not claim a menu/image from those presentations.
+SHA-tagged evidence: `build/codex-integrated-first-draw-report.json`, containing
+the real graphics packet and GPU validation error.
+
+`wgsl-interface.mjs` now reflects fragment output locations (direct returns,
+return structs, builtin-only and void returns). `gpu-draw.mjs` disables color
+writes and blending for attachments without an output, retaining their load/
+store contents. This matches an unused native attachment without inventing a
+color output. CPU interface reflection checks pass; GPU fixture now passes
+**380 checks / 15 draws**, including an empty fragment shader that preserves
+a bound color target. `build/codex-draw-report.json`.
+
+A second real boot of the same source Wasm is starting with these JS changes.
+Use `codex-poll-boot.cjs`; do not reload an active boot. The previous boot is
+terminal and archived. No second C link was necessary for this pipeline fix.
+
+## Integrated source module published and booting — 22 October 2026, 02:26 Asia/Saigon
+
+The full link completed successfully (exec 90858), including the observed
+callback graph and graphics C implementation. New SHA:
+`f0a354229b00b559b4550675fcc545382ceeb2869665abfb34832db842d5df85`,
+215,291,688 bytes, 87,041 functions, maximum 10,812 locals.
+Metadata: `build/codex-integrated-build.json`. Node passed **306/306 actual
+constructors**, same SHA (`build/codex-integrated-node-report.json`).
+
+The completion follow-up (exec 1949) has also exited successfully after
+starting the Chrome boot in the original `ssbu-web` page. State file says
+`browser-running`; **do not run the start harness again or reload**. Poll with
+`build/codex-poll-boot.cjs`. Latest poll archive is
+`build/codex-integrated-boot-poll.log`. At 4 seconds: 306 constructors, 32,389
+imports, no failed guest threads, 20 programs, 2 textures, no compiled shaders
+or draw/present yet. This is a live boot, not a completion claim.
+
+The module still predates the C input change. Its object cache is prepared for
+a later link, but prioritize observing the integrated boot's next real failure
+before deciding further C changes. Source JS vertex conversion, failure packet
+archival and input/UI lifecycle fixes are served. No second linker is running.
+
+## Full input UI lifecycle checked — 22 October 2026
+
+`build/codex-test-input-ui.cjs` additionally verifies the whole UI -> runtime
+Worker -> posted shared pointer -> input writer connection with a routed,
+self-authored module. Two boot/keyboard/focus/release/stop/reboot cycles pass
+6 assertions. This complements the real C Npad test; it is not a live game
+input response. Report `build/codex-input-ui-report.json`. The first harness
+attempt tried to focus the disabled ELF input and timed out; using the enabled
+Stop button verifies actual canvas blur. The fixture tab was closed after
+each attempt, preserving the original page. Cancellation reports were archived
+separately and the real source report restored only while the build follow-up
+was still waiting.
+
+## Worker GPU failure evidence preserved — 22 October 2026
+
+Async backend/Worker errors previously bypassed the normal result-report path,
+losing `lastGraphicsPacket` and GPU statistics when the Worker closed. The
+Worker catch now sends a plain diagnostic snapshot, and the UI archives it
+under `phase: workerError` (or `browserError`/`cancelled` for those paths).
+Each run clears stale progress and diagnostics. A recorded packet alone still
+does not imply submission, rendering or game completion.
+
+The full UI test `build/codex-test-worker-error.cjs` uses a separate tab with
+a deliberately incomplete graphics packet and a routed fixture module.
+The real Worker/backend rejects it, the UI stores the same packet/error in
+the server report, and runtime controls recover. It also exposed and fixed
+an input variable declared in the file-verifier scope instead of startRuntime;
+that ReferenceError would have prevented the next real boot. Report archived
+as `build/codex-worker-error-report.json`; the global report was restored to
+the archived real source boot only while the follow-up was still waiting.
+These are JS-only fixes available to the pending integrated build's boot.
+
+## Integration completion follow-up running — 22 October 2026
+
+Exec session **1949** runs `build/codex-finish-integration.ps1`. It waits on
+the existing Python builder PID **169548** (start UTC 18:11:01.2149977), then
+requires newly published build metadata, runs actual Node constructors and
+checks the tested SHA matches that module before starting Chrome. It preserves
+any active browser runtime: the guarded `codex-start-integrated.cjs` fails
+before navigation if `__ssbuRuntimeDone === false`. It does not build/link,
+restart a failed build, or start a second linker.
+
+Watch `build/codex-integration-followup.json` for `waiting-build`,
+`constructors`, `starting-browser`, `browser-running` or `failed`. New outputs:
+`codex-integrated-build.json`, `codex-integrated-node-report.json`,
+`codex-integrated-node.log`, `codex-integrated-boot-start.log`. Once browser is
+running, poll `codex-poll-boot.cjs` without reload. Do not issue competing
+browser navigation while the follow-up is transitioning. This is an immediate
+local process dependency, not a recurring automation. Server HTTP 200 verified.
+
+The follow-up explicitly copies `game-input.mjs`, because the current builder
+loaded its old Python copy list before that source change. The current link
+still predates the C input export; the JS handles its absence. At last check,
+wasm-opt PID 157916 and the full builder tree were live; old module remains
+served until validated publication. No game completion is claimed.
+The input C change also passed a separate `--fibers --compact-codegen --jobs 8
+--compile-only` run (`build/codex-input-objects.log`): only `host_os.c` rebuilt,
+with no second link. That object is ready for a later link; it does not alter
+the already-running linker input or add input support to its pending module.
+
+## Browser input connected in source — 22 October 2026
+
+`host_os.c` now exposes a shared, atomic seven-word pad snapshot through
+`web_input_pointer`. The browser is the sole input writer; guest HID readers
+use a bounded sequence retry and return neutral input on a torn snapshot.
+`GetNpadState` uses the snapshot for connected player 0, clamps sticks to
+[-32767,32767], and keeps other/disconnected players neutral. The guest state
+layout and keyboard bindings follow `runtime/nnhid.c`. Browser standard pads
+use Nintendo physical button positions, a 15% rescaled stick deadzone and
+native stick-direction button bits.
+
+`game-input.mjs` writes directly through the shared Wasm memory posted by the
+owner Worker. Keyboard input is restricted to the game canvas, and blur,
+visibility change and teardown release input. RAF samples standard gamepads
+only while the canvas/window is focused. The UI lists bindings. The default
+15-minute boot timeout has been removed: a running game must not be killed
+just because it stays in nnMain. Explicit `?timeout=<milliseconds>` remains
+available, while constructor-only runs retain their bounded timeout.
+
+Validation: **177 OS/Wasm checks**, including actual JS shared-memory writes
+read through Npad imports in a pthread, torn snapshots, stick clamps and
+non-player-0 isolation. Report `build/codex-os-input-report.json`. Pure mapping
+contracts: **12** (`test_game_input.mjs`), browser keyboard/focus/release checks:
+**7** (`build/codex-browser-input-report.json`). No physical gamepad or live
+game/menu response is verified yet.
+
+**The currently running full link predates this C input change.** The JS is
+backward compatible when the export is absent, but a subsequent full link is
+required for game input. Do not start it while exec 90858 is live. That handle
+was polled successfully again, and wasm-opt PID 157916 is still advancing
+(CPU >5,653 seconds). Current served Wasm remains SHA ae6b06f8... . The new
+input module was added to the builder's publication list and served files.
+
+## Native vertex fetch conversion — 22 October 2026
+
+The full integration linker is still live: wasm-opt PID 157916 was verified
+again with CPU time advancing beyond 4,078 seconds. No second linker started.
+The prior turn that only read handoff documents supplied no new runtime evidence;
+this turn revalidated the actual process before continuing implementation.
+
+`gpu-draw.mjs` now describes all vertex formats accepted by native `vfmt_get`
+and converts unsupported WebGPU fetch encodings from actual GPU buffer bytes.
+These include scalar/three-channel byte/half formats, normalized 16-bit values,
+scaled integers and signed/unsigned packed 10:10:10:2. Integer shader input
+classification remains intact. Converted streams retain original vertex and
+instance indices, base vertex, stride-zero semantics and implicit (0,0,0,1)
+components. Reads and expanded uploads are bounded to 64 MiB; unsupported
+instance divisors still fail explicitly. Direct WebGPU formats keep their
+existing path. No guest/C source or protected cache header changed.
+
+Validation: 38 CPU boundary/default/type contracts in
+`test_gpu_vertex_fetch.mjs`; 379 GPU checks / 14 fixture draws, including
+float3 default w, half3, unaligned byte3 scaled fetch, signed normalized short3,
+indexed base vertex and first instance. Report `build/codex-draw-report.json`.
+The C NVN integration fixture still passes 3,266 checks / 2 actual draws
+(`build/codex-c-draw-report.json`). These remain synthetic renderer tests;
+there is still no verified game image, menu, match or input.
+
+## Source boot confirmed and triangle conversion — 22 October 2026
+
+The mapping/mutex fix is now verified in the **source-built** module, not only
+the earlier binary diagnostic. Chrome boot completes 306 constructors and
+stops at the same next callback `0x71017c5540` / `lr = 0x7101975594`, with
+`threadFailed = 0`, 7,949 programs and 234 textures / 283 views. Import count
+is 36,837,206 in this scheduling, versus 67,128,644 in the earlier diagnostic;
+counts alone are not a stable boot milestone. The archived report includes
+source-build SHA `ae6b06f80d8873e14dbe52ce47da45fd6d9ca72515e562462b9e790ff4eb367a`:
+`build/codex-source-36837206-report.json`. This boot is finished; preserve it
+until the integrated build completes before booting that newer module.
+
+The JavaScript draw path additionally lowers NVN last-provoking-vertex flat
+interpolation, indexed triangle strips, restart and 8-bit indices into real
+32-bit triangle lists. Cyclic rotations preserve winding and original vertex
+IDs/base vertex/instance parameters; strip restart discards incomplete groups
+and resets parity. Actual source index bytes are read from the GPU buffer,
+including unaligned 8-bit offsets. A bounded 64 MiB conversion cap fails clearly.
+No shader storage writes are accepted, so additional vertex invocations cannot
+silently change guest storage. Unsupported shader features still fail explicitly.
+
+Validation: **11 CPU contract cases** in `test_gpu_draw_indices.mjs` and
+**312 real GPU checks** in `test-gpu-draw.mjs`, now including last-vertex colors,
+strip winding with back-face culling, 8-bit restart and a legitimate vertex 255
+when restart is disabled, and a 16-bit index buffer starting at a 2-byte offset.
+The latter is converted to an aligned physical index buffer without changing
+the original vertex IDs. GPU report: `build/codex-draw-report.json` (8 actual
+fixture draws). These are self-authored shader fixtures, not game screenshots.
+This work is JavaScript only and will be copied by the currently running full
+integration build, with no additional guest object rebuild.
+The existing C NVN draw fixture still passes 3,266 checks after these changes
+(`build/codex-c-draw-report.json`).
+
+## Current integration — 22 October 2026, 01:11 Asia/Saigon
+
+The original source link has completed: SHA
+`ae6b06f80d8873e14dbe52ce47da45fd6d9ca72515e562462b9e790ff4eb367a`,
+215,267,430 bytes, 87,020 functions, maximum 10,812 locals. The source-built
+module passes **306/306 constructors in Node**, archived in
+`build/codex-mapping-source-node-report.json`. It predates the new callback and
+renderer work. A real Chrome boot of this source build is now running in the
+existing `ssbu-web` page; poll it without reload (`codex-poll-boot.cjs`).
+
+A second full source build is now running in exec session **90858**, log
+`build/codex-runtime-integrated-build.log`, command
+`build_runtime.py --fibers --compact-codegen --jobs 8 --trace-asyncify`.
+This integrates the 62,439-function callback graph plus presentation,
+depth/stencil clears, and the new graphics recorder/executor. Check its live
+process/session before starting any other link into the same staging path.
+
+`host_gpu_draw.c` now records vertex layouts/streams, retained GPU ranges,
+uniform/storage bindings, combined/separate texture handles, pipeline states,
+viewports, depth ranges and draw arguments. Submission snapshots live buffer
+contents, resolves physical descriptors, preserves program snapshots and
+serializes operation 24 to `gpu-draw.mjs`. Small immutable records allocate only
+their actual payload (rather than a maximum-sized range array per state change),
+to avoid unnecessary memory growth over thousands of boot-loop submissions.
+
+The real WebGPU draw path builds shader/pipeline/bind groups and executes
+triangle and indexed-triangle calls. It copies unaligned storage ranges into
+aligned GPU buffers, handles push constants/draw parameters, color masks,
+standard blending, scissor and supported depth/stencil states. The runtime
+includes the last graphics packet in failure reports for further bring-up.
+
+Validation is explicitly synthetic: the fixture Worker alone injects
+self-authored WGSL in place of the compiler, while production continues to
+compile retained Maxwell sources with the existing real compiler. The JS draw
+fixture passes **199 checks** (ordinary/indexed/textured draws, blending,
+scissor, storage alignment, push-constant groups, invalid resources/restart
+semantics). The C NVN fixture passes **3,266 checks**, including two real GPU
+draws, a physical sampler, metadata mutation after recording, buffer writes at
+submission and program finalization before replay. Reports:
+`build/codex-draw-report.json`, `build/codex-c-draw-report.json`.
+These do not yet prove a game draw, native pixel parity, menu or match.
+
+Unsupported draw features fail explicitly: compute, graphics storage writes
+and images, indexed strips/restart lowering, 8-bit indices, last-provoking-
+vertex flat interpolation, unsupported vertex-fetch encodings, complex raster
+states, texture swizzles and compressed logical-bound sampling. These must be
+implemented against observed game packets as execution reaches them. Production
+has no synthetic shader or gameplay fallback.
+
+## Latest boot evidence — 22 October 2026, 00:31 Asia/Saigon
+
+The separate scratch-mapping diagnostic completed its boot attempt at
+**67,128,644 imports**, stopping at **uncompiled indirect target
+`0x71017c5540`**, `phase = nnMain`, `lr = 0x7101975594`, with
+`threadFailed = 0`. It registered 7,949 programs, created 234 textures / 283
+views and uploaded 209,066,994 texture bytes. No game shaders were compiled or
+frames presented. Report: `build/codex-scratch-67128644-report.json`.
+
+The original `swprintf` failure is directly verified as passed in this binary
+diagnostic: inspection under the guest map lock finds both mappings at 65,536
+bytes and the scratch page containing format `%0*d` and formatted output `28`.
+The inspection locates the GuestMemory object from the exported `elf_unload`
+disassembly and validates its layout before reading. This is stronger evidence
+than comparing import counts from differently scheduled boots. The full source
+link is still pending, so this does not certify that newer source integration.
+
+Caller inspection finds a virtual call at `0x7101975590` via vtable slot +48.
+The original relocation table at `0x710509e610` contains seven related targets
+`71017c5460`, `71017c5470`, `71017c5480`, `71017c5500`, `71017c5520`,
+`71017c5530`, `71017c5540`. The observed callback is now in `runtime_roots.json`;
+`prepare_runtime.py --main --pointer-tables --callback-tables` discovers the
+whole group and increases the graph from 62,435 to **62,439 functions**,
+keeping 709 units. This preserves the existing observed-table mode; the earlier
+handoff command with `--all-pointer-tables` is not the current manifest mode.
+
+An attempted live Draw/Dispatch guard did not return before the worker ended.
+Its activation is unconfirmed and is not used as evidence of draw rejection.
+The pending CLI client was stopped only after the completed runtime report and
+closed worker confirmed that its target was gone; the browser was preserved.
+
+## Continuation — 22 October 2026, depth/stencil clear and scratch diagnostic
+
+`ClearDepthStencil` is now recorded and executed rather than silently ignored.
+Operation 25 snapshots the clear depth, stencil value/write mask and scissor;
+the retained depth target view selects its mip/layers. Full clears use attachment
+load operations, while partial/masked clears use a real depth/stencil pipeline.
+All six supported depth/stencil formats are covered. The standalone real GPU
+fixture passes **210 checks**, including exact stencil mask preservation and
+all-or-nothing invalid packet validation. The C NVN fixture passes **1,209
+checks**, including clears of mip 1/layer 1, clipped negative scissors and
+immutable source metadata. Reports: `build/codex-depth-clear-report.json` and
+`build/codex-nvn-depth-clear-report.json`. Updated host objects are cached; these
+C changes still require a full link before they become part of the game module.
+
+The source linker remains active (check PID/log before another link). To make
+boot progress while waiting, `build/codex-patch-scratch.py` pins the old Wasm
+SHA `1a03f4c049177939fb358d0e19050adfa6000e9c2df7d4c670d8be4212de86e6`
+and changes exactly four constant/call pairs inside `runtime_run`: reserve and
+commit sizes for the two scratch mappings, identified with `llvm-objdump`.
+The separate `runtime-scratch-patch.wasm` has SHA
+`1b9dbaa10f8d1e45fb46322be19a5446c824a868c0ac5073a8fbe60a44a1c407`
+and passes **306/306 constructors** (`build/web-poc/runtime-scratch-patch-node-report.json`).
+This is explicitly a binary diagnostic, not a new source-linked integration.
+Boot uses `/scratch.html` and `build/codex-start-scratch.cjs` in Playwright
+session `ssbu-web`; collect progress/result without reloading that page.
+The first invocation was inadvertently reloaded by the old NVN helper after
+18 million imports, so it was restarted. Run fixtures in isolated tabs using
+`build/codex-check-nvn-isolated.cjs`, never the old reload helper on a live boot.
+
+An additional diagnostic `runtime-scratch-guard.wasm` (SHA
+`e8c17007427653d1ed43420dd21645fd3f520036997f92be82889cd382ed11cd`)
+only rejects the 13 previously ignored Draw/Dispatch names, matching the source
+fail-fast fix. It has not been booted yet; preserve the current scratch run
+before trying it. Actual game draw execution remains unimplemented.
+
+## Current continuation — 21–22 October 2026
+
+Read `web/HANDOFF.md` for the newer build/cache instructions; the sections
+below describe older milestones. The stored browser report at continuation
+start reaches 38,527,928 imports and stops in `swprintf` at unmapped
+`0x7800002100`. The source now maps both the errno scratch region and SDK
+constant region to 64 KiB, with `swprintf` protected by `registry`.
+The next build is being linked with `--fibers --compact-codegen --jobs 8`.
+
+Code inspection confirms that the reported 818 fences and 4,914 color clears
+are **not evidence of 818 displayed game frames**. `nvnQueuePresentTexture`
+currently sends backend operation 5, which only submits an empty GPU command
+list; no window texture reaches a canvas. Many draw/state command names are
+accepted by `host_gpu_commands.c` without recording or executing them. The
+stored report also has `shadersCompiled = 0`. Actual draw execution and canvas
+presentation remain required before claiming visible game rendering.
+
+The continuation now implements operation 23 for presentation: the C queue
+retains the selected physical window texture and sends its crop; the runtime
+Worker renders that texture into a transferred game canvas. The presentation
+shader preserves top-left coordinates and uses an sRGB attachment view to
+encode sampled linear color correctly. Repeated boots create fresh canvases.
+`test-gpu-present.mjs` passes 121 real GPU checks (actual presented pixels,
+cropping, sRGB, invalid inputs, destroyed textures); evidence:
+`build/codex-presentation-report.json`. The C NVN fixture passes 1,183 checks
+with two actual presents and no leaked textures/program snapshots; evidence:
+`build/codex-nvn-report.json`. These synthetic tests do not prove game draws.
+
+The existing negative `DrawArrays` test exposed silent acceptance of unsupported
+draw/dispatch calls. Those names now fall through to the explicit unimplemented
+NVN diagnostic until a real execution path is added. The full module currently
+linking predates these C presentation/draw changes; it is intended to verify
+the scratch mapping fix first. A subsequent link is required to integrate
+the newer C changes. None of the three protected cache headers was edited.
+
+## Handoff update — 05:45 Asia/Saigon
+
+Read [the detailed AI handoff](../README_AI_HANDOFF.md) before continuing.
+This update supersedes the earlier 19 October 2026 handoff notes below.
+
+1. **Published `runtime-fibers-compact` & Chrome `nnMain` / worker progression past `0x71036f9a70` and `0x71036f85d0` to `0x7100027bf0` (`629` live mutexes, `18,837,755` import calls, `threadFailed = 0`)**:
+   - Verified `runtime-fibers-compact` (`6e82a0501c677651cfc2069492a405681a5c756a506382ec3ac74875d371ce5e`, **164,570,580 bytes / 72,093 functions / maximum 10,812 locals / 49,478 guest functions**, `2026-10-19T22:34:01.207840+00:00`, `build/web-poc/runtime-fibers-compact-build.json`) in Node (`306/306` constructors, `10,945` imports) and Chrome via `advance_runtime.py --steps 1` (`build/browser-runtime-18837755-report.json`, `build/web-poc/runtime-browser-report.json`).
+   - After passing the `BCATCacheStorage` guest worker thread (`0x71036f9a70`, `628` live mutexes, `build/browser-runtime-18836613-report.json`) and adding `71036f85d0` along with the `T1` virtual methods (`71036f80f0`, `71036f86e0`, `71037003e0`, `7103720870`, `7101754420`, `71017546f0`, `7101755800`, `71016802b0`, `710158bb70`, `710133dba0`, `71006abe50`), the 18 direct subsystem initializers of `u_71022b7100`, and the `BootSequenceScene` virtual methods (`71022cd350`, `71022d23e0`, `71022d6fd0`, `71022d8050`, `71022d8880`, `71022d9a80`, `71022da6e0`), `nnMain` passed `0x71036f85d0`, created another mutex (**`629` live/peak mutexes**), and spawned a new worker thread via `f_71000007f0` -> `f_7100027c40` -> `f_7100027a70`, stopping at **uncompiled indirect target `0x7100027bf0`** (`phase = "guestThread"`, `importCalls = 18,837,755`, `guestFunction = 0`, `lr = 0x7300000000`, `sp = 0x804ad3b000`, `x0 = 0x804ad36080`, `x8 = 0x7100027bf0`).
+   - At this boundary, the runtime has completed all 306 constructors, created **629 live/peak mutexes**, **2 live semaphores**, **309 SDK layout queries**, **7,844 registered shader programs**, **348 GPU buffers created / 7 destroyed (`8,206` writes / `107,102,720` bytes written, `80,465,920` live bytes)**, **103 GPU textures / 126 texture views (`125` writes / `172,407,250` texture bytes written, including `23` real game `depthUploadPasses` and `11` `stencilUploadWrites`)**, and **12 command submissions / 12 buffer-to-texture copies / 12 queue finishes**. Evidence: `build/browser-runtime-18837755-report.json`.
+   - `0x7100027bf0` (loaded from GOT `0x71052a2000 + 632` in `f_7100027a70`) is the generic thread entry wrapper for threads created via `f_7100027a70`, which immediately dispatches to the inner callback stored at `c->x[0] + 448` (`0x7100027da0`, loaded from GOT `0x71052a2000 + 640` in `f_7100027c40`).
+
+2. **NVN Builder `SetDevice`-Before-`SetDefaults` Fix (`1,181/1,181` Checks PASS)**:
+   - Fixed all 6 NVN Builder `SetDefaults` implementations (`MemoryPoolBuilder`, `BufferBuilder`, `TextureBuilder`, `TextureView` in `web/host_gpu_resources.c`, `SamplerBuilder` in `web/host_gpu_sampler.c`, and `QueueBuilder` in `web/host_gpu_commands.c`) so `SetDefaults` preserves the `device` pointer at offset `+16` if `SetDevice` was called before `SetDefaults` (matching the `nn::gfx` initialization order in `f_71022ee2b0`, where `SetDevice` is called before `SetDefaults` on a 1,000-descriptor pool at offset `30,000`).
+   - Added 5 regression assertions in `web/gpu_probe.c`: Chrome NVN C fixture (`check-browser-nvn-clear.cjs`) now passes **1,181/1,181 checks (`failures = 0`)** (`build/browser-nvn-depth-report.json`), and full UI **Chạy kiểm tra** (`check-browser-clear-ui.cjs`) passes (`render.checks = 3704`, `textures.checks = 1181`, `depth.checks = 652`).
+
+3. **`rd64` Virtual Tail-Call Fix in `prune_huge_dispatch()` (`web/prepare_runtime.py`)**:
+   - Fixed `prune_huge_dispatch()` in `web/prepare_runtime.py` so virtual tail calls (`{ jt = c->x[R]; goto L_dispatch; }`) whose target register `c->x[R]` is loaded via `rd64(` are recognized as non-jump-table tail calls even when an unrelated signed 32-bit load (`(int32_t)rd32(a)`) appears earlier in the 20-line window. This eliminated the last 2 bailed functions (`f_71032f2db0` `576 -> 0` cases, `f_71022f49a0` `176 -> 0` cases, `0` bailed functions across all `461` `runtime_c*.c` units). Unit tests: **13/13 PASS** in `web/test_prepare_runtime.py` (`23/23` total in `web/`).
+
+4. **64 KB Pthread Stack Overflow Fix (`web/host_fs.c`), `nn::nifm` Return Fix (`web/host_os.c`), and `os_probe` (`161/161 PASS`)**:
+   - Fixed a 64 KB pthread stack overflow in `web/host_fs.c` (`static unsigned char staging[65536]` under `fs_lock`), fixed `_ZN2nn4nifm*` in `web/host_os.c`, and verified **161/161 checks PASS (`failures = 0`)** in `web/os_probe.c` (`build/web-os/report.json`).
+   - No menu/match, actual game draw, input/audio or browser FPS has been verified yet. The older sections below are retained as historical record.
+
+## Latest web integration result
+
+The latest published full module includes the semaphore adapter and completes
+306 constructors in Node and Chrome. The observed Chrome boundary is now
+**uncompiled indirect target 7103545f50**, called from **71037cccb0** in a guest
+thread, with **550 live/peak mutexes** and **2 live semaphores**. Evidence:
+`build/runtime-progress/1792373536138784400/report-02.json` and
+`build/runtime-callback-node-report.json`.
+The module is **60,022,715 bytes / 46,158 functions / maximum 548 locals**,
+SHA-256 `2aaacc18a7c4d7d01ddbbd3af34689be1273af9d04645f460139256dc2482997`.
+The bounded continuation has added this observed callback's real native
+definition and is rebuilding it with referenced pointer-table methods and the
+new NVN color-clear frontend. Earlier callbacks 710354a120 and 7103546af0 have
+been passed. The real boot now confirms semaphore creation; no menu/match,
+draw, input/audio or FPS verification exists yet.
+
+The previous full module independently passed the former 512-mutex limit with
+547 live/peak mutexes and stopped at `InitializeSemaphore`, caller 71035468ac,
+after 26,765 imports. Its evidence remains at
+`build/runtime-progress/1792372563072165500/report-00.json`.
+
+The ordinary `/` page now selects `fibers-compact` by default, with the older
+non-fiber module still selectable through `?runtime=debug`. Chrome verification
+loaded `runtime-fibers-compact.wasm` from `/` and completed all 306 constructors.
+The cancellation control was also verified to clear the active run and unlock
+the inputs. Evidence: `build/browser-default-runtime-report.json`. The worker
+reports the Wasm loading/compilation phase before importing the large module.
+
+### Recorded program bindings
+
+`nvnCommandBufferBindProgram` now captures immutable shader source versions
+through the owner-Worker snapshot API. Recorded command handles and submitted
+queue stage state retain those versions independently of `SetShaders` changes
+or program finalization. Stage masks update only the selected stages; a null
+program unbinds them. Queue finalization releases its remaining snapshots.
+
+Chrome fixtures pass **124 checks** without SDK layout and **331 checks** with
+the real SDK layout functions. They include source replacement/finalization
+before submission, command-handle finalization after submission, independent
+stage updates, null unbinding, rejected masks/stale programs, and zero snapshots
+remaining after queue destruction. Evidence:
+`build/browser-program-command-report.json`. Real-GPU retained shader compilation
+is recorded separately in `build/browser-program-snapshots-report.json`; these command tests
+do not compile shaders, dispatch compute or draw game pixels. This change is
+linked into the published full runtime, but the observed game boundary has
+not yet exercised a program-binding command.
+
+### Physical color-clear renderer
+
+`gpu-render.mjs` and owner-Worker operation 22 now execute ordered color clears
+on physical WebGPU texture subresources. Full clears use render-pass load/clear;
+channel masks or scissor rectangles use a typed fullscreen shader that preserves
+other pixels/channels. Pipeline caching is bounded to 256 entries. All packet
+records are validated before rendering, and closing during asynchronous pipeline
+creation prevents submission to destroyed resources.
+
+Chrome passes **3,704 pixel/guard checks**, including every RGBA mask on
+normalized, signed and unsigned integer targets, float values outside [0,1],
+linear-to-sRGB encoding through storage formats and view overrides, preservation
+of implicit alpha on expanded RGB targets,
+scissor, mip/layer isolation, ordered clears, invalid
+batch rejection and texture cleanup. The full page's **Chạy kiểm tra** run is
+also green with this fixture. Evidence: `build/browser-color-clear-report.json`
+and `build/browser-color-clear-ui-report.json`. Node cancellation/input-lifetime
+checks and existing GPU bridge/resource/queue tests pass.
+
+These particular tests are analytic physical-target packets. The NVN frontend
+is tested separately below. Depth/stencil, 1D/3D targets and multisampling remain
+unported.
+
+### NVN color-clear command frontend
+
+`SetRenderTargets`, `SetScissor(s)` and `ClearColor(i/ui)` now capture immutable
+guest metadata and retain target textures. Queue target/scissor state survives
+command-handle finalization and later submissions. Mixed copy/clear submissions
+execute each action in recorded order; copy-only submissions retain their batch
+upload path. Targets are released on unbinding or queue destruction. Upper-left
+origin, explicit scissors and matching-format 2D/array/cube subresources are
+supported. Compatible linear/sRGB view formats select the actual attachment
+format; incompatible format reinterpretations, lower-left origin and implicit
+scissor defaults stop explicitly pending validation. The owner accepts legacy
+56-byte clear records and new 60-byte records with the view format, preserving
+compatibility with the previous full runtime.
+
+The SDK-backed NVN fixture passes **1,053 checks** in Chrome, including full clear
+→ buffer-to-texture copy → masked clear pixel ordering, cross-submission state,
+clipped negative scissors, captured array/view/color/scissor input lifetimes,
+texture finalization guards, RGB float/uint clears retaining implicit alpha,
+and captured sRGB render-target view overrides.
+All texture/program-snapshot resources are released. Evidence:
+`build/browser-nvn-color-clear-report.json`. The full page also passes with both
+this fixture and the physical clear fixture. This is a self-authored NVN stream;
+the real game has not yet submitted a clear/draw at the observed boundary.
+
+### Constructor/runtime continuation
+
+The real constructor graph now completes **306/306 constructors in Node and
+Chrome 155**, with 10,945 handled import calls. Browser evidence:
+`build/web-poc/runtime-browser-report.json`; the `Khởi tạo runtime` control
+selects the same local `main.elf` and runs it in a dedicated worker. This is
+still not a rendered menu/match.
+
+`prepare_runtime.py` builds real dependency graphs, retains EH/resume bodies,
+and prunes only instruction labels proved unreachable by AArch64 control flow
+(six CFG preservation tests pass). It includes actual pointer-table leaves,
+ADRP+ADD callback targets, and the allocator/runtime code range. The latest
+`--main` graph has 33,879 functions / 90,866,886 generated C bytes, including the
+graphics initialization range. Missing address buckets are permitted during
+optional range discovery, but a missing required callee still fails preparation.
+Fifteen Python tests pass, including that distinction. Stable address
+buckets and per-unit cache keys avoid rebuilding everything for one new target.
+All extracted code remains under ignored build/.
+
+An optional `prepare_runtime.py --main --pointer-tables` discovers consecutive
+relative code-pointer relocations at data addresses computed by explicitly
+observed callbacks (including their unwind bodies). It also reverse-indexes
+complete contiguous code-pointer groups containing observed callback targets.
+Groups longer than 256 entries are skipped whole, and newly discovered methods
+do not recursively select further groups. Targets still require real native
+definitions; discovery does not replace execution.
+
+The callback-table candidate added **65 functions / 148,797 C bytes**, from
+33,810 / 90,714,226 to 33,875 / 90,863,023. All 33,810 prior function bodies
+were hash-identical, none missing; 21 tables / 175 targets had native definitions.
+Evidence: `build/callback-table-comparison.json`. Eleven preparation tests pass,
+including non-recursive reverse selection and whole-group size bounds. The
+next observed callback expanded the active graph to 33,879 functions and 22
+tables / 181 targets; that graph is currently building.
+
+The earlier address-computation-only probe had **33,808 functions / 90,681,048
+source bytes**, versus **33,799 / 90,664,859**: nine added functions, 16,189 added
+source bytes, no missing or changed existing function bodies. In particular,
+the actual table at 710522e9a8 referenced by callback 710353cd70 has six further
+methods absent from that earlier graph. Evidence:
+`build/observed-pointer-table-comparison.json`; that graph has now been built
+and booted through the callback group to the mutex boundary. Nine preparation tests pass, including contiguous relocation walks,
+gaps, bounds and constant clobbering. `advance_runtime.py --pointer-tables`
+can use this discovery on its next observed callback rebuild.
+
+The initial broad experiment discovered 75,923 functions / 882,426,125 source
+bytes by walking tables throughout the transitive graph. It remains available
+as `--all-pointer-tables` for investigation; it was prepared separately, not
+compiled or substituted for the live runtime. Normal preparation retains its
+existing graph unless the caller opts into either discovery mode.
+
+`build_runtime.py --debug-graph` compiles guest units at O0 for bring-up; a
+large-function fallback uses O1 code generation with LLVM IR passes disabled
+to stay below practical browser local-count limits. Generated modules are
+checked for numeric-local counts. The failed experimental Binaryen coalescing
+pass was stopped after this alternative instantiated and ran successfully.
+No FPS claim is made for this debug build. Windows link uses an emcc response
+file to avoid the command-line length limit.
+
+Host services now handle the observed constructor path: memory/string
+operations, C++ guards, pthread mutex/TLS state, virtual address reservation and
+page commit/decommit, main thread identity/core/priority, clocks, SDK constants,
+and libc++ strings. String buffers are allocated/freed by the actual game
+allocator, so inlined guest code can exchange them safely. 91 self-contained
+real SDK leaves are compiled too; the remaining SDK graph is prepared in
+`build/web-sdk` but not yet bound. The next-prime handler matches 12 independent
+Unicorn runs of the real SDK, including input zero (which differs from the
+older native host shortcut). Concurrent page-table mutation is now serialized
+with scalar/vector/CAS access; borrowed spans still require stable lifetime.
+
+`runtime_main` now enters nnMain on a real pthread. The observed OE notification
+thread uses actual pthread/event waits; clocks and read-only RomFS mounting
+work in the browser. WORKERFS mounts the selected directory's File objects,
+including nested .nrr files, without loading the archive into Wasm memory.
+The owner Worker stays available to serve filesystem and WebGPU proxies.
+
+Chrome boot reaches NVN bootstrap, resolves the function registry, creates the
+compatibility device against a real WebGPU device, and sets clip modes. It
+now passes all 98 device capability queries and creates memory pools,
+texture/sampler descriptor pools, command buffers and a queue. It currently
+records texture/sampler pool bindings, registers actual shader programs,
+creates a 16x16 RGBA8 texture and a six-face cubemap, and executes seven real
+buffer-to-texture copies in seven submissions. After the LightEvent adapter
+was added, the ordinary module reaches `nn::os::InitializeFiber` after about
+22,700–22,800 host calls. The optimized full Asyncify module now passes that
+initialization. The first build stopped at callback **710353cd70**, called from
+**710392acb0**. After adding that actual native definition, the next build
+passes it and stops at **710353cef0**, called from **710353cb90** (22,692–22,711
+imports in the saved runs). This is another method of the same relocated
+callback table. The scoped-table build now passes both callbacks and stops in
+a guest thread at **mutex not initialised or table full**, key **8005406110**,
+last guest function **7103957670**. The original message does not distinguish
+an exhausted fixed table from an unknown unlock. A new mutex adapter and
+import attribution are being integrated to resolve/diagnose that boundary.
+These results do not yet prove a game fiber
+switch/migration or a frame. Earlier boot evidence is retained under
+`build/runtime-progress/1792354243195715200` and
+`build/runtime-progress/1792354299127181800`.
+The capability table uses
+the actual requested WebGPU device limits for physical limits, explicit
+frontend ABI sizes/alignment, and zero for unsupported feature flags. It does
+not copy a Switch's hardware capability table. Unsupported commands stop explicitly; optional
+native fast-clear registration reports failure. Evidence:
+`build/web-poc/runtime-browser-report.json`. Node constructor evidence remains
+`build/web-poc/runtime-node-report.json`; Node has no attached WebGPU device.
+Game fibers, full SDK/NRO loading, GPU textures/rendering, input/audio and a
+browser match remain incomplete. The full port goal remains active.
+
+### Mutex adapter refresh
+
+The previous mutex registry used 512 fixed records and conflated a full table
+with an unknown unlock. `host_mutex.c` replaces it with a dynamically allocated
+hash registry, operation leases, native-thread ownership and recursion depth.
+Destroy rejects held locks and waiters; unknown/wrong-owner unlocks do not
+create a new mutex. POSIX calls return their errors; SDK/C++ operations trap on
+invalid operations. The root cause of the observed game error is still to be
+established by the refreshed full-module boot, rather than assumed to be capacity.
+
+`python web/build_mutex_probe.py` passes **46,383 checks** in Node and Chrome
+155: 1,536 simultaneous guest keys, recursive/error-check modes, actual
+cross-pthread exclusion, a 20,001-update protected counter, wrong-owner unlock,
+busy destroy, destruction/reuse and SDK entry points. All test mutexes are
+released. Evidence: `build/web-mutex/report.json` and
+`build/browser-mutex-report.json`, `results.mutexes`. This is standalone
+production-adapter coverage, not a successful game boot past that error.
+
+The host-import wrapper now records the current symbol before dispatching a
+known handler and restores the previous logical-frame symbol on return.
+Failures inside implemented handlers therefore identify the import too.
+The heap frame pointer remains attached to the logical stack across fiber
+migration. The runtime worker also reports live/peak mutex counts when the
+new module exports are present. The first mutex-refresh module passed Node
+constructors but hit a C-stack ABI assertion on Chrome while sending a report.
+The aligned-stack module now returns a valid browser report past 512 mutexes,
+at the semaphore boundary described above.
+
+### Fiber stack ABI and semaphore continuation
+
+Wasm32 malloc in the pinned SDK guarantees eight-byte alignment. The fiber
+initializer installs the supplied C stack top directly, whereas C/JS variadic
+argument buffers require sixteen-byte stack alignment. Fiber C/Asyncify
+stacks now use `aligned_alloc(16, ...)`. The initial pthread pool is eight,
+covering the additional threads observed during bring-up.
+
+The expanded production-adapter fixture passes **324 checks in Node and
+Chrome** (108 per round), including mixed i32/f64/i64 EM_ASM arguments before
+and after migration. A deliberately eight-byte-aligned allocator control
+fails at `readEmAsmArgs`, matching the game's previous assertion. It is never
+published. Evidence: `build/web-host-fiber/report.json`,
+`build/browser-fiber-stack-alignment-report.json`, and
+`build/web-host-fiber-unaligned/control.log`.
+Run `python web/build_host_fiber_probe.py --unaligned-control` for that control.
+The independent 79-check migration probe also still passes after alignment.
+
+`host_semaphore.c` provides real pthread-backed counting permits, try/timed
+acquire, single/count release, current-count queries and finalization.
+Records are leased while operations block; invalid counts/overflow do not
+silently alter the semaphore. Timeouts use a monotonic absolute deadline.
+**1,426 checks pass in Node and Chrome**, including two actual pthread
+consumers, empty/available/zero/negative/timed acquisition, count bounds,
+overload/C aliases and 700 simultaneous objects with complete cleanup.
+Evidence: `build/web-semaphore/report.json` and
+`build/browser-semaphore-report.json`, `results.semaphores`.
+This is isolated adapter evidence; the full game integration is currently
+building under `build/runtime-semaphore-state.json` / `build/runtime-semaphore-build.log`,
+then will run Node constructors and the bounded browser continuation.
+
+A separate diagnostic copy of the preceding Wasm/JS module helped observe
+the semaphore boundary without removing its ABI assertion. It is not a
+production fix. Source hash/scope: `build/runtime-observer-metadata.json`;
+observation: `build/runtime-error-observer-report.json`.
+
+### NVN resource/queue bridge
+
+`WebGpuPrograms` now retains immutable source revisions separately from the
+current program handle. Replacing or finalizing a program does not invalidate
+an outstanding snapshot; releasing a snapshot rejects stale tokens, and close
+prevents late compilation/cache commits. The owner-Worker bridge reserves
+operations 20/21 for retain/release and serializes snapshot compilation with
+other device error scopes. The default snapshot count limit is 65,536 and can
+be configured for a registry. This prepares recorded program bindings; the
+NVN command recorder does not yet use those operations.
+
+`node web/test_gpu_program_snapshots.mjs` checks source ownership, replacement,
+finalization, shared variants, bounds, stale tokens, failure recovery and close
+during compilation with a mock compiler/device. Chrome 155 additionally passes
+**10 checks using actual captured compute/vertex sources**: a finalized source
+revision still produces matching WGSL through Maxwell/glslang/Naga, accepted
+fresh WebGPU modules, and an accepted compute pipeline. No dispatch/draw or
+pixel comparison occurs. Evidence:
+`build/browser-program-snapshots-report.json`, `results.gpuProgramSnapshots`.
+The optional browser fixture is published by `build_maxwell.py` and included
+in **Chạy kiểm tra** when actual captures are present.
+
+`gpu-samplers.mjs` now decodes the frontend's 48-byte sampler values into real
+WebGPU samplers. `WebGpuBackend.materializeSampler` snapshots the descriptor
+before queuing, shares device error-scope ordering, and uses a bounded 512-entry
+LRU; cache eviction preserves samplers already retained by live bind groups.
+The parser supports nearest/linear filters, mip nearest/linear, repeat,
+mirror-repeat, edge clamp, eight depth comparisons and compatible integer
+anisotropy values. Non-mip filters currently require a one-level bound texture.
+Border/mirror-clamp modes, LOD bias/snap, min/max reduction, negative LOD clamps
+and incompatible anisotropy explicitly require further shader lowering.
+
+Chrome 155 passes **156 analytic color/depth sample comparisons** through the
+actual backend and 17 actual GPUSamplers: min/mag, mip interpolation, address
+wrapping, LOD clamps and all depth comparison functions. The fixture also
+creates an anisotropic sampler; anisotropic pixel equivalence is not proved.
+Evidence: `build/browser-sampler-integration-report.json`, `results.gpuSamplers`.
+`node web/test_gpu_samplers.mjs` separately verifies guards, byte offsets,
+cache bounds/eviction, queued input snapshots, failure recovery and late close
+with a mock device. The browser fixture is included in **Chạy kiểm tra** when
+published by `build_gpu_probe.py`. This is a renderer component; game command
+recording/bind groups still need to call it before actual NVN draws can run.
+
+`host_gpu_resources.c` implements CPU-backed and GPU-only pool/buffer storage,
+builder copies, range validation, descriptor pool metadata and reference
+lifetimes. Physical pools support 4 KiB allocations (the game's observed pool
+size 0x54000 is not a multiple of the 64 KiB virtual mapping page). GPU storage
+is allocated lazily; CPU-backed uploads stream through a bounded 1 MiB staging
+buffer. Flush/invalidate respect buffer offsets and aligned GPU transfers.
+Virtual/sparse pool remapping remains unsupported. Texture/image descriptor
+registration now snapshots source state and creates validated WebGPU views.
+
+`host_gpu_bridge.c` sends requests from the guest pthread to its owner Worker,
+then waits on a condition variable until async WebGPU validation/completion.
+`gpu-backend.mjs` serializes requests so per-device error scopes cannot cross
+between guest callers. Allocation, upload, readback, destroy, queue flush,
+queue completion and error status use actual WebGPU operations. A failed
+request does not poison the request queue; stale resource handles are rejected.
+
+`host_gpu_commands.c` implements command-buffer lifecycle, callback metadata,
+memory accounting, pool retention, unique command handles and queue builders.
+Empty recordings and ordered texture/sampler pool bindings can finish. Handles
+own their binding records and retain descriptor pools until handle finalization;
+later recordings do not overwrite earlier handles. The frontend reserves 16
+bytes per binding in its own command representation, not native NVN packets.
+Buffer-to-texture copies also record immutable view/region/stride metadata.
+SubmitCommands accepts these implemented records and pool bindings; draw and
+other unported copy commands still stop explicitly. Queue Finish/
+Finalize waits for actual WebGPU completion. Sync fences capture actual queue
+completion promises; poll, finite/infinite CPU wait, server wait, refencing and
+release are implemented. Completion waits leave the bridge available to other
+callers. Queue submissions/flush/finish serialize per queue without holding the
+global command registry during owner-Worker waits. Command/control byte counters
+measure the frontend representation; no compute commands are accepted yet.
+
+`host_gpu_copy.c` reads source bytes at submission, including captured row/image
+strides and array/3D offsets. Live resource leases cover each in-flight
+submission, rather than pinning one-shot upload pools for the lifetime of an
+old command handle. After completion the game may finalize its source pool;
+replay validates the source address and original texture identity again. Copies
+currently stage bytes through CPU memory and WebGPU writeTexture. A direct GPU
+buffer-copy fast path and rendered-game performance remain unverified.
+
+Pure state builders for eight NVN families share 79 native entrypoints through
+generated guest-memory adapters. Sampler builders preserve float-register ABI,
+LOD/filter/wrap/compare/border values, and descriptor registration copies the
+sampler state. Physical WebGPU samplers and draw-time descriptor binding are
+still pending.
+
+The dump-free C integration fixture uses these same NVN functions through a
+real pthread/Worker/WebGPU path: **107 checks pass on Chrome**. It checks copied
+builders, descriptor metadata, a non-64-KiB physical pool, CPU->GPU flush,
+GPU->guest invalidate, 65,536-byte content comparison, invalid ranges,
+GPU-only addresses with no CPU mapping, finalization/stale handles, recovery,
+queue flush/finish, recording/handle
+lifetimes, ordered bindings across independent command handles, descriptor
+retention, program initialization/source registration/replacement/finalization,
+sync/fence behavior, state copies across guest pages, narrow boolean
+and 64-bit output writes, sampler registration copies, and explicit rejection
+of an unsupported DrawArrays call. It creates
+and releases three real GPU buffers (81,928 bytes uploaded, 65,556 read back),
+leaving zero live buffer bytes. Browser evidence:
+`results.webgpu.gpuResources` in `build/web-poc/browser-report.json`.
+
+This resource fixture is not a game draw. The latest real game boot allocates
+five physical WebGPU buffers (two subsequently released), uploads 67,187,456
+buffer bytes in 82 transfers, creates two textures and two views, and performs
+14 texture uploads totaling 14,336 bytes, including seven submitted copies.
+No game frame/menu/match is rendered yet.
+Node sync/dispatch tests separately exercise controlled promises and mock
+modules; their timeout/cancellation checks are not physical GPU timing evidence.
+
+The unsigned 32/64-bit libc++ array sort adapters use checked guest-memory
+reads/writes and bounded-stack heap sort. **88 Wasm cases match actual SDK
+AArch64 execution in Unicorn**, including extrema, duplicates, sorted/reversed
+arrays, unaligned 64-bit data, page crossings and surrounding canaries. The
+oracle maps/relocates the user's SDK, not a reimplementation of its sort.
+Reproduce with `python web/check_sdk_sort.py`. The observed libc++ substring
+constructor is also bound; its buffers still use the game's allocator. Exception
+throwing for an out-of-range substring remains an explicit unsupported boundary.
+
+### Browser shader compiler
+
+`build_shader.py` builds a standalone ~1.1 MB Wasm compiler using pinned Naga
+29.0.4. Its private dependency copy has a scoped fallthrough emission patch,
+following Naga's HLSL strategy; the original IR still passes the normal
+validator. It never modifies the global Cargo cache. Three Rust tests cover
+fallthrough with function results, emitted-WGSL revalidation and invalid input.
+
+The browser's check button now tests SPIR-V -> Wasm compiler -> WGSL -> WebGPU
+execution. A self-authored four-case fallthrough shader reads back [7,6,4,99],
+and malformed input followed by recompilation on the same instance succeeds.
+`build/web-poc/browser-report.json` also records two actual native-cache vertex
+shaders converted by the Wasm compiler and accepted by Chrome's WebGPU shader
+compiler (336,876 / 1,034,892 WGSL bytes). This is shader compilation evidence,
+not a game pipeline, correct pixels, or rendering performance evidence.
+
+The optional `/?inspectPrograms=1` boot now inspects the programs actually
+registered in the live WebGPU backend. The latest browser report records
+**20/20 shader modules accepted**, **five actual compute pipelines created**,
+and **one graphics pipeline created** from registered vertex/fragment handles
+13/14. The graphics pair is selected by compatible interface masks, not an
+observed BindProgram command; it uses a synthetic 48-byte float vertex layout
+at locations 0/2/8 and an RGBA8 target. No compute dispatch, graphics draw,
+native pixel comparison or game frame is implied. The explicit probe options
+select triangles and float resource interpretation. Evidence:
+`results.runtime.diagnosticProgramInspection` in the runtime browser report.
+Diagnostic pipelines have separate statistics; their creation does not mean
+the game submitted them. With the inspection window, the snapshot has 20
+programs and 87 buffer writes (67,216,128 bytes), rather than the earlier fast
+halt's 15 programs / 82 writes.
+
+Shader lowering now assigns a deterministic sampler namespace:
+`samplerBinding = 256 + imageBinding`, with image bindings below 256 and
+conflicts rejected. Previously a fragment sampler could take binding 0 and
+collide with a vertex texture compiled independently. A real Chrome WebGPU
+negative control rejects the old pair with “Binding types differ (texture vs
+sampler)”; the stable 0/256/40/296 interface creates a pipeline. Evidence:
+`results.webgpu.samplerStageBindings`. SPIR-V tests check the independent-stage
+mapping and reserved-namespace rejection. The 20 modules and five compute /
+one graphics pipeline above were also rechecked with the new mapping.
+`test_wgsl_interface.mjs` covers the bounded Naga input-interface reader;
+`test_gpu_pipeline_checks.mjs` checks queue recovery and closing during async
+pipeline creation with a mock device, separately from the real GPU evidence.
+
+The earlier first-eight cached-SPIR-V probe converts 2/8. `shader_probe.py` applies
+diagnostic triangle-only interface changes, moves push constants to an explicit
+uniform binding and lowers f32 NaN/Inf classification using IEEE integer bits.
+Three Python tests cover scalar/vector classification, special values and
+rejection of other widths. Remaining samples stop on unsupported demote-helper
+and viewport-index capabilities. Point primitives require a separate path;
+the diagnostic PointSize varying is not point-size emulation.
+
+The new `maxwell_compiler.c` and `web/maxwell/CMakeLists.txt` compile the existing
+portable Maxwell translator plus pinned glslang 16.6.0 into a ~2 MB Wasm module.
+glslang targets Vulkan/SPIR-V 1.0, preserving GLSL discard as OpKill rather than
+introducing the native backend's SPIR-V 1.6 demote extension. A timed native
+diagnostic run exited 0 after 156 seconds and captured 9,574 MXD1 stage files
+under ignored build/maxwell-capture. They are compiler inputs only; the web
+path does not call a native compiler or use a precompiled shader cache.
+
+`game-shaders.mjs` now connects Maxwell -> Wasm translation/glslang -> SPIR-V
+interface lowering -> Wasm Naga -> WGSL. First 16 captures pass this whole path
+and Chrome WebGPU shader validation, including vertex and textured fragment
+stages. The same 16 also pass through the new program registry and variant
+compiler, with real WebGPU validation and zero live programs after release.
+Evidence: results.webgpu.gamePrograms in
+`build/web-poc/browser-report.json` (16/16). This still does not prove pipeline
+creation, correct draw pixels, a rendered game frame, or gameplay.
+
+`host_gpu_programs.c` snapshots bounded raw control/code/constant data during
+SetShaders/SetShadersExt. The Worker owns the copies after the C request returns.
+Invalid replacements preserve the old source; finalization releases handles.
+`gpu-programs.mjs` caches validated shader variants by the renderer's explicit
+topology and integer resource/attribute options. The game boot currently
+registers 15 programs but compiles zero variants: draw/pipeline creation has not
+yet been reached. There is no assumed triangle topology in the live game path.
+Controlled mock tests separately check ownership, cache keys, invalid replacement,
+validation failure/recovery and release during compilation.
+
+### Source texture layout
+
+`host_gpu_texture.c` implements texture-builder configuration, copied builder
+state, swizzles and packaged layout data through checked guest-memory accesses.
+Its 96-byte portable state matches the native frontend; the device occupies
+the unused tail of the 128-byte object. The dump-free GPU fixture checks copies
+across a page boundary, device preservation, dimensions/storage, 64-bit stride
+and bounded packaged-layout output. `host_gpu_texture_views.c` preserves the
+native view override flags and copies, including signed level counts and
+32-bit output writes. Texture/image descriptor registration copies view state,
+creates actual WebGPU views, replaces/unregisters entries and releases views
+when pools are finalized. Draw-time binding and sampling remain incomplete;
+view component swizzles still require shader-side handling.
+
+`host_gpu_texture_objects.c` owns texture lifetimes, retains source pools and
+uses the existing portable `runtime/tex_decode.c` for Tegra layout/deswizzling.
+Initial texels come from the actual memory pool, including GPU readback for
+CPU_NO_ACCESS storage. Packaged-data pointers remain metadata, matching the
+native frontend; they do not replace pool storage. Source bounds, strides and
+128 MiB staging limits are checked before copying. Recorded copies retain
+immutable metadata; source pools are not kept alive merely by old handles.
+
+`gpu-textures.mjs` validates binary subresource packets and creates actual
+WebGPU textures, uploads every mip/layer/slice, and supports bounded readback.
+RGB formats that need four components are expanded with the correct alpha
+bits; integer and floating data is not converted through RGBA8 previews.
+Format features are requested only when the adapter exposes them. Unsupported
+depth/stencil uploads, multisampling, texture buffers, sparse storage, flag-0x40
+render-target layouts and compressed dimensions requiring emulation still stop
+explicitly. Buffer-to-texture commands now update GPU contents at submission;
+automatic refresh from later direct CPU writes to texture storage remains pending.
+
+The optional SDK-backed integration fixture passes **314 checks in Chrome**:
+9 physical textures, 49 uploads and 49 readbacks, 8,836 texture bytes uploaded,
+17 created/released views and zero live textures/views after release. It checks 2D/odd row sizes, arrays with
+mips, 3D mip volumes, BC1 blocks, explicit linear stride, RGB32 float/uint
+expansion, short-stride rejection, stale handles and a GPU-only source pool.
+It executes 16 copies in 9 submissions, including metadata/stride snapshots,
+source changes after recording, partial regions, array/volume/BC copies, replay
+after source-pool recreation, finalized-handle rejection and recovery. View tests
+cover sRGB reinterpretation, copied descriptor state, failed replacement
+preserving the old view, replacement/unregistration and pool cleanup.
+Two fixed GOB byte-offset checks supplement the library round-trip preparation.
+These are self-authored texels, not a native-vs-web game-image comparison.
+Evidence: `results.webgpu.gpuTextures` in browser-report.json. Build with
+`python web/build_gpu_probe.py --with-sdk` and call
+`testGpuResources({withSdk:true})`; the default probe remains dump-free.
+Separate CPU/mock tests cover format precision, malformed packets, feature
+gates and validation-failure cleanup, not physical GPU execution.
+
+`prepare_nvn_layout.py` selects **30 real SDK functions**, including the chip
+method targets used by storage-kind selection, with no host-service shortcuts.
+It prepares a relocated SDK snapshot from the locally verified 13.0.4 SDK
+(SHA-256 pinned in the preparer). Both artifacts stay under ignored build/;
+the runtime embeds the snapshot and lazily maps it read-only into guest memory.
+The source device/chip model follows runtime/nvn_sdk.c. It describes Switch
+source storage and does not replace the real WebGPU capability table.
+
+`host_nvn_layout.c` executes that graph for storage size/alignment/class and
+sparse layout, using guest-stack scratch space and cloned registers. **459
+configurations / 2,295 queries match actual AArch64 execution in Unicorn**,
+including all known formats, mip chains, arrays, 3D, cubes, multisampling,
+linear stride, sparse flags and packaged block heights. Buffer-target byte
+sizes and flag-0x40 alignment also have independent expected-value checks.
+Reproduce with `python web/check_nvn_layout.py`; results:
+`build/nvn-layout-check.log`. This verifies SDK layout rules, not image upload,
+deswizzling or rendered pixels. The live Chrome boot records `sdkLayoutQueries:6`
+and its most recent inputs/result in runtime-browser-report.json.
+
+The embedded snapshot raises the linker's minimum static allocation to about
+17.5 MB, so this runtime starts with 32 MiB of Wasm memory and retains its
+existing 512 MiB maximum. This is separate from the reserved guest address space.
+
+### OS event continuation and callback bring-up
+
+`host_os.c` now handles LightEvent initialize/finalize, signal/clear, wait,
+try-wait and timed wait, using pthread mutexes/condition variables. Manual and
+auto-clear behavior is preserved. Event operation leases prevent a slot from
+being finalized/reused during a wait; finalized slots can be initialized again.
+`python web/build_os_probe.py` passes **26 checks with real Wasm pthreads in
+Node**, including two concurrent waiters, one-signal auto-clear behavior,
+timeouts, signed negative timeout handling, finalized-event rejection and 600
+event lifetimes through the 512-slot registry. This is not a game scheduler or
+fiber test. Evidence: `build/web-os/report.json`.
+
+With the local server and Playwright CLI session open,
+`python web/advance_runtime.py --steps 10` runs bounded boot/build iterations.
+It adds only observed main-image callbacks with existing lifted definitions,
+requires a fresh browser report, saves per-step logs under
+`build/runtime-progress/`, and stops at host/GPU failures. It never generates
+stub handlers. Recent runs added callbacks 0x7103717c10 and 0x7103549e20 and
+stopped first at LightEvent, then at InitializeFiber after the event adapter.
+
+The original same-thread fiber probe does not cover migration. Emscripten's
+[fiber API documentation](https://emscripten.org/docs/api_reference/fiber.h.html)
+identifies thread-specific rewind IDs as the current cross-thread limitation.
+The project-local `portable_fiber.c` adapter assigns canonical rewind IDs for
+the complete static export set on each Worker. It guards the export signature,
+preserves ordinary Asyncify sleep handling, and prevents a fiber rewind from
+exiting the pthread before its outer entry wrapper. No Emscripten source is
+patched. Because this uses private internals, `fiber_toolchain.py` pins the
+SHA-256 of Emscripten 6.0.12's libasync.js and rejects another version. Wasm64
+and dynamic-module changes are explicitly outside this adapter's scope.
+
+`python web/build_fiber_migration.py` passes **79 checks in Node and Chrome
+155** with actual pthread A → B → A migration, opposite prior rewind-ID
+histories, nested stack cookies and setjmp/longjmp. Its stock-API negative
+control fails. `python web/build_host_fiber_probe.py` passes **315 checks in
+Node and Chrome** (105 per round, three pthread lifetimes on the same two
+Workers) through the actual Initialize/Switch/GetCurrent/Finalize
+imports. These check virtual guest registers/SP, destination thread TLS,
+diagnostic longjmp on a different pthread, root-frame restoration, rejection
+of running/unknown fibers, finalization of a suspended stack, and 4,200
+initialize/finalize cycles per round reusing slots. Worker IDs prove pool
+reuse; interrupted trampolines are cleared at pthread exit. These use self-authored callbacks,
+not lifted game fibers. Evidence: `build/web-host-fiber/report.json` and
+`results.hostFibers` / `results.fiberMigration` in the browser report.
+
+`host_fiber.c` allocates C/Asyncify stacks lazily at first use. A fiber becomes
+available to another worker only after its full stack has unwound; the JS
+context-switch hook publishes this with an atomic store. TLS state is read
+through separate translation units after migration, avoiding cached source
+pthread TLS addresses. Each guest thread/fiber owns its diagnostic frame; it
+follows the fiber instead of using one jmp_buf per physical pthread. The fiber
+loop's frame covers both callbacks and switches, and finalization discards its
+suspended diagnostic chain along with the two stacks.
+
+The observed game call sets InitializeFiber flags to 1. The adapter accepts
+flag values 0 and 1 and rejects other bits: SDK bit 0 skips optional stack-alias
+allocation, rather than changing virtual register preservation. The supplied
+guest stack is used directly. `python web/check_sdk_fiber_flags.py` executes
+the actual SDK prefix for flags 1 and for flags 0 with a refusing optional
+alias allocator, verifies its state/arguments/stack fields, and stops before
+platform context setup. It does not claim SDK native context assembly runs
+in Wasm. The 315-check fixture starts with the game's flag 1 and tests both
+valid values plus rejection of flag 2.
+
+`python web/build_runtime.py --debug-graph --fibers` builds a separate
+`runtime-fibers` module. The ordinary debug build retains its previous
+InitializeFiber boundary and has been booted again after the diagnostic-frame
+change: 306 constructors complete. The full optimized Asyncify integration
+now also completes **306/306 constructors in Node and Chrome**, and passes the
+InitializeFiber boundary. Its first successful module is **59,980,555 bytes /
+46,125 functions / maximum 548 locals**, SHA-256
+`d3ffd63134973d2eb5c5b3b1764647791b302af7e18b548bb22cd0b85016972e`.
+Node evidence: `build/web-poc/runtime-fibers-compact-node-report.json`; Chrome
+boot evidence: `build/runtime-progress/1792354243195715200/report-00.json`.
+That first build stops at callback 710353cd70. The following build passes that
+callback and stops at 710353cef0; it is **59,982,395 bytes / 46,126 functions /
+maximum 548 locals**, SHA-256
+`7fb2ef05f82819254129841392f66d6b94c4a3aadf30eeede0451703f7c38a39`.
+Its publication metadata is `build/web-poc/runtime-fibers-compact-build.json`
+(overwritten by subsequent builds), and its browser evidence is
+`build/runtime-progress/1792354299127181800/report-01.json`.
+The current scoped-table build/boot loop is logged in
+`build/runtime-fibers-pointer-advance.log` and
+`build/runtime-progress/1792368936341494600/`.
+It completed at the mutex boundary. The published scoped-table module is
+**59,991,328 bytes / 46,135 functions / maximum 548 locals**, SHA-256
+`1e9e755b4c2015eea4a620e72b9b0b05e966703112e2f4640081e435204249d3`.
+The mutex refresh is recorded in `build/runtime-mutex-refresh-state.json`,
+`build/runtime-mutex-refresh-build.log` and, after linking,
+`build/runtime-mutex-refresh-node.log` / `build/runtime-mutex-refresh-advance.log`.
+There is no menu/match or proven game fiber migration yet.
+Earlier attempts were intentionally stopped
+after source fixes and after discovering that Binaryen debug level 2 makes
+full WAT copies. They are not evidence of an unsupported Wasm operation.
+`--trace-asyncify` uses level 1 only; the successful full build enabled it and
+recorded 821.552 seconds for the Asyncify pass (separate from validation and
+link time). The callback rebuild leaves tracing off. Use `/?runtime=fibers-compact`, or
+`python web/advance_runtime.py --steps 1 --fibers --compact-codegen`.
+
+### Compact code generation and synchronous diagnostics
+
+`--compact-codegen` applies O1 backend code generation with LLVM IR passes
+disabled to every guest unit, rather than only the single bucket that exceeded
+the browser local limit. The initial controlled comparison retained 46,089
+linked functions while reducing the module from **77,104,030 to 54,108,540
+bytes**, and maximum numeric locals from **44,403 to 25**. It is still a bring-up
+build, not an FPS measurement. The actual browser graph completes 306
+constructors and reaches the same InitializeFiber boundary with this variant.
+`python web/check_compact_codegen.py` checks 96 actual lifted leaves against
+384 existing AArch64 oracle states: all pass. Guest objects share the same
+host ABI between variants; the 942 guest object paths are identical for compact
+fiber/non-fiber builds. Only host adapters receive the fiber implementation
+flags. `--jobs` controls C compiler concurrency and `--compile-only` prepares
+cached objects without publishing a module.
+
+An isolated Asyncify advice probe identified a further false-positive path:
+stdio callbacks in fault formatting caused `read_word` to be classified as
+suspending through `web_memory_fault`. Production traps now live in
+`runtime_trap.c`; bounded callback-free formatters preserve the messages,
+and the unframed fatal path uses a direct synchronous JS console call.
+The memory fault path no longer references stdio in full-runtime builds.
+No Asyncify remove-list/unsafe override is used: the compiler proves these
+paths cannot suspend. The genuine fiber switch remains a positive analysis
+control.
+
+`python web/build_diagnostic_probe.py` passes **68,444 byte/canary comparisons
+against snprintf**, including capacities zero through 240, truncation, UTF-8
+and 64-bit hex addresses. It also exercises the actual production trap/TLS
+frame with mapped reads/writes, recovered unmapped/readonly faults, long-message
+truncation and parent-frame preservation. Evidence:
+`build/web-diagnostics/report.json` and its build advice log. The compact
+runtime was rebuilt after this change; `node web/test_runtime_node.mjs compact`
+again completes **306/306 actual constructors** in Node. Its binary hash and
+result are in `build/web-poc/runtime-debug-compact-node-report.json`.
+The first complete no-I/O Asyncify transformation finished but failed the
+numeric-local guard: 117,967,313 bytes / 46,125 functions, maximum 92,748 locals,
+with three functions above 50,000 (`build/runtime-fibers-noio-build.log`).
+Compact backend code generation alone does not bound locals after Asyncify
+flattens the functions. The new full integration enables Binaryen's internal
+optimization level 1, which coalesces locals before suspension instrumentation.
+For one isolated actual guest bucket this reduced maximum locals from 41,932
+to 15; a second bucket dropped from 47,048 to 15. These are compiler stress
+checks with unresolved calls, not game execution. The largest bucket's
+optimization exceeded its deliberately bounded 90-second benchmark, so no
+compile-time estimate is inferred for the full module.
+
+The optimized configuration passes the 79-check migration adapter, the
+315-check host fiber adapter, all 68,444 diagnostic formatting comparisons,
+and `python web/check_compact_codegen.py --asyncify` (384 real AArch64 leaf
+oracle states). The leaf fixture uses the full runtime's emscripten longjmp
+mode because Wasm exception mode cannot be mixed with Asyncify. These gates
+do not establish whole-game scheduling correctness. The full build uses at
+most two Binaryen workers by default. Full-module validation, Node constructors
+and Chrome boot now pass the former InitializeFiber boundary, as recorded
+above; actual game fiber switching and a menu/match remain unverified.
+
+Subsequent runtime builds link into `build/web-runtime/linking/<variant>/`
+and validate numeric locals before replacing the served `.mjs`/`.wasm` pair.
+A failed or over-limit output therefore preserves the last published build.
+Successful publication records a Wasm hash, bytes/function/local counts and
+timestamp in `<variant>-build.json`; this describes compiler output, not game
+execution. Two publication tests cover a rejected 50,001-local module,
+accepted 50,000-local boundary, incomplete pairs and unchanged prior output.
+Reload after publication; the two served files are not an atomic deployment
+for requests arriving during that short replacement interval. The
+first successful full build was launched before this staging change; the
+subsequent callback rebuild uses staging.
+
+The optimized 79- and 315-check fiber fixtures also pass in Chrome 155
+(`build/browser-sampler-integration-report.json`, `fiberMigration`/`hostFibers`). The page
+also passes the 384-state optimized Asyncify game-leaf oracle in Chrome; its
+`game32Asyncify` report records the Wasm hash and check timestamp. The page
+now prevents concurrent runtime launches and offers a stop control. A real
+browser cancellation followed by a fresh compact runtime launch completes
+306/306 constructors. Historical nnMain boundary evidence remains in
+`build/runtime-progress/` as the root report is overwritten on later checks.
+
+`spirv-compat.mjs` splits combined image/samplers into distinct bindings,
+publishes the remapping, relocates push constants, preserves real draw parameters
+through a 16-byte uniform block (baseVertex/baseInstance/drawIndex), and lowers
+f32 NaN/Inf and unsigned 32-bit carry/borrow without losing their semantics.
+Node tests compare scalar/vector carry/borrow with BigInt and IEEE classification
+with independently reinterpreted float bits. Input/interface/topology guards
+also pass. The game compiler suppresses only WGSL's derivative-uniformity
+diagnostic because the reconstructed per-invocation PC loop hides original warp
+reconvergence. Implicit derivatives remain in the program; their pixel parity
+is unverified and must be included in native-vs-web draw comparison.
+
+A broader Node probe samples 64 captures across the full run: 35/64 currently
+convert to WGSL. 27 stop on shader-selected viewport capability and two on
+ImageQueryLod. They are not replaced by viewport zero or a constant LOD. The
+first-16 fixture is a compiler smoke set, not evidence for all game shaders.
+The compiler is still not connected to the NVN boot renderer; resource and
+command execution remains required.
+
+Commands for this stage:
+
+```
+deps/dump-tools/Scripts/python.exe web/prepare_sdk.py
+deps/dump-tools/Scripts/python.exe web/prepare_runtime.py --main
+deps/dump-tools/Scripts/python.exe web/build_runtime.py --debug-graph
+deps/dump-tools/Scripts/python.exe web/build_shader.py
+deps/dump-tools/Scripts/python.exe web/build_maxwell.py
+deps/dump-tools/Scripts/python.exe web/build_gpu_probe.py
+deps/dump-tools/Scripts/python.exe web/prepare_shader_fixtures.py --count 16
+# Broader local compiler diagnostic (no GPU draw):
+deps/emsdk/node/24.19.0_64bit/node.exe web/probe_maxwell.mjs 64 --spread
+deps/emsdk/node/24.19.0_64bit/node.exe web/test_spirv_compat.mjs
+deps/emsdk/node/24.19.0_64bit/node.exe web/test_gpu_capabilities.mjs
+# PowerShell, constructor + nnMain diagnostic:
+$env:SSBU_WEB_RUNTIME='runtime-debug'
+deps/emsdk/node/24.19.0_64bit/node.exe web/run-runtime.mjs --main
+```
+
+Earlier kernel/bootstrap results follow as history. Current kernel fixtures
+pass 54 checks on each pointer width (including concurrent page-table growth,
+protection/decommit and cross-page reads), the 384-state game fixtures and eight
+ELF malformed-input/recovery scenarios still pass after memory changes.
+
+The browser build now runs code from the local validated dump, beyond the
+original synthetic probes. `web/prepare_game.py` selects 96 bounded leaf
+functions from the native lift (2,688 instructions; 88 functions use memory),
+then creates independent Unicorn AArch64 register/flags/data-window oracles.
+All 384 states match on both Wasm32 and Wasm64 in Node and Chrome 155.
+This is a bounded subset, not whole-game equivalence.
+
+`guest_memory.c` now grows its page table up to an explicit configured limit;
+the default remains 256 pages. New tests cover growth beyond that limit,
+aliasing across growth, capacity failure without partial mapping and cleanup.
+The two core fixtures now pass 50 checks each; the fiber fixture still passes.
+Mapping mutations still require stopped accessors. The reservation array still
+has 16 slots; a concurrent allocator/scheduler is not implemented.
+
+The dedicated browser worker mounts local File objects read-only via WORKERFS.
+C stdio range reads validate six 64 KiB samples of the 17,600,869,448-byte
+`data.arc`, including crossing 2/4 GiB and the file tail. A short read at EOF is
+detected. The asset Wasm heap starts at 16 MiB; the entire archive is neither
+uploaded nor copied into a browser filesystem. Sample hashes do not establish
+whole-archive integrity.
+
+The actual main ELF loads three LOAD segments at virtual 0x7100000000:
+86,672,224 file bytes plus 35,252,880 BSS bytes, in 29,767 pages. Every BSS byte
+is checked for zero; text/rodata write protection is exercised. The loader then
+applies 306,168 relative, 31,297 imported-symbol and 16 undefined weak-symbol
+relocations (0 own symbols), matching the native counts. Counts and selected
+relocated values also match an independently prepared Python reference.
+Imported-symbol addresses are unmapped symbolic slots at 0x7400000000, not
+working SDK services. Unsupported relocation types fail and discard the image.
+
+The real lifted `nninitStartup` body runs in that mapped image with a 1 MiB
+guest stack. Three actual handlers supply no CLI arguments and retain the
+guest FS allocator callbacks. The expected callback addresses, an image-global
+pointer, stack restoration and return link are verified. All other imports,
+indirect functions, SVCs and nnMain explicitly stop. No constructors or nnMain
+are run; there is no NVN renderer, menu, match or browser game FPS result yet.
+
+Node also passes eight malformed ELF input/recovery scenarios. Chrome passed
+the combined runtime/game-function/asset/loader/bootstrap flow. The final runtime
+rerun after clearing earlier development errors logged 0 errors/0 warnings.
+The HTTP server's five tests pass, including separate report endpoints and
+origin checks. Evidence:
+
+- `build/web-poc/{node-report,browser-report}.json`
+- `build/web-poc/{elf-node-report,elf-browser-report,asset-browser-report}.json`
+- `build/web-game/selection.json` (function addresses and original-byte hashes)
+- `output/playwright/ssbu-web-bootstrap-full.png`
+
+Run commands and limitations are in [README.md](README.md). All game-derived
+sources, vectors and compiled outputs remain in ignored build directories.
+Next gate: extend import binding, constructor call graph and guest module loading;
+then scheduler/exception semantics and an NVN/WebGPU backend. Bootstrap success
+does not establish that those remaining gates are feasible or complete.
+
+## Latest native result
+
+Update after the font input: extracted all seven shared fonts from the user's
+`Downloads/Compressed/Firmware.21.1.0.zip` into ignored
+`build/native/sysdata/fonts`. The archive is version 21.1.0 (its filename),
+although the user described it as 22.1.0. The supplied 22.1.0 key archive's
+prod.keys matches the existing local file; no global key file was changed.
+The rerun loaded the fonts, decoded the opening movie, reached the title and
+rendered the first-launch Milestones notice. Visually verified screenshot:
+`build/native/captures/frame_600.png`. The original script waits for the main
+menu and cannot dismiss this extra first-launch notice. A local script variant
+uses the runtime's existing `@until` input mode to dismiss notices. At that
+point the first run had not reached a match.
+
+The subsequent `smoke-firstboot.log` run passed the notices, main menu, rules,
+stage and character selection, and reached the battle input section (step 19,
+poll 2963). Later scripted movement/jump/attack steps ran while the renderer
+reported fight frames. Frames 4200–4500 averaged 17.06 ms (58.6 FPS), median
+16.63 ms, p99 35.07 ms; this is one native interval, not a browser benchmark.
+The `battle_120.bmp` filename is misleading: its trigger also fired on a reward
+screen before the actual battle. Visual inspection showed a Thanatos reward;
+do not cite that screenshot as proof of combat. Audio was muted. The fast
+run completed its 150-second test window and exited 0 after 154 seconds; this
+was a timed stop, not a verified match result. All 81 script steps were reached.
+The fast sequence now dismisses first-launch notices with `@until`, following the
+existing reward-aware sequence pattern. No native rebuild was needed.
+
+The following font-blocked result describes the earlier smoke run.
+
+Native build has completed all 11 setup steps: 1,161 main objects, 98 module
+DLLs, linked `build/native/work/ssbu_native.exe`. SDK self-test: 0 failures.
+Controller self-test: 49/49. Lifter differential check: 32,043 identical, 0
+different. The old `compile.log` string `failed: 0` is a successful summary,
+not a compiler error.
+
+A first scripted smoke run selected the NVIDIA RTX 4070 Laptop GPU and presented
+6 Vulkan frames with 0 Vulkan call failures, then exited with code 7 after 66
+seconds because `nintendo_udsg-r_std_003.ttf` is missing. It did not reach a
+verified title/menu or match. Validation layers were off, and no game screenshot
+was captured. This is not evidence of playable gameplay or a web game port.
+
+Log: `build/native/logs/smoke.log`. The required font check is implemented in
+`runtime/nnpl.c`; despite the older optional-font wording in build documentation,
+the current runtime explicitly stops when a requested shared font is absent.
+No Nintendo fonts/firmware were found in the searched Downloads/.switch paths.
+Next input needed: the user's Switch shared-font folder or firmware dump from
+which `tools/extract/fw_fonts.py` can extract those fonts. Set `SSBU_FONTS` or
+place them under `build/native/sysdata/fonts`, then repeat the scripted run.
+
+### Firmware input provided afterward
+
+Located `Downloads/Compressed/Firmware.23.0.1.zip` (238 NCA files). Read its NCA
+headers locally and extracted only the five system-font data NCAs (titles
+0100000000000810 through 0814) to `build/firmware-font-ncas`. Archive entries were
+read through ZipFile; input archive and keys were not modified.
+
+Font decoding is currently blocked: all five NCAs require the local entry named
+`key_area_key_application_16`, which is absent from the current
+`~/.switch/prod.keys`; the corresponding master key is absent too. No fonts were
+written. No other key file was found in Downloads or inside the firmware ZIP.
+The user was asked for a compatible local prod.keys path or an already extracted
+Switch font folder. No game rerun was started while this input remains missing.
+
+Updated `fw_fonts.py` to report missing key **names**, return a failing exit code
+when no fonts can be produced, and close skipped NCA file handles. The former
+behavior returned success after silently writing zero fonts. Verified the current
+input now reports the missing name, writes zero fonts, and exits 1; key values
+were never logged.
+
+The progress paragraphs below describe earlier stages and are retained as history.
+
+Branch: `web-poc`, based on upstream
+`938e66bb7be0ba4123e291211895412da421b705`.
+
+Implemented and run locally, without a game dump:
+
+| Check | Result |
+|---|---|
+| Pinned Emscripten 6.0.12 build, strict C warnings | pass |
+| Default runtime memory helper branch, compile-only | pass |
+| Wasm32 CPU/memory/runtime-helper/pthread fixture | 43 checks, 0 failures |
+| Wasm64 CPU/memory/runtime-helper/pthread fixture | 43 checks, 0 failures |
+| Nested same-thread Asyncify fiber + longjmp fixture | pass |
+| Two live workers resuming explicit continuation state | pass, part of core fixture |
+| Local HTTP server tests | 4 tests, pass |
+| Browser COOP/COEP and SharedArrayBuffer | pass |
+| WebGPU compute and 64 expected readback words | pass |
+| WebGPU canvas clear/present | pass |
+| Browser console after final reload/run | 0 errors, 0 warnings |
+
+Core and fiber checks passed under SDK Node **24.19.0** and the Playwright-driven
+headed **Chrome/155.0.0.0** on Windows. Browser GPU information reported `intel`,
+architecture `xe-lpg`, `fallback=false`. This run did not select/test the NVIDIA
+adapter. User-agent and available GPU details are retained in the browser report.
+
+The opt-in runtime helper adapter uses sparse guest pages and preserves 64-bit
+guest addresses under both pointer widths. It is bounded to 256 mapped page
+entries for this experiment. Mapping changes and dirty reset require stopped
+accessors; a production allocator/concurrent page table has not been built.
+
+Evidence remains locally in ignored build/output directories:
+
+- `build/web-poc/manifest.json`
+- `build/web-poc/node-report.json`
+- `build/web-poc/browser-report.json`
+- `output/playwright/ssbu-web-probes.png`
+
+Reports are overwritten on rerun. They describe synthetic fixtures only. The
+small Wasm output sizes and memory-loop timings cannot predict a full game build
+or its FPS.
+
+## Still unverified (original web-probe stage)
+
+- Full Windows native build and playable baseline on this machine.
+- Game dump/version validation, generated code and module loading in Wasm.
+- Complete guest/host pointer audit and real allocator working set.
+- Real fiber migration/task-system semantics and guest exception unwinding.
+- Full lifter atomic memory ordering and numerical equivalence.
+- NVN backend and Maxwell shader translation to WebGPU/WGSL.
+- Asset loading, saves, input, audio, movies and a real match in a browser.
+
+## Input preparation and native build — 18 October 2026
+
+Found `Super Smash Bros Ultimate.xci` in the user's Downloads directory
+(15,262,199,296 bytes). Read-only HFS0/NCA metadata inspection found base display
+version **1.0.0** and embedded patch display version **2.0.1**. Both Program NCAs'
+`main` and `sdk` text sizes fail the upstream 13.0.4 size checks. No game content
+was extracted, no input file was modified, and full payload hashes were not read.
+Metadata report: `build/xci-inspection.json` (ignored). Local inspection used the
+existing keys without logging key values.
+
+The user then supplied a separate 13.0.4 NSP update in Downloads. Its control
+version and main/SDK text sizes match 13.0.4. Applied that update over the base
+Program NCA from the XCI, ignoring its older embedded patch, into
+`build/dump-13.0.4/`. Prepared ExeFS and all 14 RomFS files; `data.arc` is
+17,600,869,448 bytes. All three segments of main and SDK passed the SHA-256 checks
+in upstream `nso2elf.py`. This does not claim full NCA/payload hash verification.
+
+The native lifter differential test ran against Unicorn using the actual
+instruction samples: **32,043 identical, 0 different, 0 reference faults**.
+Evidence: `build/native/logs/lifter-early-check.log`. Input validation summary:
+`build/dump-validation/summary.json`.
+
+Native dependencies were prepared locally: LLVM 9.0.0, SDL3 3.4.18, glslang
+16.6.0, Vulkan-Headers v1.4.347, Python packages in `deps/dump-tools`, and
+libopus 1.6.1 built with MSVC after checking Xiph's published SHA-256. Open-source
+Mii test references and their revision are recorded in
+`deps/yuzu-reference/provenance.json`. No permanent PATH modifications were made.
+
+The installed Visual Studio 2026 instance is an Insiders installation. Added
+`-prerelease` to the setup and glslang-shim vswhere queries; the native compile/
+link dependency probe then passed. Runtime memory helpers still use their default
+native branch for this build; the web adapter is not enabled.
+
+The full native pipeline was started with two compile jobs under `build/native`.
+At the user's request, it was restarted with four jobs, retaining 740 completed
+objects and discarding one output that was in flight during the stop. The resumed
+compile identified 421 remaining translation units. Restart details are recorded
+in `build/restart-4jobs.json`; future reruns of `build/run-native.cmd` use four jobs.
+Image conversion, module extraction, table generation, main lift and SDK lift
+completed. Main lift produced 1,161 C translation units. Main compilation is
+still in progress at this status update; full native linking, SDK/pad self-tests,
+boot and a scripted match have **not** completed. See `build/native/logs` and
+`build/native/state.json` for progress; `build/run-native.cmd` reruns/resumes the
+pipeline with the local tool paths.
+
+The next verification gate remains the native scripted match and memory/task
+measurements. See [README.md](README.md) to rerun the dump-free web probes.

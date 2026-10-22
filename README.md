@@ -1,4 +1,15 @@
-# ssbu-recomp
+# SSBU-port-web
+
+Experimental WebAssembly/WebGPU port of [Denkishi/ssbu-recomp](https://github.com/Denkishi/ssbu-recomp).
+The browser port has reached real loading graphics, but menu, controls and a playable
+match are not yet verified. The native gameplay shown below describes the upstream
+Windows project.
+
+Start with [web/README.md](web/README.md), the current [AI handoff](web/HANDOFF.md)
+and [source checkpoint](web/COMMIT_CHECKPOINT.md). Local dumps, keys, generated game
+code and build outputs are excluded from Git.
+
+## ssbu-recomp — original native project
 
 A **static recompilation** of *Super Smash Bros. Ultimate* (version 13.0.4) from the Nintendo Switch to a
 native Windows x64 program, with its own runtime, a Vulkan renderer, and tools to turn the fighters' script
