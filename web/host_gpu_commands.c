@@ -24,7 +24,7 @@ typedef struct CommandBuffer {
     char label[128];
     struct CommandBuffer *next;
 } CommandBuffer;
-typedef struct CommandList {uint64_t handle,command_bytes;unsigned references;PoolBinding *bindings;struct CommandList *next;} CommandList;
+typedef struct CommandList {uint64_t handle,command_bytes,control_start;unsigned references;PoolBinding *bindings;struct CommandList *next;} CommandList;
 typedef struct Queue {uint64_t key,command_size,compute_size,control_size,command_total,control_total,texture_pool,sampler_pool;
     uint32_t flags,priority,references;ProgramSnapshot *programs[6];WebGpuRenderState *render;WebGpuDrawState *draw;int alive;pthread_mutex_t submit_lock;char label[128];struct Queue *next;} Queue;
 typedef struct Fence {uint32_t handle,references;} Fence;
@@ -36,17 +36,18 @@ static Queue *queues;
 static Sync *syncs;
 static Window *windows;
 static uint32_t next_list=1;
+static uint64_t control_reclaims;
 static pthread_mutex_t commands_lock=PTHREAD_MUTEX_INITIALIZER;
 EMSCRIPTEN_KEEPALIVE const char *web_gpu_command_info(void) {
     static char text[384];
     // A guest may wait for a GPU reply while holding this lock. The owner
     // Worker must skip the observation rather than block its reply loop.
     if(pthread_mutex_trylock(&commands_lock)){snprintf(text,sizeof text,"{\"busy\":true}");return text;}
-    size_t count=0,bindings=0,draws=0,renders=0,programs=0,sublists=0;uint64_t bytes=0;
+    size_t count=0,bindings=0,draws=0,renders=0,programs=0,sublists=0;uint64_t bytes=0,reclaims=control_reclaims;
     for(CommandList *list=lists;list;list=list->next){count++;bytes+=list->command_bytes;
         for(PoolBinding *b=list->bindings;b;b=b->next){bindings++;draws+=b->draw!=NULL;renders+=b->render!=NULL;programs+=b->program_binding!=0;sublists+=b->sublist!=NULL;}}
     pthread_mutex_unlock(&commands_lock);
-    snprintf(text,sizeof text,"{\"registryLists\":%zu,\"registryBindings\":%zu,\"drawRecords\":%zu,\"renderRecords\":%zu,\"programBindings\":%zu,\"sublistBindings\":%zu,\"modeledCommandBytes\":%llu}",count,bindings,draws,renders,programs,sublists,(unsigned long long)bytes);
+    snprintf(text,sizeof text,"{\"registryLists\":%zu,\"registryBindings\":%zu,\"drawRecords\":%zu,\"renderRecords\":%zu,\"programBindings\":%zu,\"sublistBindings\":%zu,\"modeledCommandBytes\":%llu,\"controlReclaims\":%llu}",count,bindings,draws,renders,programs,sublists,(unsigned long long)bytes,(unsigned long long)reclaims);
     return text;
 }
 static unsigned bucket(uint64_t key){return (unsigned)(key>>4)&1023;}
@@ -85,6 +86,19 @@ static void free_bindings(PoolBinding *binding) {
     while(binding){PoolBinding *next=binding->next;if(binding->sublist)release_list(binding->sublist);else if(binding->render)web_gpu_render_release(binding->render);else if(binding->draw)web_gpu_draw_release(binding->draw);else if(binding->program_binding)release_program(binding->program);else if(binding->copy)web_gpu_copy_release(binding->copy);else web_gpu_descriptor_release(binding->pool,binding->sampler);free(binding);binding=next;}
 }
 static void release_list(CommandList *list){if(!--list->references){free_bindings(list->bindings);free(list);}}
+static void overwrite_control_slot(uint64_t start) {
+    /* EndRecording consumes 32 bytes in guest-owned control storage. Reusing
+     * those bytes replaces the old handle's registry ownership. Merely adding
+     * storage does not overwrite it. Selected submissions and recorded sublists
+     * retain their immutable metadata until their existing references end. */
+    CommandList **link=&lists;
+    while(*link){
+        CommandList *old=*link;
+        if(start<old->control_start+32&&old->control_start<start+32){
+            *link=old->next;control_reclaims++;release_list(old);
+        }else link=&old->next;
+    }
+}
 static void release_queue(Queue *queue) {
     if(!--queue->references) {
         if(queue->texture_pool)web_gpu_descriptor_release(queue->texture_pool,0);
@@ -557,8 +571,9 @@ int web_gpu_commands_import(Ctx *c,const char *name) {
         require_memory(c,buffer,32,1);
         CommandList *list=calloc(1,sizeof *list);
         if(!list||!next_list){free(list);fail("NVN command handle allocation failed",buffer->key);}
-        list->references=1;list->command_bytes=buffer->record_bytes;
+        list->references=1;list->command_bytes=buffer->record_bytes;list->control_start=buffer->control+buffer->control_used;
         list->bindings=buffer->bindings;buffer->bindings=buffer->bindings_tail=NULL;
+        overwrite_control_slot(list->control_start);
         list->handle=0x7c00000000ULL+(uint64_t)next_list++*16;list->next=lists;lists=list;
         buffer->control_used+=32;buffer->recording=0;c->x[0]=list->handle;
     } else if(!strcmp(operation,"SetTexturePool")||!strcmp(operation,"SetSamplerPool")) {

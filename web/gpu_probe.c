@@ -84,9 +84,75 @@ static void refill_callback(Ctx *c){
     check(invoke("nvnCommandBufferIsRecording",key,0,0,0)==1); // Reentrant call must not deadlock.
     if(callback_mode==2)invoke("nvnCommandBufferSetTexturePool",key,TEXTURES,0,0);
     if(callback_mode==3)invoke("nvnCommandBufferFinalize",key,0,0,0);
-    if(!callback_mode){if(event)invoke("nvnCommandBufferAddControlMemory",key,CONTROL+2048,minimum,0);else invoke("nvnCommandBufferAddCommandMemory",key,POOL_OBJECT,0,minimum);}
+    /* The refill-retention test supplies distinct storage. Reusing an old
+     * slot deliberately invalidates its registry handle (tested separately). */
+    if(!callback_mode){if(event)invoke("nvnCommandBufferAddControlMemory",key,BASE+0x3c000+callback_calls*512,minimum,0);else invoke("nvnCommandBufferAddCommandMemory",key,POOL_OBJECT,0,minimum);}
     for(unsigned i=0;i<19;i++)c->x[i]=0xdead0000u+i;
     memset(c->v,0,8*sizeof c->v[0]);c->fn=0xdeadbad;
+}
+static void control_reuse_checks(void) {
+    const uint64_t a=BASE+0x6c00,b=BASE+0x6e00,q=BASE+0x6f00,control=CONTROL+3072,handles=CONTROL+4000;
+    int sampler=-1;uint64_t pool=0;
+    check(invoke("nvnCommandBufferInitialize",a,DEVICE,0,0)==1);
+    check(invoke("nvnCommandBufferInitialize",b,DEVICE,0,0)==1);
+    invoke("nvnCommandBufferAddCommandMemory",a,POOL_OBJECT,0,4096);
+    invoke("nvnCommandBufferAddCommandMemory",b,POOL_OBJECT,0,4096);
+    invoke("nvnCommandBufferAddControlMemory",a,control,128,0);
+    invoke("nvnCommandBufferBeginRecording",a,0,0,0);
+    invoke("nvnCommandBufferSetTexturePool",a,TEXTURES,0,0);
+    uint64_t first=invoke("nvnCommandBufferEndRecording",a,0,0,0);
+    check(web_gpu_command_pool_binding(first,0,&sampler,&pool)&&!sampler&&pool==TEXTURES);
+    invoke("nvnCommandBufferAddControlMemory",a,control,128,0);
+    check(web_gpu_command_pool_binding(first,0,&sampler,&pool)); // Declaring storage alone does not overwrite.
+    invoke("nvnCommandBufferBeginRecording",a,0,0,0);
+    invoke("nvnCommandBufferSetSamplerPool",a,SAMPLERS,0,0);
+    uint64_t second=invoke("nvnCommandBufferEndRecording",a,0,0,0);
+    check(second!=first&&!web_gpu_command_pool_binding(first,0,&sampler,&pool));
+    check(web_gpu_command_pool_binding(second,0,&sampler,&pool)&&sampler&&pool==SAMPLERS);
+    wr64(handles,first);
+    if(!setjmp(expected_stop)){trap_expected=1;invoke("nvnQueueSubmitCommands",QUEUE,1,handles,0);trap_expected=0;check(0);}
+    else{trap_expected=0;check(strstr(error,"invalid or finalised command handle")!=NULL);error[0]=0;}
+    invoke("nvnCommandBufferBeginRecording",a,0,0,0);
+    invoke("nvnCommandBufferSetTexturePool",a,TEXTURES,0,0);
+    uint64_t third=invoke("nvnCommandBufferEndRecording",a,0,0,0);
+    check(web_gpu_command_pool_binding(second,0,&sampler,&pool)); // Adjacent 32-byte slots remain independent.
+    check(web_gpu_command_pool_binding(third,0,&sampler,&pool));
+    invoke("nvnCommandBufferAddControlMemory",b,control+24,128,0);
+    check(web_gpu_command_pool_binding(second,0,&sampler,&pool)&&web_gpu_command_pool_binding(third,0,&sampler,&pool));
+    invoke("nvnCommandBufferBeginRecording",b,0,0,0);
+    invoke("nvnCommandBufferSetTexturePool",b,TEXTURES,0,0);
+    uint64_t overlap=invoke("nvnCommandBufferEndRecording",b,0,0,0);
+    check(!web_gpu_command_pool_binding(second,0,&sampler,&pool)&&!web_gpu_command_pool_binding(third,0,&sampler,&pool));
+    check(web_gpu_command_pool_binding(overlap,0,&sampler,&pool));
+    invoke("nvnDeviceFinalizeCommandHandle",DEVICE,overlap,0,0);
+    uint64_t previous=0;
+    for(unsigned i=0;i<96;i++){
+        invoke("nvnCommandBufferAddControlMemory",a,control+128,128,0);
+        invoke("nvnCommandBufferBeginRecording",a,0,0,0);
+        invoke(i&1?"nvnCommandBufferSetSamplerPool":"nvnCommandBufferSetTexturePool",a,i&1?SAMPLERS:TEXTURES,0,0);
+        uint64_t current=invoke("nvnCommandBufferEndRecording",a,0,0,0);
+        check(current!=previous&&(!previous||!web_gpu_command_pool_binding(previous,0,&sampler,&pool)));
+        check(web_gpu_command_pool_binding(current,0,&sampler,&pool)&&sampler==(int)(i&1)&&pool==(i&1?SAMPLERS:TEXTURES));previous=current;
+    }
+    invoke("nvnDeviceFinalizeCommandHandle",DEVICE,previous,0,0);
+    invoke("nvnCommandBufferAddControlMemory",a,control+384,128,0);
+    invoke("nvnCommandBufferBeginRecording",a,0,0,0);invoke("nvnCommandBufferSetTexturePool",a,TEXTURES,0,0);
+    uint64_t child=invoke("nvnCommandBufferEndRecording",a,0,0,0);
+    wr64(handles,child);invoke("nvnCommandBufferAddControlMemory",b,control+512,128,0);
+    invoke("nvnCommandBufferBeginRecording",b,0,0,0);invoke("nvnCommandBufferCallCommands",b,1,handles,0);
+    uint64_t parent=invoke("nvnCommandBufferEndRecording",b,0,0,0);
+    invoke("nvnCommandBufferAddControlMemory",a,control+384,128,0);
+    invoke("nvnCommandBufferBeginRecording",a,0,0,0);
+    uint64_t replacement=invoke("nvnCommandBufferEndRecording",a,0,0,0);
+    check(!web_gpu_command_pool_binding(child,0,&sampler,&pool));
+    if(!setjmp(expected_stop)){trap_expected=1;invoke("nvnTexturePoolFinalize",TEXTURES,0,0,0);trap_expected=0;check(0);}
+    else{trap_expected=0;check(strstr(error,"referenced by recorded commands")!=NULL);error[0]=0;}
+    check(invoke("nvnQueueInitialize",q,QUEUE_BUILDER,0,0)==1);
+    wr64(handles,parent);invoke("nvnQueueSubmitCommands",q,1,handles,0); // Parent keeps the evicted child's metadata alive.
+    invoke("nvnDeviceFinalizeCommandHandle",DEVICE,parent,0,0);
+    invoke("nvnQueueFinalize",q,0,0,0);
+    invoke("nvnDeviceFinalizeCommandHandle",DEVICE,replacement,0,0);
+    invoke("nvnCommandBufferFinalize",a,0,0,0);invoke("nvnCommandBufferFinalize",b,0,0,0);
 }
 __attribute__((noinline)) static void publish(void) {
     MAIN_THREAD_ASYNC_EM_ASM({Module['onGpuProbeReport'](UTF8ToString($0));},report);
@@ -631,6 +697,7 @@ static void *run(void *unused) {
         invoke("nvnDeviceFinalizeCommandHandle",DEVICE,first_list,0,0);
         check(!web_gpu_command_pool_binding(first_list,0,&sampler,&bound_pool));
         invoke("nvnDeviceFinalizeCommandHandle",DEVICE,second_list,0,0);
+        control_reuse_checks();
         /* Real refill path: host recording -> protected guest callback ->
          * reentrant NVN allocation, then replay the original pending command. */
         check(invoke("nvnCommandBufferInitialize",REFILL_COMMANDS,DEVICE,0,0)==1);
