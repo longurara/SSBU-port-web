@@ -25,6 +25,8 @@ def advance(args):
     history=ROOT/'build/runtime-progress'/str(time.time_ns());history.mkdir(parents=True)
     main=ROOT/'build/native/binaries/13.0.4/main.elf';romfs=ROOT/'build/dump-13.0.4/romfs'
     paths=[romfs/'data.arc',*sorted((romfs/'.nrr').glob('*.nrr'))]
+    font_paths=sorted((ROOT/'build/native/sysdata/fonts').glob('*.ttf'))
+    if len(font_paths)!=7:raise RuntimeError('Expected seven local system fonts')
     if not main.is_file() or len(paths)!=14 or any(not path.is_file() for path in paths):raise RuntimeError('Expected the verified local 13.0.4 dump')
     helper=history/'boot.cjs'
     helper.write_text('''async (page) => {
@@ -33,12 +35,14 @@ def advance(args):
   await page.waitForFunction(() => window.__ssbuElfDone);
   await page.locator('#romfs').evaluate(el => el.removeAttribute('webkitdirectory'));
   await page.locator('#romfs').setInputFiles(ROMFS_PATHS);
+  await page.locator('#fonts').evaluate(el => el.removeAttribute('webkitdirectory'));
+  await page.locator('#fonts').setInputFiles(FONT_PATHS);
   await page.getByRole('button',{name:'Thử boot game',exact:true}).click();
   await page.waitForFunction(() => window.__ssbuRuntimeDone,{},{timeout:300000});
   const error=await page.evaluate(() => window.__ssbuRuntimeError);
   if(error)throw new Error(error);
 }
-'''.replace('RUNTIME_URL',json.dumps('http://127.0.0.1:8787/'+('?runtime=fibers-compact' if args.fibers and args.compact_codegen else '?runtime=fibers' if args.fibers else '?runtime=compact' if args.compact_codegen else '?runtime=debug'))).replace('MAIN_PATH',json.dumps(str(main))).replace('ROMFS_PATHS',json.dumps([str(path) for path in paths])),encoding='utf-8')
+'''.replace('RUNTIME_URL',json.dumps('http://127.0.0.1:8787/'+('?runtime=fibers-compact' if args.fibers and args.compact_codegen else '?runtime=fibers' if args.fibers else '?runtime=compact' if args.compact_codegen else '?runtime=debug'))).replace('MAIN_PATH',json.dumps(str(main))).replace('ROMFS_PATHS',json.dumps([str(path) for path in paths])).replace('FONT_PATHS',json.dumps([str(path) for path in font_paths])),encoding='utf-8')
     report_path=ROOT/'build/web-poc/runtime-browser-report.json'
     events=[]
     for index in range(args.steps):

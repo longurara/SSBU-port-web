@@ -2,6 +2,7 @@
  * handles remain virtual addresses; host synchronization objects stay private. */
 #define _POSIX_C_SOURCE 200809L
 #include "runtime.h"
+#include "host_font.h"
 #ifdef WEB_FIBERS
 #include "host_fiber.h"
 #endif
@@ -127,6 +128,7 @@ static int audio_pump_locked(uint64_t now) {
     return moved;
 }
 void web_os_reset(void) {
+    web_font_reset();
     // One fresh instance/ELF per worker run. Live workers must be stopped before reset.
     for (unsigned i = 0; i < 64; i++) { free(numberlines[i].bits); free(numberlines[i].run_len); }
     for (unsigned i = 0; i < 32; i++) free(stdallocs[i].blocks);
@@ -305,8 +307,6 @@ static uint64_t wait_event(HostEvent *event, int block, int timed, uint64_t ns) 
 }
 #define MOVIE_VTABLE 0x7800000a00ULL
 #define MOVIE_FN_BASE 0x7500002000ULL
-#define FONT_GLYPH_BUF 0x7800000c80ULL
-#define SHARED_FONT_BUF 0x7800001000ULL
 
 int web_os_indirect(Ctx *c, uint64_t address) {
     if (address >= MOVIE_FN_BASE && address < MOVIE_FN_BASE + 64 * 16 && !(address & 15)) {
@@ -711,6 +711,7 @@ static int zlib_decompress(uint8_t *dst, size_t dst_cap, const uint8_t *src, siz
     return ((s2 << 16) | s1) == want_adler;
 }
 int web_os_import(Ctx *c, const char *name) {
+    if(web_font_import(c,name))return 1;
 #ifdef WEB_FIBERS
     if(web_fiber_import(c,name))return 1;
 #endif
@@ -1655,87 +1656,8 @@ int web_os_import(Ctx *c, const char *name) {
         free(src); free(dst);
         c->x[0] = ok ? 1 : 0; return 1;
     }
-    if (!strcmp(name, "_ZN2nn2pl21RequestSharedFontLoadENS0_14SharedFontTypeE")) { c->x[0] = 0; return 1; }
-    if (!strcmp(name, "_ZN2nn2pl22GetSharedFontLoadStateENS0_14SharedFontTypeE")) { c->x[0] = 1; return 1; }
-    if (!strcmp(name, "_ZN2nn2pl20GetSharedFontAddressENS0_14SharedFontTypeE")) { c->x[0] = SHARED_FONT_BUF; return 1; }
-    if (!strcmp(name, "_ZN2nn2pl17GetSharedFontSizeENS0_14SharedFontTypeE")) { c->x[0] = 4096; return 1; }
     if (!strcmp(name, "_ZN2nn2pl8IsVrModeEv") || !strcmp(name, "_ZN2nn2pl11BeginVrModeEv") || !strcmp(name, "_ZN2nn2pl9EndVrModeEv")) {
         c->x[0] = 0; return 1;
-    }
-    if (!strcmp(name, "_ZN2nn6fontll24ScalableFontEngineHelper6DecodeEPKvj")) {
-        uint64_t p = c->x[0]; uint32_t sz = (uint32_t)c->x[1] & ~3u;
-        static const uint8_t key[4] = {0x49, 0x62, 0x18, 0x06};
-        if (!p || sz < 12) { c->x[0] = 0; return 1; }
-        for (uint32_t i = 0; i < sz; i++) wr8(p + i, rd8(p + i) ^ key[i & 3]);
-        c->x[0] = p + 8; return 1;
-    }
-    if (!strncmp(name, "_ZN2nn6fontll18ScalableFontEngine", 33)) {
-        const char *m = name + 33;
-        uint64_t self = c->x[0];
-        if (!strcmp(m, "C1Ev") || !strcmp(m, "C2Ev")) {
-            for (uint64_t off = 0; off < 0xb8; off += 8) wr64(self + off, 0);
-            wr32(self + 0x10, 32 << 16); wr32(self + 0x1c, 32 << 16);
-            c->x[0] = self; return 1;
-        }
-        if (!strcmp(m, "10InitializeEPvj")) { wr64(self + 0xb0, c->x[1]); c->x[0] = 0; return 1; }
-        if (!strcmp(m, "8FinalizeEv") || !strcmp(m, "8GetErrorEv") || !strcmp(m, "7SetFontEPc") ||
-            !strcmp(m, "13SetBoldWeightEi") || !strcmp(m, "15SetOutlineWidthEt") ||
-            !strcmp(m, "8SetFlagsENS1_5FlagsE") || !strcmp(m, "11SetAutoHintEb") ||
-            !strcmp(m, "13ReleasesGlyphEPv") || !strcmp(m, "25InitializeOtfKerningTableEPFPvmmS2_ES2_b") ||
-            !strcmp(m, "23FinalizeOtfKerningTableEPNS0_15OtfKerningTableEPFvPvS4_ES4_") ||
-            !strcmp(m, "17AcquireOtfKerningEPKNS0_15OtfKerningTableEjjj") ||
-            !strcmp(m, "21AcquireOtfKerningLastEPKNS0_15OtfKerningTableEjj") ||
-            !strcmp(m, "22AcquireOtfKerningFirstEPKNS0_15OtfKerningTableEjj")) { c->x[0] = 0; return 1; }
-        if (!strcmp(m, "22GetPointerToWorkBufferEv")) { c->x[0] = rd64(self + 0xb0); return 1; }
-        if (!strcmp(m, "8LoadFontEPcPKvjj")) {
-            if (c->x[1] && c->x[4] >= 6) web_write(c->x[1], "Font0", 6);
-            c->x[0] = 0; return 1;
-        }
-        if (!strcmp(m, "8SetScaleEiiii")) {
-            wr32(self + 0x10, (uint32_t)c->x[1]); wr32(self + 0x14, (uint32_t)c->x[2]);
-            wr32(self + 0x18, (uint32_t)c->x[3]); wr32(self + 0x1c, (uint32_t)c->x[4]);
-            c->x[0] = 0; return 1;
-        }
-        if (!strcmp(m, "14GetFontMetricsEPNS0_7MetricsE")) {
-            uint64_t met = c->x[1];
-            if (met) {
-                for (uint64_t off = 0; off < 0x93c; off += 4) wr32(met + off, 0);
-                wr16(met + 0x00, 1000); wr16(met + 0x04, 800); wr16(met + 0x06, 200);
-                wr16(met + 0x08, 800); wr16(met + 0x0a, (uint16_t)-200);
-                wr16(met + 0x10, 800); wr16(met + 0x12, (uint16_t)-200);
-                wr16(met + 0x18, 0); wr16(met + 0x1a, (uint16_t)-200); wr16(met + 0x1c, 1000); wr16(met + 0x1e, 800);
-                wr16(met + 0x930, 1000); wr32(met + 0x934, 1024);
-            }
-            c->x[0] = 0; return 1;
-        }
-        if (!strcmp(m, "15CheckGlyphExistEj")) { c->x[0] = 1; return 1; }
-        if (!strcmp(m, "10GetAdvanceEPsS2_PiS3_jt")) {
-            int32_t sx = (int32_t)rd32(self + 0x10);
-            if (sx <= 0) sx = 32 << 16;
-            int32_t dx = sx / 2;
-            if (c->x[1]) wr16(c->x[1], (uint16_t)((dx + 0x8000) >> 16));
-            if (c->x[2]) wr16(c->x[2], 0);
-            if (c->x[3]) wr32(c->x[3], (uint32_t)dx);
-            if (c->x[4]) wr32(c->x[4], 0);
-            c->x[0] = 0; return 1;
-        }
-        if (!strcmp(m, "10GetKerningEPiS2_jj")) {
-            if (c->x[1]) wr32(c->x[1], 0);
-            if (c->x[2]) wr32(c->x[2], 0);
-            c->x[0] = 0; return 1;
-        }
-        if (!strcmp(m, "15AcquireGlyphmapEjt")) {
-            int32_t sx = (int32_t)rd32(self + 0x10);
-            if (sx <= 0) sx = 32 << 16;
-            int32_t dx = sx / 2;
-            for (uint64_t off = 0; off < 0x28; off += 8) wr64(FONT_GLYPH_BUF + off, 0);
-            wr32(FONT_GLYPH_BUF + 0x08, 0x28);
-            wr16(FONT_GLYPH_BUF + 0x10, (uint16_t)((dx + 0x8000) >> 16));
-            wr32(FONT_GLYPH_BUF + 0x14, (uint32_t)dx);
-            wr16(FONT_GLYPH_BUF + 0x24, 8);
-            wr16(FONT_GLYPH_BUF + 0x26, (uint16_t)(c->x[2] & 0xffff));
-            c->x[0] = FONT_GLYPH_BUF; return 1;
-        }
     }
     if (!strcmp(name, "_ZN2nn6crypto16GenerateSha1HashEPvmPKvm")) {
         uint64_t out = c->x[0], out_sz = c->x[1], data = c->x[2], sz = c->x[3];

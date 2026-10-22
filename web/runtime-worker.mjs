@@ -1,10 +1,12 @@
 import {WebGpuBackend,dispatchGpuRequest} from './gpu-backend.mjs';
+import {localFontInputs} from './font-input.mjs';
 
 self.onmessage = async ({data}) => {
   let module;
   let device;
   let backend;
   try {
+    const fonts=localFontInputs(data.fonts,{required:data.boot===true});
     const runtimeModules={debug:'./runtime-debug.mjs',fibers:'./runtime-fibers.mjs',compact:'./runtime-debug-compact.mjs','fibers-compact':'./runtime-fibers-compact.mjs'};
     const runtimeBuild=Object.hasOwn(runtimeModules,data.runtimeBuild)?data.runtimeBuild:'fibers-compact';
     self.postMessage({type:'status',message:'Đang tải và biên dịch WebAssembly, lần đầu có thể mất một lúc…'});
@@ -35,6 +37,7 @@ self.onmessage = async ({data}) => {
       module.FS.mkdir('/romfs');
       module.FS.mount(module.WORKERFS,{blobs:data.romfs},'/romfs');
     }
+    if(fonts.length){module.FS.mkdir('/fonts');module.FS.mount(module.WORKERFS,{blobs:fonts},'/fonts');}
     self.postMessage({type:'status',message:'Đang nạp chương trình…'});
     if (!module.ccall('elf_load','number',['string'],['/program/main.elf'])) throw new Error(module.ccall('elf_info','string',[],[]));
     if(data.boot&&typeof module._web_input_pointer==='function')self.postMessage({type:'input-state',buffer:module.HEAPU8.buffer,offset:module._web_input_pointer()>>>0});

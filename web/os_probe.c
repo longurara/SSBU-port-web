@@ -28,6 +28,7 @@ void guest_trap(const char *what,uint64_t address) {
     if(boundary)longjmp(*boundary,1);abort();
 }
 int web_runtime_thread_call(Ctx *c,uint64_t address){(void)c;guest_trap("guest thread execution is outside event fixture",address);return 0;}
+void call_indirect(Ctx *c,uint64_t address){(void)c;guest_trap("font guest callback is outside dump-free event fixture",address);}
 static void check_at(int value,int line){checks++;if(!value){atomic_fetch_add(&failures,1);pthread_mutex_lock(&error_lock);size_t n=strlen(error);if(n+16<sizeof error)snprintf(error+n,sizeof error-n,"%sL%d",n?",":"",line);pthread_mutex_unlock(&error_lock);}}
 #define check(v) check_at((v),__LINE__)
 static uint64_t invoke(const char *name,uint64_t key,uint64_t a,uint64_t b) {
@@ -309,17 +310,18 @@ static void *run(void *unused) {
             c=(Ctx){0};c.x[0]=0x7800010da0ULL;c.x[1]=5;c.x[2]=0x7800010d80ULL;c.x[3]=sizeof zhello;
             check(web_os_import(&c,"_ZN2nn4util14DecompressZlibEPvmPKvmS1_m")&&c.x[0]==0);
         }
-        // nn::pl shared font + nn::fontll::ScalableFontEngine
-        check(invoke("_ZN2nn2pl22GetSharedFontLoadStateENS0_14SharedFontTypeE",0,0,0)==1);
-        check(invoke("_ZN2nn2pl20GetSharedFontAddressENS0_14SharedFontTypeE",0,0,0)==0x7800001000ULL);
-        check(invoke("_ZN2nn2pl17GetSharedFontSizeENS0_14SharedFontTypeE",0,0,0)==4096);
+        // Dump-free fixture: invalid font type and engine without a loaded font.
+        // Actual fonts and guest GlyphMap lifetimes are covered by host_font_probe.
+        check(invoke("_ZN2nn2pl22GetSharedFontLoadStateENS0_14SharedFontTypeE",7,0,0)==0);
+        check(invoke("_ZN2nn2pl20GetSharedFontAddressENS0_14SharedFontTypeE",7,0,0)==0);
+        check(invoke("_ZN2nn2pl17GetSharedFontSizeENS0_14SharedFontTypeE",7,0,0)==0);
         check(invoke("_ZN2nn6fontll18ScalableFontEngineC1Ev",0x7800010e00ULL,0,0)==0x7800010e00ULL);
         check(!invoke("_ZN2nn6fontll18ScalableFontEngine10InitializeEPvj",0x7800010e00ULL,0x7800012000ULL,4096));
         check(invoke("_ZN2nn6fontll18ScalableFontEngine22GetPointerToWorkBufferEv",0x7800010e00ULL,0,0)==0x7800012000ULL);
-        check(invoke("_ZN2nn6fontll18ScalableFontEngine15CheckGlyphExistEj",0x7800010e00ULL,'A',0)==1);
+        check(invoke("_ZN2nn6fontll18ScalableFontEngine15CheckGlyphExistEj",0x7800010e00ULL,'A',0)==0);
         {
-            uint64_t gm=invoke("_ZN2nn6fontll18ScalableFontEngine15AcquireGlyphmapEjt",0x7800010e00ULL,'A',2);
-            check(gm==0x7800000c80ULL&&rd16(gm+0x10)==16&&rd16(gm+0x26)==2);
+            uint64_t gm=invoke("_ZN2nn6fontll18ScalableFontEngine15AcquireGlyphmapEjt",0x7800010e00ULL,'A',8);
+            check(!gm && invoke("_ZN2nn6fontll18ScalableFontEngine8GetErrorEv",0x7800010e00ULL,0,0)==0x131);
         }
         // nn::crypto + nn::mii + movie::Buffer
         {

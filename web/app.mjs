@@ -1,4 +1,5 @@
 import {attachGameInput} from './game-input.mjs';
+import {localFontInputs} from './font-input.mjs';
 const tbody = document.querySelector('#results'), log = document.querySelector('#log');
 const button = document.querySelector('#run'), summary = document.querySelector('#summary');
 let reportURL;
@@ -253,7 +254,7 @@ bindLocalFile('#archive', 'assets');
 bindLocalFile('#elf', 'elf');
 
 let activeRuntime;
-const runtimeControls=['#runtime','#boot','#elf','#romfs','#run'].map(selector=>document.querySelector(selector));
+const runtimeControls=['#runtime','#boot','#elf','#romfs','#fonts','#run'].map(selector=>document.querySelector(selector));
 const stopRuntime=document.querySelector('#stop-runtime');
 stopRuntime.addEventListener('click',()=>activeRuntime?.cancel());
 window.addEventListener('pagehide',()=>activeRuntime?.cancel());
@@ -265,6 +266,9 @@ async function startRuntime(event) {
   if (!file) { status.textContent = 'Chọn main.elf ở trên trước.'; return; }
   if(document.querySelector('#elf').disabled){status.textContent='Đang kiểm tra main.elf, chờ bước này hoàn tất.';return;}
   if(button.disabled){status.textContent='Đang chạy kiểm tra, chờ bước này hoàn tất.';return;}
+  const fonts=Array.from(document.querySelector('#fonts').files);
+  try { localFontInputs(fonts,{required:event.target.id==='boot'}); }
+  catch(error){status.textContent=String(error.message??error);return;}
   const priorDisabled=runtimeControls.map(control=>control.disabled);
   for(const control of runtimeControls)control.disabled=true;
   stopRuntime.hidden=false;
@@ -333,7 +337,7 @@ async function startRuntime(event) {
         input=attachGameInput(display);
         canvas=display.transferControlToOffscreen();
       }
-      worker.postMessage({file,romfs,boot,runtimeBuild,inspectPrograms,diagnosticMemory,diagnosticFrames,canvas},canvas?[canvas]:[]);
+      worker.postMessage({file,romfs,fonts,boot,runtimeBuild,inspectPrograms,diagnosticMemory,diagnosticFrames,canvas},canvas?[canvas]:[]);
     }), 'Runtime', runtimeTimeout);
     window.__ssbuRuntime = result;
     if(allocationTimeline.length)result.allocationTimeline=allocationTimeline;
