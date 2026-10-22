@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {localFontInputs,requiredFonts} from './font-input.mjs';
+const fonts=requiredFonts.map(name=>new File([new Uint8Array(4)],name));
+assert.deepEqual(localFontInputs([]),[]);
+assert.throws(()=>localFontInputs([],{required:true}),/thiếu/);
+assert.throws(()=>localFontInputs(fonts.slice(1),{required:true}),/thiếu/);
+assert.throws(()=>localFontInputs([...fonts,fonts[0]]),/Trùng/);
+assert.throws(()=>localFontInputs([new File([],requiredFonts[0])]),/Kích thước/);
+assert.throws(()=>localFontInputs([{name:requiredFonts[0],size:4}]),/không hợp lệ/);
+const blobs=localFontInputs([...fonts].reverse(),{required:true});
+assert.deepEqual(blobs.map(b=>b.name),requiredFonts);
+for(let i=0;i<fonts.length;i++)assert.equal(blobs[i].data,fonts[i]);
+assert.equal(localFontInputs([...fonts,new File(['ignored'],'readme.txt')],{required:true}).length,7);
+console.log('PASS: local font selection, required inputs, identity, duplicate and invalid input checks');
