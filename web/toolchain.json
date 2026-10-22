@@ -1,0 +1,5 @@
+{
+  "emscripten": "6.0.12",
+  "upstream": "938e66bb7be0ba4123e291211895412da421b705",
+  "description": "Runtime probes; optional local game integration keeps all derived source/assets under ignored build directories"
+}
