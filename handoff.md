@@ -1,5 +1,13 @@
 # Bàn giao AI: SSBU 13.0.4 WebAssembly / WebGPU
 
+> **Chrome font-thread path PASS:** test_font_browser.py dùng C adapter thật,
+> local File/WORKERFS + PROXY_TO_PTHREAD/pool3. Đủ1513imports/700glyphcycles,
+> sharedfonts/GPOS callbacks pass khi C đọc file trên pthread qua ownerworker.
+> Evidence build/font-browser/report.json. ssbu-font đã đóng, ssbu-web giữ nguyên.
+> Fullbuild optimizer143728 vẫn live(CPU1582s), exec42509; chưa publish/bootmới.
+> Boot23 tại5138s:heap1324744704,snapshots414543tạo/150live,registry242,
+> reclaims763096; screenshot vẫn đen. Đây là verifiedwait, không phải buildfailed.
+
 > **FONT ĐÃ NỐI — FULL BUILD ĐANG CHẠY:** host_font.c thay font stub bằng
 > dữ liệu7TTF thật + FreeType + guest-safe GlyphMap/OTF/lifetime/errors. UI và
 > worker đã có input fonts/WORKERFS; chưa publish bản mới/chưa boot font thật.

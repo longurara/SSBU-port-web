@@ -1,5 +1,37 @@
 # Verified status — 21 October 2026
 
+## Actual Chrome font File/WORKERFS + runtime pthread path passes
+
+Added web/test_font_browser.py to compile the same production font C adapter
+and host_font_probe into an isolated opt-in browser fixture. System fonts and
+the known GPOS variant are selected as local File inputs; the variant remains
+under build/font-browser/, outside the served directory. No font uploads.
+
+First owner-worker test passed. Then tested the actual runtime threading path:
+PROXY_TO_PTHREAD=1, pool3, C main executes on a pthread, FILE/WORKERFS operations
+proxy to the owner worker; two additional pthreads stress glyph lifetimes.
+Chrome reports crossOriginIsolated:true and the complete1513-import/700-cycle
+fixture passes, including real shared fonts and reentrant GPOS callbacks.
+Evidence build/font-browser/{report.json,build.json,build.log,run.log}.
+Report hashes local fixture publication and C inputs, not independently fetched
+Wasm in the browser. This remains adapter evidence, not a real game boot.
+To reproduce: run test_font_browser.py, open the printed explicit index.html URL
+in a separate CLI session, run build/font-browser/run.cjs, save output to run.log,
+then test_font_browser.py --verify. Server intentionally requires the filename;
+/font-probe/ without index.html returns403. Dedicated ssbu-font browser was
+closed after verification; game ssbu-web was preserved.
+
+Full font build still live: coordinator178424/builder145152/emcc143808/
+optimizer143728. Last optimizer CPU1582.28s, working set643674112bytes;
+actual Asyncify command verified, no optional pass-debug enabled. No new
+publication/constructor/browser-game result yet. Keep waiting on the same
+exec42509/processes; do not restart based on an unchanged log/state file.
+
+Boot23 independently observed at5138s (~85.6min), same f40835ac runtime:
+heap1324744704,414543snapshotsCreated/150live, registry242/reclaims763096,
+699428draws/29402presents. Screenshot inspected: black. Live observation saved
+as build/codex-boot23-font-build-live.json/.log. No menu/match input response proven.
+
 ## Real-font guest adapter integrated; full font build currently running
 
 host_font.c now handles real nn::pl inputs and all existing fontll import names
