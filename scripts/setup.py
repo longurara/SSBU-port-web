@@ -175,7 +175,7 @@ def step_deps(cx):
     if not os.path.exists(os.path.join(cx.tools['glslang'], 'lib', 'glslang.lib')):
         raise Fail('glslang folder lacks lib\\glslang.lib (use the windows-x86_64 release package)')
     vsw = os.path.join(os.environ.get('ProgramFiles(x86)', r'C:\Program Files (x86)'), 'Microsoft Visual Studio', 'Installer', 'vswhere.exe')
-    vs = subprocess.run([vsw, '-latest', '-products', '*', '-requires', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64', '-property', 'installationPath'],
+    vs = subprocess.run([vsw, '-latest', '-prerelease', '-products', '*', '-requires', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64', '-property', 'installationPath'],
                         capture_output=True, text=True).stdout.strip() if os.path.exists(vsw) else ''
     if not vs:
         raise Fail('Visual Studio / Build Tools with "MSVC v14x x64/x86 build tools" not found (needed for the glslang shim)')

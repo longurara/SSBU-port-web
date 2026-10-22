@@ -68,3 +68,7 @@ deps/
 # local configuration
 config/
 __pycache__/
+
+# Local browser probe sessions and screenshots
+.playwright-cli/
+output/playwright/

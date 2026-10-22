@@ -7,7 +7,7 @@ if "%GLSLANG_ROOT%"=="" set GLSLANG_ROOT=..\reference\upstream\glslang-16.6.0
 set GL=%GLSLANG_ROOT%
 set VSW=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe
 set VSDIR=
-if exist "%VSW%" "%VSW%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath > "%TEMP%\ssbu_vsdir.txt"
+if exist "%VSW%" "%VSW%" -latest -prerelease -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath > "%TEMP%\ssbu_vsdir.txt"
 if exist "%TEMP%\ssbu_vsdir.txt" set /p VSDIR=<"%TEMP%\ssbu_vsdir.txt"
 if "%VSDIR%"=="" ( echo build_glslang: no Visual Studio / Build Tools with the C++ x64 tools found & exit /b 1 )
 set "PATH=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer;%PATH%"
