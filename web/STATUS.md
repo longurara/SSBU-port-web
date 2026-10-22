@@ -1,5 +1,57 @@
 # Verified status — 21 October 2026
 
+## Real-font guest adapter integrated; full font build currently running
+
+host_font.c now handles real nn::pl inputs and all existing fontll import names
+through GuestMemory, replacing host_os.c's shared Font0/empty-glyph stubs.
+Shared fonts are local WORKERFS inputs at /fonts. A private 128MiB virtual arena
+at0x7c00000000 holds the actual font bytes and individually tracked glyph maps;
+ReleasesGlyph decommits pages and reuses addresses. Host font objects remain
+private, deduplicated by full bytes/face, with consistent names across engines.
+SFNT/TTC length derives from checked guest table directories (32MiB input cap).
+All font operations serialize access to FreeType; guest allocator/free callbacks
+run after unlocking. Preserves native's known lack of iType hinting/bold matching.
+
+Added bounded GPOS kern/palt extraction (pair/class/single/extension paths),
+legacy kern handling, guest OTF table callbacks, work/error/effect state, and
+chunked in-place BFTTF decode. UI selects a local fonts directory; worker mounts
+the seven required files before boot. advance_runtime.py also selects these files.
+No font/ROM bytes are committed or uploaded. Build uses -sUSE_FREETYPE=1 only on
+the raster compilation and final link, avoiding guest-wide flag invalidation.
+
+Verified: web/test_host_font.py passes1513 actual production-adapter import calls,
+seven local shared fonts, cross-page reads/writes and >32bit guest addresses,
+700 repeated/concurrent glyph cycles with unchanged page count after releases,
+engine reuse/errors, BFTTF decode, plus a locally generated known-value GPOS
+variant testing pair/palt results (-65,5,15), kern-only(-80), allocation/free
+callbacks and callback reentry. The seven original system TTFs have no GPOS
+table; their empty OTF results are real, not evidence of pair-parser coverage.
+Known GPOS variant is generated from the user's font into ignored build/ only.
+Class/extension paths exist but are not separately covered by this known fixture.
+Evidence build/host-font/report.json; all7 core raster tests and input checks pass.
+OS pthread/input regression:177checks,0failures, build/codex-font-os-regression.log.
+
+Full runtime coordinator now PID178424, builder145152, emcc143808, optimizer143728
+(verified actual process/command/CPU). Exec session42509. State
+build/codex-font-build-followup.json; log build/codex-font-full-build.log.
+Uses --fibers --compact-codegen --jobs8, REQUIRED Binaryen optimize-level1 and
+normal validation, without optional --trace-asyncify. Previous actual full build
+used no --debug-graph; follow that authoritative configuration to reuse its cache.
+An initial compile-only command with --debug-graph refreshed253 stale debug units;
+it did not change protected headers or publish/link. Correct config compile-only
+then passed using cached game objects. No second runtime linker is running.
+
+Coordinator will verify protected/graph hashes, changed publication's actual SHA,
+4GiB memory limit and306 Node constructors, then stop at ready-for-font-browser-boot.
+Do NOT rerun coordinator while live: that would start another build. New browser
+helper build/codex-start-font-integrated.cjs is prepared (not run), selecting all
+seven fonts and retaining the active-runtime guard. Preserve boot23 until the
+new build validates; archive its final evidence before intentionally stopping it
+and booting the actual font fix. Do not reuse old raw C static addresses for new SHA.
+Boot23 GuestMemory region table independently rechecked:8regions, enough for arena;
+first diagnostic used offset256(page pointer), corrected to actual region_count260.
+Evidence build/codex-font-prelink-state.log. No new game/menu/match proof yet.
+
 ## Portable real-font raster/metrics core verified, not yet connected to game
 
 Added font_raster.c/.h using the pinned Emscripten FreeType port (2.14.3).

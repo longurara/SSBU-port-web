@@ -1,5 +1,20 @@
 # Bàn giao AI: SSBU 13.0.4 WebAssembly / WebGPU
 
+> **FONT ĐÃ NỐI — FULL BUILD ĐANG CHẠY:** host_font.c thay font stub bằng
+> dữ liệu7TTF thật + FreeType + guest-safe GlyphMap/OTF/lifetime/errors. UI và
+> worker đã có input fonts/WORKERFS; chưa publish bản mới/chưa boot font thật.
+> Fixture1513imports/700glyphcycles/2threads + known GPOS callback/reentry pass;
+> OS177checks pass,7font raster/input checks pass. Xem STATUS.md chi tiết/phạm vi.
+> Coordinator178424/builder145152/emcc143808/optimizer143728, exec42509 live.
+> State build/codex-font-build-followup.json, log codex-font-full-build.log.
+> KHÔNG rerun coordinator/build mới. --fibers --compact-codegen --jobs8,
+> không --debug-graph (actual old full build không dùng), không --trace-asyncify;
+> giữ optimize-level1/normalvalidation. Protected headers/graph giữ nguyên.
+> Tự checkSHA+4GiB+Node306 rồi ready-for-font-browser-boot, không tự reloadgame.
+> Helper build/codex-start-font-integrated.cjs đã chuẩn bị7font/chưa chạy.
+> Preserve boot23 tới khi bản mới validate, archive evidence rồi dừng có chủ đích
+> để bootfixfont. C staticaddresses cũ không dùng choSHA mới. Chưa chơi được.
+
 > **Tiến độ font thật:** đã thêm web/font_raster.c/.h và fixture chạy lại bằng
 > web/test_font_raster.py (pinned Python). FreeType2.14.3, 7TTF local đều pass
 > raster/metrics/cmap/CJK khi có/whitespace/rotate/shear/reflection/outline và
