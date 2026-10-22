@@ -1,5 +1,44 @@
 # Verified status — 21 October 2026
 
+## HID polling and actual empty glyphs verified; movie workers exited — boot23
+
+Extracted a non-executable disassembly skeleton from exact f40835ac Wasm using
+its unique C GetNpadState prefix address412028; original publication untouched.
+web_os_import is function98594. Disassembly identifies supported styles20231920,
+player0Connected20231928 and samplingNumber20231976. Actual read:styles63,
+joyHold1,connected1,sampling10577->10578 over250ms. C polls the pad; absence of
+polling/disconnection is not the demonstrated blocker. This is not a full input trace.
+Evidence codex-boot23-hid-state.log and os-skeleton.json/.wat, all under build/.
+
+HostThread ABI208bytes/name76 independently checked by pinned compiler, compile-only.
+thread_for absolute function98600 (wasm-dis's generated label98529 is a definition
+index; do not confuse it with an absolute function index). Static thread array20119248,
+count20233600,normal registry mutex20233604 found in its actual disassembly.
+Bounded snapshot under that mutex has25records: MOVIE_INIT and MoviePlayerThread
+both started1/finished1. MoviePlayerThread entry0x71036f0890,arg0x802e770000.
+Its vtable was initialized (all64slots match) but that only proves constructor
+history. Reading its now-finished argument gives qword0=0,extractor+40=0; memory
+may be retained/reused, so do not call this a live object or active decoder hang.
+Reports codex-boot23-threads.json, movie-vtable.log and movie-object.log.
+
+Original ELF's2112PLT slots were all checked against their GOT relocations:
+ExtractorC1=0x71039c6cc0,DecoderC1=0x71039c6c20. Extractor call sites are in
+f_71036e7250 and f_71036f1c50. Movie worker uses actual WaitAny and holder userdata,
+not an unknown movie method there. Resolver/evidence codex-main-os-imports.json.
+
+Actual shared glyph header at0x7800000c80 has size40,type8,bpp8,advance2097152
+(32pixels16.16) but width/height/stride all0. This confirms game calls the empty
+font backend. Shared font buffer prefix is zero; that does not prove which font
+input the caller requested. Evidence codex-boot23-font-state.log. Real font
+loading/rasterization is now the next functional priority; do not claim it alone
+explains every zero UI matrix. Seven local user TTFs exist; SDK FreeType port is
+pinned to2.14.3. No font implementation or new runtime build started yet.
+At3292s still live:354718182imports/441140draws/18641presents,263877snapshots
+created/149live,heap1324744704,allocated1219855776/system1222093504. Registry242
+lists/controlReclaims483310. The same heap/system size persists across the observed
+1104..3292s interval; no menu/input/match completion. Source font metadata readiness
+is recorded separately in build/codex-available-font-inputs.json.
+
 ## Old snapshot boundary crossed; one actual A press verified — boot23
 
 At1104s:103132603imports/103196draws/4559presents,66737snapshots created but159live,

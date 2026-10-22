@@ -1,5 +1,14 @@
 # Bàn giao AI: SSBU 13.0.4 WebAssembly / WebGPU
 
+> **Cập nhật sau55phút boot23:** vẫn live, heap1324744704;263877snapshot tạo,
+> 149live, registry242/controlReclaims483310. HID connected1/styles63 và sampling
+> tăng thật. MOVIE_INIT/MoviePlayerThread đều finished1; không kết luận decoder
+> đang treo. Glyph buffer thật size40/type8/advance32px nhưng width/height/stride0,
+> chứng minh game dùng font stub. Ưu tiên chức năng tiếp: font loading/rasterization
+> thật (7TTF local, SDK FreeType2.14.3); chưa viết font backend/chưa build mới.
+> Xem STATUS.md và codex-boot23-{hid-state,threads,font-state} artifacts. Skeleton
+> OS chỉ để disassembly, bỏdata/unselectedcode, KHÔNG được chạy hoặc publish.
+
 > **BOOT23 VẪN LIVE — bằng chứng mới sau25phút, không reload.**
 > SHA f40835ac..., ssbu-web/PID149760. Snapshot đã tạo102234, còn149live;
 > heap1324744704bytes giữ nguyên từ1104s tới1504s. Đã vượt ngưỡng lỗi65536 cũ.
