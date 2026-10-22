@@ -1,0 +1,18 @@
+[package]
+name = "ssbu-web-shader"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+naga = { version = "=29.0.4", features = ["spv-in", "wgsl-in", "wgsl-out"] }
+
+[profile.release]
+opt-level = 2
+lto = "thin"
+
+[patch.crates-io]
+naga = { path = "../../deps/naga-web-29.0.4" }
