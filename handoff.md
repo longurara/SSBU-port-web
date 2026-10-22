@@ -1,5 +1,17 @@
 # Bàn giao AI: SSBU 13.0.4 WebAssembly / WebGPU
 
+> **AUTO FONT BROWSER FOLLOW-UP ĐANG CHỜ:** PID158588/exec75657,
+> build/codex-font-browser-followup.py + .json. Không chạycompiler mới.
+> Chỉ saubuildSHA/4GiB/Node306/sourcehash pass mới archiveboot23, Stopoldruntime,
+> bootfontfix đúng1lần, cài probes và ghi progress/fontarena. Đừng manualboot/
+> stop/reload để tránh race observer. Nó heartbeatgiữ sessionssbu-web mỗi180s.
+> Hủy observer trước nếu người dùng yêu cầu dừng/pause: tạo
+> build/codex-font-browser.cancel hoặc stop riêngPID158588. Hiệngoal vẫnactive.
+> build/codex-read-font-arena.cjs đã chuẩn bị; oldbaseline arenaReserved:false.
+> Installer guestreader tự tìmGMobject, không dùngstaticaddress cũ choSHA mới.
+> Optimizer143728 live(CPU3520.94s), coordinator178424/exec42509 chưaxong.
+> Xem statecả2process trước khi hành động; KHÔNG rerun scripts chỉ đểpoll.
+
 > **Chrome font-thread path PASS:** test_font_browser.py dùng C adapter thật,
 > local File/WORKERFS + PROXY_TO_PTHREAD/pool3. Đủ1513imports/700glyphcycles,
 > sharedfonts/GPOS callbacks pass khi C đọc file trên pthread qua ownerworker.

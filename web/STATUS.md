@@ -1,5 +1,45 @@
 # Verified status — 21 October 2026
 
+## Guarded font-build browser follow-up is now active — do not race it
+
+New observer PID158588, exec75657, script build/codex-font-browser-followup.py,
+state build/codex-font-browser-followup.json. It watches the existing coordinator
+PID178424 through a Windows synchronization handle (no compiler launches).
+Initial read-only heartbeat independently confirms boot23 active, expected
+f40835ac worker SHA,306ctors/5602s. It sends a bounded page heartbeat every180s
+while waiting, keeping the dedicated browser session alive.
+
+Only after coordinator ready-for-font-browser-boot, it independently checks
+actual changed Wasm SHA, served metadata, exact4GiB/306Node reports, and frozen
+protected/graph/font source hashes. Then archives old live/screenshot/reports,
+stops archived boot23 via its existing Stop button, and boots the real font fix
+once with all7 local font inputs. Retries diagnostic installation only, never
+reboots. Captures progress/arena evidence for twelve20s intervals, preserving
+the new runtime for visual/menu/input follow-up. A failure stops the observer;
+it does not retry a failed game boot or rebuild. Do not manually boot/stop/reload
+while this observer is active. Inspect its current state before the next action.
+
+Prepared build/codex-read-font-arena.cjs uses the existing bounded GuestMemory
+reader (installer already discovers the unique object, not a fixed C address).
+It scans only the private0x7c00000000/128MiB font arena for checked SFNT headers
+and live GlyphMap-shaped allocations. Baseline on old runtime correctly reports
+arenaReserved:false. This is not evidence about the pending new game yet.
+Evidence build/codex-font-arena-old-baseline.log. Reads are bounded and hold the
+existing map_lock only while copying; zero/busy/transient results are not proof
+of absent font calls. New actual font-arena observation will be saved separately.
+
+If the human asks to stop/pause, cancel this observer first (create
+build/codex-font-browser.cancel or stop only PID158588) to prevent later automatic
+browser mutation, then honor the requested compiler/goal handling. Do not rerun
+the observer/coordinator just to inspect progress. A cancel file is checked
+between stages and every15s while waiting; current goal has no pause request.
+
+Optimizer143728 still live, CPU3520.94s at last check, not a failed/abandoned job.
+Coordinator178424, builder145152 and emcc143808 unchanged; exec42509 pending.
+The original coordinator still stops after checks; the new observer handles
+the subsequent guarded browser transition. These notes supersede earlier
+instructions to manually boot immediately when the coordinator becomes ready.
+
 ## Actual Chrome font File/WORKERFS + runtime pthread path passes
 
 Added web/test_font_browser.py to compile the same production font C adapter
