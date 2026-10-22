@@ -1,5 +1,133 @@
 # Verified status — 21 October 2026
 
+## Control-storage lifetime fix verified in fixture; full build live — 23 October 2026, 01:05 Vietnam
+
+BOOT21 ENDED: page crashed during optional CDP Runtime.queryObjects inspection; CLI
+confirmed reset to about:blank. Cause not established; do not call it4GiB OOM.
+Archive build/codex-boot21-browser-crash-report.json and corresponding crash.log.
+Replaced that approach with opt-in self.__ssbuDiagnosticModule in runtime-worker.mjs,
+deleted on shutdown. Boot22 restarted on SAME f37e Wasm, no relink at that time.
+Direct module access verified. Bounded64KiB guest reader uses the existing gm.map_lock;
+unique GuestMemory signature found at19503480 for f37e. Read32bytes matched local ELF.
+
+Pinned Wasm32 ABI assertions compiled before changing C, and actual pthread/JS mutex
+interop7checks passed (normal mutex lock word offset4, EBUSY10, C waiter wakes and
+native mutex works after JS release). Export-body disassembly of a nonexecuted Wasm
+skeleton located f37e commands_lock20782432, lists20782456, buffers20782464.
+These addresses/old CommandList layout are SPECIFIC TO f37e; do not reuse on a new SHA.
+No protected headers changed and no heap-wide DevTools object queries repeated.
+
+Actual command storage sampled under that normal mutex (nonblocking, synchronous
+bounded traversal). Registry has678 command-buffer objects, many not configured.
+build/codex-boot22-command-storage4.json stores32 samples; derived
+build/codex-boot22-control-reuse-analysis.json records565 resets across235 configured
+buffers: same actual buffer pointer/key/control address, consumption32->0.
+Old control tracking never invalidated the previous list when those bytes were reused.
+
+BOOT22 TERMINAL at1222s: GPU program snapshot space exhausted (65536 live snapshots),
+error invalid NVN program for command binding.128098405imports, heap3542089728,
+allocated3439215672, registry116860lists/5982818bindings/4141450drawRecords/
+840482programBindings. Full115-sample report archived:
+build/codex-boot22-snapshot-exhaustion-report.json. Actual boot22 early pass capture
+also archived after checking timestamp against boot22 start (same Wasm SHA as boot21).
+
+SOURCE FIX commit50b1275: record each list's actual32-byte control slot. EndRecording
+retires registry ownership of overlapped old slots, using the same release_list refcount
+path as explicit finalization. Adding storage alone leaves handles valid; selected/nested
+references keep immutable metadata alive. No age limit, snapshot-cap increase or shader
+substitution. controlReclaims telemetry added. Refill fixture now supplies distinct
+control blocks when it intends to keep older handles alive.
+
+Actual C/NVN/bridge/WebGPU fixture passes3502checks/2draws,99controlReclaims and final
+registry/bindings/snapshots all0: build/codex-control-reuse-fixture-report.json.
+New tests cover exact reuse, declaration without overwrite, adjacent slots, cross-buffer
+partial overlap, stale submission rejection,96reuse cycles and retained nested metadata.
+Opt-in Worker module hook committed separately as5e8c5d6. These new commits are local;
+last confirmed remote checkpoint6760975 remains unchanged. Game validation still pending.
+
+Dedicated browser recycled ONLY AFTER boot22 terminal + fixture; ssbu-web idle '/',
+Node172852. New FULL BUILD exec8095, coordinator183220, launcher182812/builder179628,
+finalizer8772 confirmed live; no second linker. State/log:
+build/codex-control-reuse-followup.json / codex-runtime-control-reuse-build.log.
+Coordinator build/codex-finish-control-reuse.ps1 retains --jobs8, BinaryenO1/cores4,
+graph70279 and max4GiB; hashes protected headers, roots/manifest and changed source.
+After link it checks changed SHA, actual max65536pages, Node306 exact SHA, then guarded
+boot with target/pass probes. Preserve this existing process. Served f37e is OLD relative
+to this fix; do not boot it during build. UI matrix producer/blackness remains unresolved;
+menu/input/match/audio/performance are not verified.
+
+## Boot21 passed old2GiB limit; persistent UI collapse captured — 23 October 2026 (Vietnam)
+
+Previous turn progressed by validating actual4GiB publication and starting guarded boot21.
+This turn verified live ssbu-web throughout. At678001ms heap2231500800 exceeded old2GiB
+without the former staging allocation error. At858000ms:79444004imports/59707draws,
+heap2634547200, allocated2590366984/free171480, registry69730lists/3552250bindings/
+2456010drawRecords/443697renderRecords/499610programBindings, modeledCommandBytes197126480.
+Still live on SHA f37e127a..., Node179088; no linker or runtime restart.
+
+Logo visually confirmed around326s (latest screenshot later overwritten by black frames).
+After loading, source/window readback remains black. Archived11 actual pass captures
+at frames785..907 to build/codex-boot21-live-pass-probe.json BEFORE target reader POST.
+Target capture archived build/codex-boot21-live-target-probe.json, target5 and87 black.
+Focused canvas visible/document.hasFocus true, A/KeyZ held1200ms at620..622s;
+no menu/input correctness claim. Later textures increased293->439; attribution unknown.
+
+Actual Maxwell->GLSL outputs generated by build/codex-compile-boot21-passes.mjs.
+build/codex-boot21-ui-clip-analysis.json approximately evaluates actual GLSL position
+prefix from full captured float32x2 vertices/CB3. Most UI draws' CB3 world matrix
+has zero X/Y rows, all four clip positions collapse to(0,0,0.0033333,1) in both phases.
+Fullscreen black quad has identity world matrix and covers screen, FS tint black.
+This identifies geometry-level absence for those sampled UI draws; does not identify
+the guest producer or prove all shaders/frames. Do not force game matrices/clock.
+
+Installed independent later probe AFTER A via build/codex-install-late-pass-probe.cjs,
+namespace __ssbuLatePassProbe, report results.liveLatePassProbe (same /__report endpoint).
+Archived10 captures frames2018..2141 to build/codex-boot21-late-pass-probe.json.
+All sampled target87 readbacks still zero RGB; approximate clip analysis again has
+collapsed UI geometry: build/codex-boot21-late-pass-probe-clip-analysis.json.
+Original early report and later report have DIFFERENT result keys; archive proper SHA
+before another POST. read-heap-timeline helper does not POST, so preserves reports.
+
+Current resume state and bounded allocation timeline updated. No C/lifetime edits made.
+Registry grows rapidly with real allocated bytes; lifetime/ownership still needs a correct
+solution rather than native120-frame age heuristic. Continue live boot to observe any
+new boundary; investigate actual guest uniform producer and command storage ownership.
+Menu, working controls, playable match/audio/performance remain unverified.
+
+## Boot21 actual heap and registry telemetry verified — 23 October 2026 (Vietnam)
+
+New4GiB boot21 remains live on ssbu-web. At206001ms: 20915739imports,
+283draws/58presents, heap1022427136, allocator allocated924016320/free15248416,
+registry1363lists/65041bindings/44346drawRecords/8731renderRecords/9250programBindings,
+modeledCommandBytes3752944. At224000ms:563draws, allocator961989112/free1564904,
+liveProgramSnapshots1136, commandInfo busy:true (expected nonblocking trylock).
+Actual canvas screenshot viewed: black at this early stage, no visible menu claim.
+
+build/codex-boot21-heap-timeline.json holds21 compact samples with exact new SHA;
+build/codex-4gb-resume-state.json is the current resume snapshot. Read timeline with
+build/codex-read-heap-timeline.cjs via CLI; its result is saved locally without POSTing
+/__report, so pass-probe reports are not overwritten. CLI log is UTF8 with possible BOM.
+No actual target87 specialized pass yet; preserve existing auto-installed probes and
+archive browser-report when results.livePassProbe and f37e SHA appear. Do not restart.
+
+## Goal resumed; actual 4GiB Wasm validated and boot21 started — 23 October 2026 (Vietnam)
+
+Goal tool returned active after prior explicit pause; inspected current worktree first.
+Git main remains clean at6760975 (14 checkpoint commits already pushed). Old builder/
+optimizer ended while paused and published actual SHA
+f37e127a4124c6637b5ecbae57366fd52e73598d4fdb6c5762f4d3860dd41dd7,
+281991683bytes/99137functions/maxlocals10812 at2026-10-22T05:54:47Z.
+Actual memory parser and independent file hash pass: shared minimum512/max65536pages.
+Actual Node306 constructors pass on this exact new SHA; archived build metadata,
+memory limits and node report under codex-4gb-heap-* / codex-4gb-memory-limits.json.
+
+Opened fresh headed Playwright ssbu-web (Node179088) because prior session process
+was absent. Guarded codex-start-integrated.cjs confirmed started:true and both target/
+pass probes installed at about2026-10-22T17:15:50Z (23Oct00:15 Vietnam).
+This is the first real new4GiB boot (boot21); preserve it, do not reload/restart.
+Prior coordinator144168 remains intentionally stopped and old followup JSON stale.
+No linker active. No menu/input/match proof yet; early progress capture pending.
+
 ## USER REQUESTED STOP / FULL HANDOFF — 22 October 2026, 05:27 UTC
 
 User: "dừng lại và viết bàn giao đầy đủ đi". Goal work stops at this handoff.

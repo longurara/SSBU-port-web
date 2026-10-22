@@ -1,5 +1,33 @@
 # Bàn giao AI: SSBU 13.0.4 WebAssembly / WebGPU
 
+> **HIỆN TẠI — 23/10,01:05 Việt Nam: FULL BUILD CONTROL-REUSE ĐANG CHẠY.**
+> Boot21 đã crash khi thử CDP object query; boot22 sau đó dừng đúng lỗi snapshot65536
+> tạiheap3.54GB. Đã quan sát565lần reuse control address, sửa vòng đời trong50b1275;
+> fixture3502checks/99reclaims pass, registry/snapshots về0. Workerdiagnostic hook5e8c5d6.
+> Exec8095 / coordinator183220 / builder179628 / finalizer8772 còn sống; preserve.
+> State `build/codex-control-reuse-followup.json`, log `codex-runtime-control-reuse-build.log`.
+> Script tự kiểm tra memory65536pages + Node306 đúngSHA rồi guarded boot mới.
+> Browser ssbu-web idle '/', Node172852. f37e hiện phục vụ là BẢN CŨ chưa cófix;
+> không boot cũ trong lúc link. Không dùng các rawCaddresses f37e cho SHA mới.
+> Các live note boot21 bên dưới là lịch sử. Xem STATUS.md mới nhất và báo cáo thật.
+> Chưa có menu/input/trận đấu/audio/FPS được xác minh; nguồn world matrix UI0 còn cần tìm.
+
+> **BOOT21 ĐANG LIVE — 23/10,00:30 Việt Nam:** ssbu-web/Node179088, SHA f37e127a...
+> đã vượt2GiB cũ: heap2634547200,79444004imports/59707draws tại858s; chưa lỗi.
+> Registry69730lists/3552250bindings; allocator2590366984bytes. Logo đã thấy nhưng
+> sau loading vẫn đen. Có11capture sớm và10capture muộn sau A; world matrix UI
+> có hàng X/Y bằng0, geometry co về1điểm ở các mẫu đó. Chưa biết guest producer
+> hoặc lifetime đúng của command storage. Xem STATUS.md và codex-boot21-* reports.
+> Preserve run; không restart/link mới. Menu/input/trận đấu chưa xác minh.
+
+> **TRẠNG THÁI MỚI — 23/10/2026, khoảng00:16 Việt Nam:** goal đã được resume
+> (tool status active). Build4GiB đã publish SHA f37e127a4124c6637b5ecbae57366fd52e73598d4fdb6c5762f4d3860dd41dd7;
+> actual memory max65536pages và Node306 đúngSHA đã pass. Boot21 thật đã bắt đầu
+> trên session ssbu-web mới (Node179088), cả target/pass probes đã cài. Không reload
+> hoặc khởi động lại game live. Không còn linker. Ghi chú dừng/coordinator/browser
+> phía dưới là snapshot lịch sử; coordinator cũ vẫn dừng, followup JSON vẫn stale.
+> Menu/input/trận đấu chưa xác minh. Xem STATUS.md mới nhất và report thật.
+
 **BÀN GIAO KHI NGƯỜI DÙNG YÊU CẦU DỪNG — 22/10/2026, 12:27 Việt Nam.**
 AI hiện tại dừng công việc mục tiêu; không tự tiếp tục boot hoặc sửa game.
 Đã dừng coordinator PowerShell144168 để ngăn tự chạy Node/browser sau build.
