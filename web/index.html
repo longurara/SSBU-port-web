@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="vi">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SSBU · Web port</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { color-scheme:dark; font-family:system-ui,sans-serif; background:#111721; color:#e6edf6; }
+  body { max-width:1000px; margin:44px auto; padding:0 24px; }
+  h1 { font-size:30px; margin-bottom:8px; } p { color:#b2c1d3; line-height:1.6; }
+  button { border:0; background:#8cd5bf; color:#11251f; padding:12px 20px; border-radius:8px; font-weight:700; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:wait; } a { color:#8cd5bf; }
+  table { width:100%; border-collapse:collapse; margin:24px 0; font-size:14px; }
+  th,td { padding:13px 12px; border-bottom:1px solid #2b3647; text-align:left; vertical-align:top; }
+  th { color:#a3b4c9; } .pass { color:#8cd5bf; } .fail { color:#ff9c9c; } .skip { color:#edce8d; }
+  pre { white-space:pre-wrap; overflow-wrap:anywhere; padding:18px; background:#192230; border-radius:8px; font-size:12px; max-height:440px; overflow:auto; }
+  canvas { width:320px; height:100px; border:1px solid #445066; border-radius:6px; }
+  #game { display:block; width:100%; height:auto; aspect-ratio:16/9; margin-top:16px; background:#000; }
+  #summary { font-size:18px; color:#e6edf6; }
+</style>
+<h1>SSBU · Web port</h1>
+<p>Đang phát triển bản chạy trực tiếp bằng WebAssembly. Bản build cục bộ có thể kiểm tra các hàm lấy từ dump 13.0.4 với kết quả AArch64. Chưa boot toàn bộ game hoặc render trận đấu.</p>
+<button id="run">Chạy kiểm tra</button>
+<p id="summary" role="status">Sẵn sàng</p>
+<table><thead><tr><th>Bài kiểm tra</th><th>Kết quả</th><th>Chi tiết</th></tr></thead><tbody id="results"></tbody></table>
+<canvas id="gpu" width="320" height="100" aria-label="WebGPU synthetic clear test"></canvas>
+<p>Màu trên chỉ kiểm tra WebGPU clear/present. Chưa phải renderer NVN.</p>
+<section aria-labelledby="assets-title">
+  <h2 id="assets-title">Dữ liệu cục bộ</h2>
+  <p>Chọn <code>data.arc</code> trong thư mục RomFS đã trích. Browser đọc từng đoạn trực tiếp từ ổ đĩa, không tải file lên server. Đây là bước kiểm tra đọc dữ liệu, chưa phải nút chơi game.</p>
+  <input id="archive" type="file" accept=".arc" aria-label="Chọn data.arc">
+  <p id="asset-status" role="status">Chưa chọn file.</p>
+  <p>Nạp chương trình <code>main.elf</code> đã chuyển đổi từ dump để kiểm tra bộ nhớ trước khi boot.</p>
+  <input id="elf" type="file" accept=".elf" aria-label="Chọn main.elf">
+  <p id="elf-status" role="status">Chưa nạp chương trình.</p>
+  <p>Để thử boot, chọn thư mục <code>romfs</code> đã trích, gồm data.arc và .nrr.</p>
+  <input id="romfs" type="file" webkitdirectory multiple aria-label="Chọn thư mục romfs">
+  <button id="runtime">Khởi tạo runtime</button>
+  <button id="boot">Thử boot game</button>
+  <button id="stop-runtime" hidden>Dừng runtime</button>
+  <p id="runtime-status" role="status">Thử chạy constructors với main.elf đã chọn. Chưa có renderer hoặc nút chơi game.</p>
+  <p>Điều khiển khi game chạy: nhấp vào hình game; phím mũi tên di chuyển,
+    Z/X/C/V = A/B/X/Y, Q/E = L/R, A/S = ZL/ZR, Enter = Plus,
+    Backspace = Minus, I/J/K/L = D-pad. Có thể dùng gamepad chuẩn của trình duyệt
+    với vị trí nút Nintendo. Rời vùng game sẽ nhả các nút.</p>
+</section>
+<details><summary>Log và báo cáo</summary><pre id="log"></pre><a id="download" hidden>Tải báo cáo JSON</a></details>
+<script type="module" src="./app.mjs"></script>
+</html>
