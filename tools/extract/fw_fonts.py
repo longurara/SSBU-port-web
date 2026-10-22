@@ -34,7 +34,8 @@ class LooseNca:
         self.title_id = struct.unpack('<Q', h[0x210:0x218])[0]
         self.content_type = h[0x205]
         gen = max(max(h[0x206], h[0x220]) - 1, 0)
-        kaek = rx.KEYS.get('key_area_key_%s_%02x' % (KAEK[h[0x207]], gen))
+        self.required_key = 'key_area_key_%s_%02x' % (KAEK[h[0x207]], gen)
+        kaek = rx.KEYS.get(self.required_key)
         self.key = AES.new(kaek, AES.MODE_ECB).decrypt(h[0x300:0x340])[0x20:0x30] if kaek else None
         self.sections = []
         for i in range(4):
@@ -79,14 +80,21 @@ def main():
     fw, out_dir = sys.argv[1], sys.argv[2]
     os.makedirs(out_dir, exist_ok=True)
     found = 0
+    missing_keys = set()
     for name in sorted(os.listdir(fw)):
         if not name.endswith('.nca') or name.endswith('.cnmt.nca'):
             continue
         nca = LooseNca(os.path.join(fw, name))
-        if not nca.ok or nca.title_id not in FONT_TITLES or nca.key is None:
+        if not nca.ok or nca.title_id not in FONT_TITLES:
+            nca.f.close()
+            continue
+        if nca.key is None:
+            missing_keys.add(nca.required_key)
+            nca.f.close()
             continue
         sec = next((s for s in nca.sections if s['type'] == 0), None)
         if sec is None:
+            nca.f.close()
             continue
         level6 = struct.unpack('<Q', sec['fs'][0x8 + 0x10 + 5 * 0x18:0x8 + 0x18 + 5 * 0x18])[0]
         reader = SectionReader(nca, sec)
@@ -101,8 +109,12 @@ def main():
                 found += 1
             print('%016x  %-40s %9d bytes  %s' % (nca.title_id, path, size,
                   'decoded OK (%s)' % decoded[:4].hex() if ok else 'NOT a valid font after decoding: %s' % decoded[:8].hex()))
+        nca.f.close()
     print('%d fonts written to %s' % (found, out_dir))
+    if missing_keys:
+        print('Missing local prod.keys entries (names only): %s' % ', '.join(sorted(missing_keys)), file=sys.stderr)
+    return 1 if missing_keys or found == 0 else 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
