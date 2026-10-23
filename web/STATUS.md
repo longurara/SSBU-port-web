@@ -1,3 +1,20 @@
+> **ĐÃ CHẠY TIẾP — 23/10/2026 08:15 VN, theo yêu cầu người dùng.**
+> Full build mới coordinator169108/builder177332/wasm-opt181088, exec1648.
+> --fibers --compact-codegen --jobs8; dùng cache object, chạy lại Asyncify đã bị dừng.
+> Browser observer176208/exec82738 theo coordinatorPID từ state, chờ đúng SHA/4GiB/Node306.
+> Chỉ sau validate mới boot font build một lần. ssbu-web hiện about:blank/0workers;
+> observer chấp nhận riêng trạng thái trống này, bảo vệ mọi trang/runtime khác.
+> Server8787 đã mở lại (exec82636). Muốn dừng: cancel observer trước, rồi dừng build.
+> Log/state build/codex-font-{full-build.log,build-followup.json,browser-followup.json}.
+> Log/state lần bị dừng đã archive build/font-stopped-20261023-081531 (kiểm tra tên thực tế).
+> Chưa có publication font mới hoặc bằng chứng menu/gameplay. Không chạy trùng build.
+> **ĐÃ DỪNG THEO YÊU CẦU NGƯỜI DÙNG — 23/10/2026 06:01 VN.**
+> Đã dừng coordinator178424/builder145152/emcc143808/wasm-opt143728.
+> Browser observer đã hủy bằng build/codex-font-browser.cancel; goal đang paused.
+> State build/codex-font-build-followup.json = stopped-by-user. Cache object giữ nguyên,
+> nhưng Asyncify chưa hoàn tất, khi chạy lại phải làm lại bước tối ưu. Chưa publish font build.
+> Trang ssbu-web chỉ còn about:blank/0workers (nguyên nhân mất boot23 chưa rõ).
+> Chỉ chạy lại khi người dùng yêu cầu; kiểm tra process/state trước, không dùng các note live cũ.
 # Verified status — 21 October 2026
 
 ## Guarded font-build browser follow-up is now active — do not race it
