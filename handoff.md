@@ -1,3 +1,19 @@
+> **25/10/2026 — VORBIS JS ADAPTER ĐÃ QUA STREAM THẬT, CHƯA NỐI SDK.**
+> web/movie-audio.mjs mới: Xiph/Vorbis header validation, AudioDecoder thật,
+> AudioData→PCM s16 interleaved; queue64 giữ reservation từ trước decode đến Release.
+> First Vorbis packet chỉ priming, không tạo output; sau đó mỗi packet có PCM thật.
+> Format/range/lifetime/error được kiểm tra, đóng mọi AudioData sau copy.
+> Node test_movie_audio.mjs PASS. Browser production adapter track2:256 packet→255
+> PCM hash/time khớp toàn bộ raw AudioDecoder probe. Track3:6000 packet→5999 PCM,
+> 5908 block có tín hiệu, maxOccupied64, backpressure371, không còn reservation;
+> last PCM t105174666us. Report build/codex-movie-audio-adapter-track3-6000.json.
+> Repro: python web/test_movie_audio.py --movie build/dump-13.0.4/romfs/data.arc
+> --offset 1689801320 --length 108813844 --packets 6000 --track 3.
+> CHƯA đổi MovieBackend selection hoặc Decoder C audio, chưa full rebuild/reload.
+> TIẾP: import MovieAudioDecoder vào backend, extractor đa-track (video+audio),
+> SDK type5/format1/rate/channels/PCM format/64 slots và events; fixture AV trước build.
+> Game5c88 đang giữ nguyên, audio clock0 còn chặn title. Không ép clock/readiness.
+>
 > **25/10/2026 — FULL BUILD XONG, GAME THẬT ĐÃ GIẢI MÃ HẾT VIDEO; CÒN KẸT AUDIO CLOCK.**
 > Bản mới: SHA 5c88f7a92ccc717481213c2de4b282344f7470890828efb231142fcbcda32e57,
 > 282924589 bytes / 100259 functions / maxLocals10812, publish 13:49:08Z.

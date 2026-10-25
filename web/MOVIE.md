@@ -6,7 +6,8 @@ Buffer, MediaData, SDK Extractor and Decoder virtual calls through `host_os.c`.
 The full build and runtime worker include the real WebM/WebCodecs bridge.
 The production SDK path has passed real-video browser fixtures and actual game
 video playback through natural EOF/EOS. The title is still blocked by its audio
-clock: Vorbis decoding and SDK audio support remain unimplemented.
+clock: the production backend and SDK audio path remain unimplemented. A separate
+Vorbis JS adapter has now passed real media tests and is ready for that wiring.
 
 ## Actual game result after the integrated build
 
@@ -43,6 +44,23 @@ Report: `build/codex-movie-audio-decode-256.json`. This is not SDK audio support
 yet; the next implementation must carry these real samples through the SDK.
 
 ## Implemented and checked
+
+`movie-audio.mjs` validates the actual Xiph/Vorbis CodecPrivate headers and
+uses WebCodecs AudioDecoder with those headers, sample rate and channel count.
+It copies AudioData to actual interleaved s16 PCM, closes every decoded object,
+and validates output format/dimensions. Output reservations are kept through
+asynchronous decode and client leases, capped at 64. The first Vorbis packet
+primes the overlap state without producing PCM; subsequent packets reserve
+their real output before decode. Failed decode, format changes, incomplete
+drain and invalid ownership are reported rather than inventing samples.
+
+The production adapter's first 255 PCM hashes/timestamps match the independent
+raw AudioDecoder probe. The second actual Vorbis track passed 6000 packets,
+5999 outputs, 5908 with nonzero audio, with its 64-slot queue repeatedly full
+and no reservations after draining. Last decoded timestamp was 105174666 us.
+Reports: `build/codex-movie-audio-adapter-256.json` and
+`build/codex-movie-audio-adapter-track3-6000.json`. These remain isolated browser
+fixtures: MovieBackend multi-track selection and SDK type5/format1 are next.
 
 `movie-webm.mjs` reads real WebM tracks and compressed blocks from a `Blob`,
 `Uint8Array`, or bounded asynchronous reader `{size, read(offset, length)}`.
@@ -212,6 +230,8 @@ SDK Extractor evidence: `codex-movie-sdk-extractor-real.json` and
 
 ```powershell
 node web/test_movie_webm.mjs
+node web/test_movie_audio.mjs
+python web/test_movie_audio.py --movie C:/path/to/local.webm --track 2 --packets 256
 node web/test_movie_video.mjs
 node web/test_movie_backend_queue.mjs
 python web/test_movie_video.py --movie C:/path/to/local.webm
@@ -260,8 +280,8 @@ the previously verified bridge directly. The original game remains intact.
 
 ## Integration remaining
 
-1. Implement real Vorbis AudioDecoder/PCM output, multi-selected video/audio
-   extraction, and SDK audio configuration, format, events and 64 output slots.
+1. Connect the verified real Vorbis AudioDecoder/PCM output to multi-selected
+   video/audio extraction and SDK audio configuration, format, events and 64 output slots.
    Preserve actual Vorbis priming and decoder-derived PCM timestamps. Test
    real audio/video through the SDK before another full build. Then build with
    `--fibers --compact-codegen --jobs 8`, preserving optimize-level1/validation.

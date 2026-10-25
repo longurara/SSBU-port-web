@@ -1,0 +1,25 @@
+async(page)=>{
+ const tab=await page.context().newPage();
+ try{
+  await tab.goto('http://127.0.0.1:8787/index.html?media-probe=1');
+  await tab.evaluate(()=>{const input=document.createElement('input');input.type='file';input.id='movie';document.body.appendChild(input);});
+  await tab.locator('#movie').setInputFiles(__MOVIE_PATH__);
+  return await tab.evaluate(async()=>{
+   const {WebmDemuxer}=await import('/movie-webm.mjs'),{MovieAudioDecoder}=await import('/movie-audio.mjs');
+   const file=document.querySelector('#movie').files[0],demux=await new WebmDemuxer(file.slice(__OFFSET__,__OFFSET__+__LENGTH__)).open(),track=demux.tracks.find(t=>t.number===__TRACK__);
+   let wake=null;const decoder=await MovieAudioDecoder.create(track,{onChange:()=>{if(wake){const resolve=wake;wake=null;resolve();}}});
+   const packets=[],frames=[];let maxOccupied=0,backpressure=0;
+   const drain=()=>{let frame;while(frame=decoder.take()){let hash=2166136261,nonzero=0;for(const byte of frame.data){hash=Math.imul(hash^byte,16777619)>>>0;nonzero+=byte!==0;}frames.push({timestamp:frame.timestamp,samples:frame.samples,channels:frame.channels,rate:frame.sampleRate,bytes:frame.data.length,hash:hash.toString(16),nonzero});}};
+   const change=()=>new Promise((resolve,reject)=>{const timer=setTimeout(()=>{wake=null;reject(Error('Audio decoder stalled'));},5000);wake=()=>{clearTimeout(timer);resolve();};});
+   try{
+    for await(const sample of demux.samples({trackNumber:track.number})){
+     while(!decoder.canSubmit(sample)){if(decoder.failure)throw decoder.failure;backpressure++;drain();if(!decoder.canSubmit(sample))await change();}
+     decoder.submit(sample);packets.push({timestamp:sample.timestamp,bytes:sample.data.length});maxOccupied=Math.max(maxOccupied,decoder.occupied);if(packets.length===__PACKETS__)break;
+    }
+    await decoder.flush();drain();
+    return {packets,frames,maxOccupied,backpressure,occupied:decoder.occupied,awaitingOutput:decoder.awaitingOutput,
+     scope:'Production Vorbis adapter, actual local compressed packets and interleaved s16 PCM. Separate page; SDK audio and game integration remain unverified.'};
+   }finally{decoder.close();}
+  });
+ }finally{await tab.close();}
+}

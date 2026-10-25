@@ -1,3 +1,11 @@
+> **25/10/2026: Vorbis JS adapter đã qua stream thật, còn nối backend/SDK audio.**
+> movie-audio.mjs giải mã PCM s16 thật, xử lý priming và giữ output reservation64.
+> Node bounds/lifetime/errors PASS; 255 PCM hash/time khớp raw AudioDecoder.
+> Track3 thật 6000 packets→5999 PCM/5908 có tín hiệu, đầy queue64 rồi chạy tiếp,
+> không còn reservation sau drain. Report codex-movie-audio-adapter-track3-6000.json.
+> Chưa đổi MovieBackend/Decoder C hoặc rebuild. Tiếp multi-track + SDK audio/events.
+> Game5c88 còn giữ nguyên, clock audio0 vẫn chặn title; chưa menu/match.
+>
 > **25/10/2026: build5c88 xong; actual game video EOF/EOS được, kẹt audio clock0.**
 > SHA5c88f7a92ccc717481213c2de4b282344f7470890828efb231142fcbcda32e57; 282924589bytes,
 > 100259functions/maxLocals10812. Build PID61344/wasm-opt22848 đã kết thúc, không restart.
