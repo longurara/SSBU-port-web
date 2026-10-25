@@ -1,3 +1,14 @@
+> **25/10/2026: SDK AV đã nối và PASS; full build dd968d5 đang chạy PID25188.**
+> Đa-track Extractor giữ cursor/pending chung, SDK Vorbis PCM/audio metadata/events/64
+> outputs. Fixture SDK thật: 120video +202PCM từ203audio packets, tất cả hash/time khớp
+> direct, giữ đủ48video/64audio, EOS1 mỗi decoder, teardown sạch. Nonzero PCM367279bytes.
+> Full actual opening108813844bytes OPEN cả3 tracks PASS; track0+2 routing đúng.
+> Node/strictC11/OS182/video-only240+concurrentDtor PASS. codex-movie-sdk-av-120.json.
+> Build bắt đầu2026-10-25T16:05:41Z, wasm-opt63736 đang chạy; --fibers --compact-codegen
+> --jobs8, optimize-level1/validation giữ nguyên. State/log codex-av-dd968d5-build*.
+> Không restart theo log im lặng. Game vẫn5c88/clock0, giữ nguyên đến khi AV publish.
+> Tiếp receipt/hash→boot AV→actual audio clock/title/menu/match. Goal chưa hoàn tất.
+>
 > **25/10/2026: Vorbis JS adapter đã qua stream thật, còn nối backend/SDK audio.**
 > movie-audio.mjs giải mã PCM s16 thật, xử lý priming và giữ output reservation64.
 > Node bounds/lifetime/errors PASS; 255 PCM hash/time khớp raw AudioDecoder.

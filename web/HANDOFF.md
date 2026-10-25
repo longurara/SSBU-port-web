@@ -1,3 +1,32 @@
+> **25/10/2026 — SDK VIDEO+VORBIS ĐÃ QUA FIXTURE; FULL BUILD AV ĐANG CHẠY.**
+> Code commit dd968d5 nối MovieAudioDecoder vào backend, Extractor selected Map đa-track
+> giữ một cursor/pending sample chung, không rewind khi Select/Unselect. Filter track
+> trước xử lý lace, bỏ cached sample khi unselect đúng track. Seek0 quay đầu có audio
+> priming; audio-only seek giữ một packet overlap thật. Nonzero AV seek chưa chứng minh.
+> Decoder C type5/output1 nhận rate/channels thật, audio/raw +pcm-encoding2, 64 output
+> slots; video vẫn48. PCM COPY dùng guest buffer/capacity/timestamp/lifetime thật.
+> EOS time lấy từ output cuối + duration codec, không còn timestamp0 mặc định; EOF
+> vẫn phải thật. MovieBackend giữ track info để Stop/Reset được sau SourceClose.
+> Browser SDK AV fixture qua production OS router/guest allocator/ClientStreamReader:
+> 120 video packets→120 NV12 outputs, 203 Vorbis→202 PCM (priming1), mọi hash/time/byte
+> khớp direct decode. Giữ đủ48 video/64 audio, nonzero PCM367279bytes, EOF và EOS1 mỗi
+> decoder, liveHandles/pendingCompletions/guest objects/allocations sau dtor đều0.
+> Evidence build/codex-movie-sdk-av-120.json (13911checks ở lượt đo). Test-only muxer
+> giữ nguyên payload/header/track number của cả3 track; chọnvideo0/audio2 như game.
+> Full actual108813844byte source OPEN cũng PASS cả3 track; maxInput video283126,
+> audio719/716, selected0+2 ra packet đúng thứ tự, EOFfalse. codex-av-full-source.json.
+> Node multi-track/queue/Vorbis/WebM tests PASS, strictC11 PASS, OS182 PASS,
+> SDK video-only240frame + concurrent Dtor vẫn PASS. Không sửa protected headers.
+> Repro: build_movie_bridge_probe.py --sdk-av; test_movie_av.py --movie <data.arc>
+> --offset1689801320 --length108813844 (giữa option và số phải có khoảng trắng).
+> FULL BUILD AV PID25188 bắt đầu2026-10-25T16:05:41Z, wasm-opt PID63736 đã xác nhận chạy.
+> Flags --fibers --compact-codegen --jobs8, giữ optimize-level1/validation. State/log:
+> build/codex-av-dd968d5-build-state.json, build/codex-av-dd968d5-build{,.err}.log.
+> Kiểm tra process thật trước restart; log im lặng không chứng minh đã dừng.
+> Game hiện vẫn5c88/audio clock0; giữ nguyên đến khi bản AV publish thành công.
+> TIẾP: chờ build AV này, xác minh receipt/hash, boot đúng một lần với7 fonts+romfs,
+> kiểm tra actual audio clock/first-frame readiness/title/menu/input/match. Chưa đạt goal.
+>
 > **25/10/2026 — VORBIS JS ADAPTER ĐÃ QUA STREAM THẬT, CHƯA NỐI SDK.**
 > web/movie-audio.mjs mới: Xiph/Vorbis header validation, AudioDecoder thật,
 > AudioData→PCM s16 interleaved; queue64 giữ reservation từ trước decode đến Release.

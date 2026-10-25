@@ -6,8 +6,15 @@ Buffer, MediaData, SDK Extractor and Decoder virtual calls through `host_os.c`.
 The full build and runtime worker include the real WebM/WebCodecs bridge.
 The production SDK path has passed real-video browser fixtures and actual game
 video playback through natural EOF/EOS. The title is still blocked by its audio
-clock: the production backend and SDK audio path remain unimplemented. A separate
-Vorbis JS adapter has now passed real media tests and is ready for that wiring.
+clock. The production backend and SDK Vorbis path are now wired in source and
+have passed an interleaved real-media fixture. The AV game build is running;
+the currently loaded 5c88 game does not include that change yet.
+
+The AV build started at 2026-10-25T16:05:41Z, parent PID25188, observed wasm-opt
+PID63736, code commit `dd968d5`, with `--fibers --compact-codegen --jobs 8`.
+State/logs are `build/codex-av-dd968d5-build-state.json` and
+`build/codex-av-dd968d5-build{,.err}.log`. Revalidate the live process before
+restarting; unchanged logs are not evidence of termination.
 
 ## Actual game result after the integrated build
 
@@ -60,7 +67,23 @@ raw AudioDecoder probe. The second actual Vorbis track passed 6000 packets,
 and no reservations after draining. Last decoded timestamp was 105174666 us.
 Reports: `build/codex-movie-audio-adapter-256.json` and
 `build/codex-movie-audio-adapter-track3-6000.json`. These remain isolated browser
-fixtures: MovieBackend multi-track selection and SDK type5/format1 are next.
+fixtures. MovieBackend multi-track selection and SDK type5/format1 are now wired.
+
+The SDK AV fixture selects video index0 and audio index2 from a three-track
+finite excerpt of the actual opening. Original track numbers, codec headers
+and compressed bytes are preserved. The C driver goes through production OS
+import/indirect routing, guest allocators, SDK Extractor and both Decoders.
+It passed 120 video outputs and 202 PCM outputs from 203 Vorbis packets (one
+priming packet), with all bytes/hashes/timestamps matching direct decoding.
+Both 48 video and 64 audio leases fill; both decoders receive one natural EOS,
+and teardown leaves zero handles, completions and guest allocations/objects.
+There are 367279 nonzero PCM bytes in this fixture. Report:
+`build/codex-movie-sdk-av-120.json`. This remains a fixture, not a game result.
+
+Opening all three tracks of the complete 108813844-byte actual movie also
+passes metadata/maximum-packet scanning: video283126 bytes, audio719/716.
+Selecting indices0+2 produces the actual interleaved pending sample sequence,
+with no fabricated EOF. Report: `build/codex-av-full-source.json`.
 
 `movie-webm.mjs` reads real WebM tracks and compressed blocks from a `Blob`,
 `Uint8Array`, or bounded asynchronous reader `{size, read(offset, length)}`.
@@ -96,11 +119,12 @@ imports before the SDK Extractor/Decoder adapter. This source change
 has not been published as a new game Wasm build.
 
 `movie-backend.mjs` implements serialized extractor/decoder operations for that
-bridge. Source bytes become a Blob; metadata and video packet sizes/keyframes
+bridge. Source bytes become a Blob; metadata and packet sizes/seek points
 are read from the actual container. Peek/read/advance preserve the current
-sample, and seeking starts at a real preceding keyframe. Decoded outputs remain
-owned until release, including after source closure. Unsupported audio is
-reported explicitly. SDK event notification currently reaches a fixture
+sample across all selected tracks without rewinding on selection changes.
+Video seeking starts at a real preceding keyframe; Vorbis-only seeking includes
+one actual overlap packet. Decoded outputs remain owned until release, including
+after source closure. Unsupported codecs are reported explicitly. Notifications reach a fixture
 callback and the production SDK adapter's registered OS event objects.
 
 `CONFIGURE time=8` enables the SDK's eight indexed input slots. Submitted
@@ -248,6 +272,9 @@ python web/test_movie_video.py --movie C:/path/to/local.webm --sdk-extractor
 python web/test_movie_video.py --movie C:/path/to/local.webm --sdk-extractor --excerpt-eof
 python web/build_movie_bridge_probe.py --sdk-decoder
 python web/test_movie_video.py --movie C:/path/to/local.webm --sdk-decoder --excerpt-eof --frames 240
+python web/build_movie_bridge_probe.py --sdk-av
+python web/test_movie_av.py --movie C:/path/to/local.webm --video-packets 120
+node web/test_movie_multitrack.mjs
 ```
 
 The browser check uses an existing Playwright CLI session `ssbu-web` and the
@@ -280,11 +307,9 @@ the previously verified bridge directly. The original game remains intact.
 
 ## Integration remaining
 
-1. Connect the verified real Vorbis AudioDecoder/PCM output to multi-selected
-   video/audio extraction and SDK audio configuration, format, events and 64 output slots.
-   Preserve actual Vorbis priming and decoder-derived PCM timestamps. Test
-   real audio/video through the SDK before another full build. Then build with
-   `--fibers --compact-codegen --jobs 8`, preserving optimize-level1/validation.
+1. Follow the current AV full build through publication, verify receipt/hash,
+   then boot the real game and confirm the audio clock advances naturally.
+   Check the title readiness transition, visual output and effective menu input.
 2. Verify nonzero seek followed by SDK Flush/Start on real media. Backend seek
    and reset have separate tests; their combined game sequence is unproven.
    The SDK Extractor's concurrent destruction remains untested.
