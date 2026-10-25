@@ -86,7 +86,7 @@ def main():
     sources += [WEB/'host_gpu_texture_objects.c',WEB/'host_gpu_texture_views.c',ROOT/'runtime/tex_decode.c']
     sources += [WEB/'host_gpu_copy.c',WEB/'host_gpu_render.c',WEB/'host_gpu_draw.c']
     sources += [WEB/'runtime_frame.c',WEB/'runtime_trap.c',WEB/'host_mutex.c',WEB/'host_semaphore.c']
-    sources += [WEB/'host_font.c',WEB/'font_raster.c',WEB/'font_otf.c']
+    sources += [WEB/'host_font.c',WEB/'font_raster.c',WEB/'font_otf.c',WEB/'host_movie.c']
     if args.fibers:
         flags += ['-DWEB_FIBERS','-sSUPPORT_LONGJMP=emscripten']
         sources += [WEB/name for name in ('host_fiber.c','host_fiber_tls.c','portable_fiber.c')]
@@ -115,6 +115,7 @@ def main():
                                      ((WEB/'host_mutex.h').read_bytes() if source.name in ('host_runtime.c','host_mutex.c') else b'') +
                                      ((WEB/'host_semaphore.h').read_bytes() if source.name in ('host_runtime.c','host_semaphore.c') else b'') +
                                      (b''.join((WEB/header).read_bytes() for header in ('host_font.h','font_raster.h','font_otf.h')) if source.name in ('host_font.c','font_raster.c','font_otf.c','host_os.c') else b'') +
+                                     ((WEB/'host_movie.h').read_bytes() if source.name in ('host_movie.c','host_os.c') else b'') +
                                      (b''.join(header.read_bytes() for header in sorted(WEB.glob('*fiber*.h'))) if args.fibers and not guest else b'') +
                                      ((ROOT/'runtime/tex_decode.h').read_bytes() if source.name in ('host_gpu_texture_objects.c','host_gpu_copy.c','tex_decode.c') else b'') +
                                      (b''.join(header.read_bytes() for header in sorted(WEB.glob('host_gpu*.h'))) if source.name.startswith(('host_gpu','host_nvn')) else b'')).hexdigest()

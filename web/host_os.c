@@ -3,6 +3,7 @@
 #define _POSIX_C_SOURCE 200809L
 #include "runtime.h"
 #include "host_font.h"
+#include "host_movie.h"
 #ifdef WEB_FIBERS
 #include "host_fiber.h"
 #endif
@@ -129,6 +130,7 @@ static int audio_pump_locked(uint64_t now) {
 }
 void web_os_reset(void) {
     web_font_reset();
+    web_movie_reset();
     // One fresh instance/ELF per worker run. Live workers must be stopped before reset.
     for (unsigned i = 0; i < 64; i++) { free(numberlines[i].bits); free(numberlines[i].run_len); }
     for (unsigned i = 0; i < 32; i++) free(stdallocs[i].blocks);
@@ -712,6 +714,7 @@ static int zlib_decompress(uint8_t *dst, size_t dst_cap, const uint8_t *src, siz
 }
 int web_os_import(Ctx *c, const char *name) {
     if(web_font_import(c,name))return 1;
+    if(web_movie_import(c,name))return 1;
 #ifdef WEB_FIBERS
     if(web_fiber_import(c,name))return 1;
 #endif
@@ -1712,22 +1715,6 @@ int web_os_import(Ctx *c, const char *name) {
             wr64(c->x[0], MOVIE_VTABLE); wr64(c->x[0] + 8, 0);
             return 1;
         }
-        if (!strcmp(name, "_ZN5movie6BufferC1Ev")) { for (uint64_t o = 0; o < 0x40; o += 8) wr64(c->x[0] + o, 0); return 1; }
-        if (!strcmp(name, "_ZN5movie6BufferC1Em")) { for (uint64_t o = 0; o < 0x40; o += 8) wr64(c->x[0] + o, 0); wr64(c->x[0] + 0x10, c->x[1]); return 1; }
-        if (!strcmp(name, "_ZN5movie6BufferC1EPvm")) {
-            for (uint64_t o = 0; o < 0x40; o += 8) wr64(c->x[0] + o, 0);
-            wr64(c->x[0] + 0x08, c->x[1]); wr64(c->x[0] + 0x10, c->x[2]); wr64(c->x[0] + 0x18, c->x[2]); return 1;
-        }
-        if (!strcmp(name, "_ZN5movie6BufferC1ERKS0_") || !strcmp(name, "_ZN5movie6BufferaSERKS0_")) {
-            for (uint64_t o = 0; o < 0x40; o += 8) wr64(c->x[0] + o, rd64(c->x[1] + o));
-            return 1;
-        }
-        if (!strcmp(name, "_ZNK5movie6Buffer4BaseEv")) { c->x[0] = rd64(c->x[0] + 0x08); return 1; }
-        if (!strcmp(name, "_ZNK5movie6Buffer4SizeEv")) { c->x[0] = rd64(c->x[0] + 0x18); return 1; }
-        if (!strcmp(name, "_ZNK5movie6Buffer6OffsetEv")) { c->x[0] = rd64(c->x[0] + 0x20); return 1; }
-        if (!strcmp(name, "_ZNK5movie6Buffer8CapacityEv")) { c->x[0] = rd64(c->x[0] + 0x10); return 1; }
-        if (!strcmp(name, "_ZN5movie6Buffer8SetRangeEii")) { wr64(c->x[0] + 0x20, (uint32_t)c->x[1]); wr64(c->x[0] + 0x18, (uint32_t)c->x[2]); return 1; }
-        if (!strcmp(name, "_ZN5movie6Buffer18SetDataAndCapacityEPvm")) { wr64(c->x[0] + 0x08, c->x[1]); wr64(c->x[0] + 0x10, c->x[2]); return 1; }
         if (!strcmp(name, "_ZNK5movie9MediaData9FindInt32EPKcPi") ||
             !strcmp(name, "_ZNK5movie9MediaData9FindInt64EPKcPl") ||
             !strcmp(name, "_ZNK5movie9MediaData10FindStringEPKcPS2_")) { c->x[0] = 0; return 1; }
