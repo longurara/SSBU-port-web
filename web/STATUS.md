@@ -1,3 +1,27 @@
+> **MỚI 25/10/2026 — C MOVIE VALUE IMPORTS ĐÃ SỬA, CHƯA FULLBUILD.**
+> Source web/host_movie.c/.h đã thay Buffer ABI sai trong host_os.c và thực hiện
+> MediaData constructors/copy/assign/destruct/Clear/Set/Find/Contains/CountEntries.
+> Buffer đúngrawoffset0/4/16/24/40; owningcopydeep, borrowedcopykhôngsởhữu,
+> assignment/swap/free dùng đúng allocator callback+userdata của từngallocation.
+> SetAllocator đổi không làm cácallocationcũ bịfreebằngcallbackmới.
+> Không đưa host malloc pointers vào guest. Metadata string nằmtrong guestmemory,
+> copy độc lập, Clear/destruct/type replacement giải phóng đúnglifetime.
+> Registry locks khônggiữqua callbackguest, Ctxđược khôi phục đầyđủ saucallback.
+> web_os_import routeadaptertrướcstub; web_os_reset gọi resetquiescent.
+> build_runtime.py thêmhost_movie.c vàheaderfingerprint, khôngđổi flagsbuild.
+> Các protectedheaders khôngsửa; khôngrebuild/reloadgame030a73c0 đanglive.
+> Fixture productionC: python web/build_movie_values_probe.py PASS2819checks,
+> haiWasm pthreads/callbackreentry/contextrestore/ownership/type/lifetime/leak0.
+> RuntimeC11 -Wall -Wextra syntaxPASS; fixturebuilderđãdùngđúngstd=c11.
+> python web/build_os_probe.py PASS182checks gồmrawABI vàMediaData quaOSrouter.
+> Reports build/web-movie-values/report.json, build/web-os; khôngphảigamecheck.
+> web/MOVIE.md cậpnhật phầnđãlàm/cònthiếu. Tiếp theo vẫnExtractor/Decoder thật,
+> guestClientStreamReader/trackselection/seek/decoderbuffer/events vàJSbridge.
+> Cầnfixtureproductionimports+realvideo trướcfullgamebuild--jobs8.
+> Emscriptenlocal settings cóUSE_VORBIS/USE_OGG nếu cần giải mãVorbisaudio bằngC;
+> chưathêmports, chưađánhgiáfallbackunsupportedaudio của game. KhôngfakeEOS.
+> Chưa menu/input hiệu lực/match; goal vẫnactive.
+>
 > **MỚI 25/10/2026 — ĐÃ CÓ GIẢI MÃ VP9 THẬT TRÊN BROWSER, CHƯA NỐI GAME.**
 > web/movie-webm.mjs + movie-video.mjs đọc WebM và giải mã WebCodecs thật,
 > copy I420/NV12 thành SDK NV12. Không fake sample/frame/EOS. Chưa import vào

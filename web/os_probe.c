@@ -332,10 +332,20 @@ static void *run(void *unused) {
         check(invoke("_ZN2nn3mii9AppendMiiEPi",0x7800010ef0ULL,0,0)==0xe7e);
         check(!invoke("_ZNK2nn3mii8Database8GetCountEPiNS0_10SourceFlagE",0x7800010f00ULL,0x7800010ef0ULL,2)&&rd32(0x7800010ef0ULL)==6);
         invoke("_ZN5movie6BufferC1EPvm",0x7800010f20ULL,0x7800012000ULL,512);
+        check(rd64(0x7800010f48ULL)==0x7800012000ULL&&rd64(0x7800010f38ULL)==512&&rd32(0x7800010f24ULL)==0&&rd8(0x7800010f30ULL)==0);
         check(invoke("_ZNK5movie6Buffer4BaseEv",0x7800010f20ULL,0,0)==0x7800012000ULL);
         check(invoke("_ZNK5movie6Buffer8CapacityEv",0x7800010f20ULL,0,0)==512);
         invoke("_ZN5movie6Buffer8SetRangeEii",0x7800010f20ULL,16,256);
         check(invoke("_ZNK5movie6Buffer6OffsetEv",0x7800010f20ULL,0,0)==16&&invoke("_ZNK5movie6Buffer4SizeEv",0x7800010f20ULL,0,0)==256);
+        check(rd32(0x7800010f20ULL)==16&&rd32(0x7800010f24ULL)==256&&rd64(0x7800010f40ULL)==0);
+        {
+            const uint64_t md=0x7800010f60ULL,key=0x7800011040ULL,out=0x7800011050ULL;
+            web_write(key,"width",6);invoke("_ZN5movie9MediaDataC1Ev",md,0,0);
+            invoke("_ZN5movie9MediaData8SetInt32EPKci",md,key,1280);
+            check(invoke("_ZNK5movie9MediaData9FindInt32EPKcPi",md,key,out)==1&&rd32(out)==1280);
+            check(invoke("_ZNK5movie9MediaData12CountEntriesEv",md,0,0)==1);
+            invoke("_ZN5movie9MediaDataD1Ev",md,0,0);check(rd64(md)==0);
+        }
         // std::__sort int32 + float
         {
             wr32(0x7800010f80ULL,(uint32_t)-5);wr32(0x7800010f84ULL,10u);wr32(0x7800010f88ULL,(uint32_t)-20);wr32(0x7800010f8cULL,0u);

@@ -1,8 +1,9 @@
 # Browser movie adapter
 
 The current game build still uses the failing movie placeholder in `host_os.c`.
-The modules below are working decoder components; the SDK import adapter and
-its runtime bridge have not been connected. They do not yet unblock the title.
+The JavaScript modules below are working decoder components. The source now
+also implements Buffer and MediaData imports, but the Extractor/Decoder adapter
+and its runtime bridge have not been connected. They do not yet unblock the title.
 
 ## Implemented and checked
 
@@ -17,6 +18,18 @@ integer ranges, parent bounds, and returned reader lengths are checked.
 I420/NV12 frames into the SDK's tightly packed NV12 layout. The decoder has a
 bounded output queue, reports unsupported formats/errors, and closes frames
 after copying. It does not synthesize video frames or end-of-stream events.
+
+`host_movie.c` implements Buffer's actual SDK layout and common MediaData
+imports. Owned data uses registered guest allocator callbacks; callback context
+is preserved and no registry lock is held across guest callbacks. Allocations
+retain their original free callback/user pair when the allocator changes.
+Owning Buffer copies and metadata strings are deep-copied. Strings returned to
+guest code point to real guest storage; host registry tokens are opaque values.
+Metadata is limited to forty entries, keys to 39 bytes, strings to 4096 bytes,
+and individual owned allocations to 256 MiB. Reset requires stopped workers.
+The full runtime build includes this adapter, and `host_os.c` routes its value
+imports before the remaining Extractor/Decoder placeholder. This source change
+has not been published as a new game Wasm build.
 
 Validation on 25 October 2026:
 
@@ -33,6 +46,14 @@ Validation on 25 October 2026:
   described in the native adapter, but its role in this boot is not proven by
   a captured file-open path. Media SHA256:
   `0fcd53c42de14577b81f8b9934a332da811b7e52f2ea3d772192d9a40d312976`.
+- Actual production C imports in a small Wasm fixture: 2,819 checks of raw SDK
+  offsets, numeric metadata conversions, guest string lifetimes, owning and
+  borrowed copies, assignment/swap/destruction, allocation failure, allocator
+  replacement, callback reentry and context preservation, with two concurrent
+  Wasm pthreads. All guest allocations/metadata are released at the end.
+- OS routing fixture: 182 checks pass, including raw Buffer offsets and actual
+  MediaData calls routed through `web_os_import`. Strict runtime C11 syntax
+  check of `host_movie.c` passes with `-Wall -Wextra`.
 
 Local evidence is under ignored `build/`: `codex-movie-webm-metadata.json`,
 `codex-real-movie-browser-probe.json`, and
@@ -43,6 +64,8 @@ Local evidence is under ignored `build/`: `codex-movie-webm-metadata.json`,
 ```powershell
 node web/test_movie_webm.mjs
 python web/test_movie_video.py --movie C:/path/to/local.webm
+python web/build_movie_values_probe.py
+python web/build_os_probe.py
 ```
 
 The browser check uses an existing Playwright CLI session `ssbu-web` and the
@@ -60,10 +83,11 @@ byte range, validates twelve frames and timestamps, and saves under
    guest callbacks, allocator ownership, thread context, and real reader data.
    Use `runtime/nnmovie_mf.c` for the source-verified SDK protocol, rather than
    treating the native placeholder's failure as a successful movie skip.
-2. Correct the current Buffer ABI: offset `+0` i32, size `+4` i32, ownership
-   `+16` u8, capacity `+24` u64, base pointer `+40` u64. Owning constructors,
-   copying, assignment and destruction require the actual guest allocator.
-3. Implement MediaData lookups, track selection, source callbacks, seek, input
+2. Connect the existing value objects to the new codec adapter. The corrected
+   Buffer ABI is offset `+0` i32, size `+4` i32, ownership `+16` u8, capacity
+   `+24` u64, base pointer `+40` u64. Keep actual allocator ownership throughout
+   decoder input/output buffer lifetimes.
+3. Implement track selection, source callbacks, seek, input
    and output buffer lifetimes, decoder status, and actual event signaling.
    The browser decoder alone does not implement the SDK's slot/event protocol.
 4. Connect a request/completion bridge to the runtime worker. Test real media
