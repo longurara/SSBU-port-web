@@ -1,3 +1,22 @@
+> **26/10/2026 — BUILD CALLBACK ĐÃ XONG; GAME349e ĐANG BOOT ĐÚNG1LẦN.**
+> Build PID56760/wasm-opt65988 đã kết thúc; Linked runtime-fibers-compact.mjs.
+> Publish2026-10-25T19:55:11Z, SHA256
+> 349ee09297daa06e6b5fcf38c57af5e44a0829cbc31f6c12f95db33e02869f25,
+> 282930438bytes /100273functions /maximumLocals10812. Local+HTTP WASM hash,
+> served receipt và5 JS modules (worker/webm/video/audio/backend) khớp source.
+> State build/codex-title-e2360f4-build-state.json đã complete. KHÔNG restart compiler.
+> Sau khi xác nhận phiên5ef2 terminal, đã boot349e1lần với7font+romfs/main.elf.
+> ssbu-web URL runtime=fibers-compact&diagnosticFrames=1;18s/306ctors/33workers,
+> threadFailed0, chưa presents/movie. Không kết luận callback đã chạy qua hoặc menu đã vào.
+> Movie trace đã cài; GuestMemory unique mới20118744, reader đã cài. Evidence
+> build/codex-title-349e-{boot,trace,poll-1,reader}.log. Helper screenshot mới
+> build/codex-title-349e-screen.cjs →output/playwright/codex-title-349e-live.png.
+> Bounded poll helpers đã sửa: done=true không evaluate worker đã dừng; compact giữ
+> terminal error/address/caller/lr. Nếu cần full terminal result dùng page-only helper
+> build/codex-av-terminal-page.cjs (lọc các field cần thiết, không in GPU base64).
+> TIẾP: giữ boot349e, đợi movie/title, A bỏ intro rồi chụp title và A tiếp,
+> kiểm tra callback71023263b0 thật đã qua, menu/input/CPU match+completion. Goal chưa đạt.
+
 > **26/10/2026 — BUILD SỬA CALLBACK TITLE ĐANG CHẠY, KHÔNG RESTART.**
 > Code e2360f4 thêm observed lifted callback71023263b0; prepare --main --pointer-tables
 > đã xong: functions70281(+2), ctors306, referencedPointerTableTargets18677,
