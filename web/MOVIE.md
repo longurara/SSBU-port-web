@@ -1,3 +1,16 @@
+> **26/10/2026 — BUILD4338f4e COMPLETE; GAMEc738 ĐANG BOOT.**
+> PID64564/45900/68352 đã kết thúc, Linked runtime-fibers-compact.mjs.
+> Publish2026-10-25T21:38:44Z, SHA256
+> c738d9c8493abf950a698804c35c2acdfbf00b812582d68dcaf9fe2774970850,
+> 283696477bytes /100360functions /maximumLocals10812. Local+HTTP WASM,
+> receipt và5 JS modules khớp source; evidence build/codex-title-4338-publication-verified.json.
+> Đã boot mới đúng1lần, 306ctors/33workers/threadFailed0 ở6s; trace đã cài.
+> build/codex-title-c738-{boot,trace,poll-1}.log. Giữ phiên đang chạy, không reboot.
+> Helper screenshot build/codex-title-c738-screen.cjs giữ riêng evidence bản cũ.
+> Guest reader mới đã cài: unique GuestMemory20119864, build/codex-title-c738-reader.log.
+> TIẾP: chờ opening/title thật, A→title rồi A→menu,
+> kiểm tra callback65a0 đã qua, CPU match+completion. Chưa chứng minh menu/match.
+
 > **26/10/2026 — BUILD GROUP CALLBACK65a0 ĐANG CHẠY, KHÔNG RESTART.**
 > Code4338f4e thêm observed target71023265a0. Graph70351(+70), đủ19hàm từ
 > actual relocation group71050b6a78, ctors306/callback missing0 đã xác minh.
