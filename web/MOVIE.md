@@ -1,10 +1,10 @@
 # Browser movie adapter
 
-The current game build still uses the failing movie placeholder in `host_os.c`.
-The JavaScript modules below are working decoder components. The source now
-also implements Buffer, MediaData, and SDK Extractor virtual calls. Decoder SDK
-virtual calls and the runtime wiring remain unfinished. A C/JS bridge and the
-Extractor work in separate browser fixtures. These do not yet unblock the title.
+The currently running game Wasm predates the movie adapter. Source now routes
+Buffer, MediaData, SDK Extractor and Decoder virtual calls through `host_os.c`.
+The full build and runtime worker include the real WebM/WebCodecs bridge.
+The production SDK path has passed real-video browser fixtures; a new game
+build and boot are required before claiming that the title is unblocked.
 
 ## Implemented and checked
 
@@ -38,7 +38,7 @@ guest code point to real guest storage; host registry tokens are opaque values.
 Metadata is limited to forty entries, keys to 39 bytes, strings to 4096 bytes,
 and individual owned allocations to 256 MiB. Reset requires stopped workers.
 The full runtime build includes this adapter, and `host_os.c` routes its value
-imports before the remaining Extractor/Decoder placeholder. This source change
+imports before the SDK Extractor/Decoder adapter. This source change
 has not been published as a new game Wasm build.
 
 `movie-backend.mjs` implements serialized extractor/decoder operations for that
@@ -47,7 +47,7 @@ are read from the actual container. Peek/read/advance preserve the current
 sample, and seeking starts at a real preceding keyframe. Decoded outputs remain
 owned until release, including after source closure. Unsupported audio is
 reported explicitly. SDK event notification currently reaches a fixture
-callback; the game's event objects are not connected yet.
+callback and the production SDK adapter's registered OS event objects.
 
 `CONFIGURE time=8` enables the SDK's eight indexed input slots. Submitted
 packets are copied into a bounded queue and the slot is returned by the new
@@ -67,15 +67,14 @@ one natural EOS, and zero handles/reservations after cleanup. All 240 hashes
 and timestamps match direct decoding of the original file. Direct decoding
 also filled its 16-frame capacity and resumed under backpressure. Reports:
 `build/codex-movie-direct-240.json` and `build/codex-movie-queue-240.json`.
-These remain separate fixtures; the C SDK Decoder and game are not wired yet.
+These remain separate fixtures; game behavior must be verified by a new boot.
 
 `host_movie_bridge.c/.h` transfers bounded staging buffers from a C pthread to
 the JavaScript worker, then completes the waiting pthread with an SDK status.
 Every dispatched success or failure completes its wait token. Fixed reply
 headers are validated before consuming outputs. This adapter uses
 `MAIN_THREAD_ASYNC_EM_ASM`, so compile this translation unit with `gnu11`, as
-with `host_gpu_bridge.c`. It is not yet added to the full runtime source list;
-that belongs with the upcoming SDK Extractor/Decoder integration.
+with `host_gpu_bridge.c`. It is included in the full runtime source list.
 
 `host_movie_codec.c` implements SDK Extractor constructors and virtual methods:
 client reader/path/memory sources, track configuration/selection, sample
@@ -89,8 +88,36 @@ Instances serialize operations with a gate, and destruction removes the object
 from lookup before waiting for in-flight references. This lifetime mechanism
 still needs a concurrent SDK destruction test. Deleting destructors use the
 same version-pinned guest delete function as the native adapter; movie buffers
-and wrapper objects have different allocators. The codec adapter is not yet
-routed through `host_os.c`, linked by the full build, or wired to runtime-worker.
+and wrapper objects have different allocators.
+
+`host_movie_decoder.c` implements the Decoder constructor and vtable slots
+0..18: configuration from real track metadata, event registration, NV12 format,
+Start/Stop/Reset/Flush, input acquisition/buffers/submission, output acquisition,
+copy/format/release, errors, and both destructor forms. Eight actual guest
+allocations hold input bytes; borrowed Buffer objects cannot free those slots.
+Output slots map the backend's handles to SDK indices 0..47. Caller capacity,
+slot ownership, byte ranges, unsupported codec/format and EOS are checked.
+
+JS notifications use monotonically assigned owner IDs. The notification mutex
+is never held across a JS request or guest callback, and notifications do not
+take the Decoder gate. Registered event keys are copied while guest memory is
+bound; JS callbacks only signal existing HostEvents through
+`web_os_try_signal_event`, without guest memory access or implicit creation.
+Unregister/destruction waits for active signals through this mutex; old owner
+IDs cannot signal a later decoder's events. SDK destruction removes the object
+before waiting for in-flight call references, then closes the backend and frees
+its guest inputs. Full reset requires stopped workers.
+
+The SDK Decoder fixture passed 240 real packet/frame hashes and timestamps
+against direct decode, including 48 held outputs, actual guest input buffers,
+SDK Extractor reads directly into those buffers, real OS event notification,
+late event registration, output metadata/capacity checks, single actual EOS,
+Flush/Start/Stop and zero live handles/allocations on teardown. A deterministic
+two-thread test delays a real STATUS bridge request until the destructor has
+unlisted its object, proving the pending call can finish before destruction
+frees its implementation. Report: `build/codex-movie-sdk-decoder-240.json`.
+This is a finite test container with unchanged real compressed payloads,
+not a shortened game movie or proof that the game reaches its menu.
 
 Validation on 25 October 2026:
 
@@ -163,6 +190,8 @@ python web/test_movie_video.py --movie C:/path/to/local.webm --bridge --excerpt-
 python web/build_movie_bridge_probe.py --sdk-extractor
 python web/test_movie_video.py --movie C:/path/to/local.webm --sdk-extractor
 python web/test_movie_video.py --movie C:/path/to/local.webm --sdk-extractor --excerpt-eof
+python web/build_movie_bridge_probe.py --sdk-decoder
+python web/test_movie_video.py --movie C:/path/to/local.webm --sdk-decoder --excerpt-eof --frames 240
 ```
 
 The browser check uses an existing Playwright CLI session `ssbu-web` and the
@@ -195,28 +224,18 @@ the previously verified bridge directly. The original game remains intact.
 
 ## Integration remaining
 
-1. Complete SDK Decoder virtual calls and route the codec adapter ahead of the
-   blanket failure placeholder. Preserve guest callbacks, allocator ownership,
-   thread context, and real reader data.
-   Use `runtime/nnmovie_mf.c` for the source-verified SDK protocol, rather than
-   treating the native placeholder's failure as a successful movie skip.
-2. Connect the existing value objects to the new codec adapter. The corrected
-   Buffer ABI is offset `+0` i32, size `+4` i32, ownership `+16` u8, capacity
-   `+24` u64, base pointer `+40` u64. Keep actual allocator ownership throughout
-   decoder input/output buffer lifetimes.
-3. Connect source callbacks, track selection, seek, input/output slot lifetime,
-   decoder status, and event signaling through the SDK virtual tables. The
-   backend protocol is not a substitute for those calls by the game.
-4. Connect the verified request/completion bridge to the runtime worker and
-   full build. Test real media through the SDK C imports in a small browser
-   fixture before spending another full game link/Asyncify cycle. Exercise
-   concurrent destruction, backpressure, seek/reset, and exact buffer ownership.
-5. Implement or explicitly propagate unsupported audio codecs through the
+1. Build the integrated runtime with `--fibers --compact-codegen --jobs 8`,
+   keeping `-sBINARYEN_EXTRA_PASSES=--optimize-level=1` and normal validation.
+   Then boot and capture the real movie path and title readiness transition.
+2. Verify nonzero seek followed by SDK Flush/Start on real media. Backend seek
+   and reset have separate tests; their combined game sequence is unproven.
+   The SDK Extractor's concurrent destruction remains untested.
+3. Implement or explicitly propagate unsupported audio codecs through the
    game's real track-selection behavior. Vorbis audio, raw H.264, MP4 and VP9
    CodecPrivate configurations are not implemented by these components.
    Laced tracks without container-provided duration are explicitly rejected;
    deriving audio packet durations remains codec-specific work.
-6. Boot the complete game and verify the title readiness gate passes, menu
+4. Boot the complete game and verify the title readiness gate passes, menu
    input works, and an actual match runs. Current decoder fixtures prove none
    of these game outcomes.
 

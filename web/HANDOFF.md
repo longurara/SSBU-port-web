@@ -1,3 +1,26 @@
+> **Cập nhật 25/10/2026: Decoder SDK và sự kiện đã qua video thật; source đã nối runtime.**
+> host_movie_decoder.c mới có ctor/vtable 0..18, 8 input allocation qua guest
+> allocator, 48 output lease, NV12 metadata/copy và Stop/Reset/Flush/Start/EOS.
+> web_movie_notify dùng owner ID tăng dần và mutex riêng, không giữ mutex qua
+> JS request/callback, không lấy Decoder gate. JS chỉ dùng key HostEvent đã đăng
+> ký qua web_os_try_signal_event, không đọc guest memory hoặc tạo event mới.
+> Dtor gỡ registry rồi chờ in-flight call, đóng backend, hủy notifier/free input.
+> Fixture dùng production OS import/indirect, SDK Extractor đọc thẳng vào buffer
+> Decoder và actual WebCodecs: 240 frame hash/time khớp direct, giữ đủ 48 output,
+> EOF/EOS thật=1, late registration/format/owned buffer/capacity/flush/start/stop PASS.
+> Deterministic concurrent Dtor khi STATUS request còn chờ JS PASS; backend/guest
+> allocations/metadata/Decoder/Extractor đều sạch sau teardown. Report được giữ
+> tại build/codex-movie-sdk-decoder-240.json. OS probe 182 PASS, C11 syntax PASS.
+> build_movie_bridge_probe.py --sdk-decoder; test_movie_video.py --movie <file>
+> --sdk-decoder --excerpt-eof --frames 240. Excerpt chỉ là fixture, không vào game.
+> host_os.c route codec trước fallback, bỏ movie vtable lỗi cũ; runtime-worker.mjs
+> tạo MovieBackend/notify/dispatch/close. build_runtime.py thêm source+header hashes,
+> bridge gnu11 và 3 movie modules publish; không đổi optimize-level1/validation.
+> Backend reset giữ track metadata để Stop vẫn giải phóng queue sau SourceClose;
+> Submit sau SourceClose vẫn bị từ chối. Vorbis/H264 vẫn unsupported rõ ràng.
+> TIẾP: full build --fibers --compact-codegen --jobs 8 rồi boot kiểm tra gate/menu/match.
+> Game đang chạy vẫn Wasm 030a cũ; CHƯA có bằng chứng menu/match. Xem web/MOVIE.md.
+>
 > **Cập nhật 25/10/2026: hàng đợi Decoder JS đã qua 240 khung hình thật.**
 > Đã giữ chỗ output trước decode và trong suốt thời gian giữ lease; không dùng
 > decodeQueueSize để suy ra số output còn chờ. Đọc header VP8/VP9 để đếm frame

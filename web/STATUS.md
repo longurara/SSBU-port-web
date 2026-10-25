@@ -1,3 +1,14 @@
+> **25/10/2026: SDK Decoder + OS events đã qua 240 frame thật; đã nối source vào runtime.**
+> host_movie_decoder.c triển khai vtable 0..18, guest input allocations/output
+> lease/NV12/Stop/Reset/Flush/EOS; JS notify dùng key OS event và owner ID tăng dần.
+> Production OS router fixture: 240 hash/time khớp direct, 48 output giữ, EOF/EOS=1,
+> late events/format/owned buffers/capacity/flush/start/stop và concurrent Dtor khi
+> request còn chờ JS đều PASS. Teardown không còn handle/guest allocations/objects.
+> Report build/codex-movie-sdk-decoder-240.json. OS probe 182 PASS; C11 syntax PASS.
+> Runtime worker và full build đã nối codec/bridge/backend, bridge dùng gnu11.
+> Tiếp full build --fibers --compact-codegen --jobs 8, giữ optimize-level1/validation,
+> rồi boot thật. Game hiện vẫn Wasm 030a cũ, chưa menu/match. Vorbis/H264 unsupported.
+>
 > **Cập nhật 25/10/2026: Decoder JS qua kiểm tra hàng đợi bằng 240 frame thật.**
 > Giữ chỗ output trước decode và qua lease, phân tích hidden frame/superframe,
 > tách coded frame trước WebCodecs để không mất ảnh trong packet nhiều output.
