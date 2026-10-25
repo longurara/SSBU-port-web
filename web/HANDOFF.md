@@ -1,3 +1,20 @@
+> **26/10/2026 — c738 DỪNG SAU TITLE Ở CALLBACK7103375080; BUILD608df20 ĐANG CHẠY.**
+> Bảnc738 đã phát opening thật: video13016000us/audio14900000us, screenshot
+> output/playwright/codex-title-c738-opening.png. A922s giữ10presents/thả đúng,
+> title934s; A950s vẫn chạy, title trắng976/1034s. A1052s trên title ổn định,
+> game còn chạy1070s rồi terminal1096s: uncompiled indirect target7103375080,
+> lr71038fb850, guestFunction710392acb0, threadFailed0. Chưa menu/match.
+> Actual report build/codex-title-c738-terminal-page.json; không in toàn bộ GPU base64.
+> Original native body c_0449.c:9873, gọi trực tiếp7103374a30. Relocation group
+> 71051847f8 có đúng1target5080. Evidence build/codex-title-c738-callback-group.json.
+> Code608df20 thêm đúng observed target5080. Prepare --main --pointer-tables xong:
+> functions70353(+2), ctors306, missing definitions0; cả5080/4a30 có trong generated table.
+> Full build PID67540 bắt đầu2026-10-25T22:01:55.5287530Z,
+> --fibers --compact-codegen --jobs8; log/state build/codex-title-608df20-build{,.err}.log / -state.json.
+> Không restart compiler; phiênc738 đã terminal, không boot lại bản cũ.
+> TIẾP: chờ build thành công, xác minh local+HTTP SHA/receipt/5JS, boot mới đúng1lần,
+> chờ opening/title thật, thử A rồi menu/CPU match+completion. Goal chưa đạt.
+
 > **26/10/2026 — BUILD4338f4e COMPLETE; GAMEc738 ĐANG BOOT.**
 > PID64564/45900/68352 đã kết thúc, Linked runtime-fibers-compact.mjs.
 > Publish2026-10-25T21:38:44Z, SHA256
