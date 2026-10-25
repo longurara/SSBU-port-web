@@ -176,7 +176,7 @@ def main():
     if args.trace_asyncify:link_environment['BINARYEN_PASS_DEBUG']='1'
     subprocess.run([sys.executable, str(EMCC), '@' + str(response)], check=True,env=link_environment)
     publish_module(staging/f'{flavor}.mjs',OUT/f'{flavor}.mjs')
-    for name in ('runtime-worker.mjs', 'index.html', 'app.mjs', 'game-input.mjs', 'font-input.mjs','movie-webm.mjs','movie-video.mjs','movie-backend.mjs', 'gpu-guest-pool-diagnostics.mjs', 'gpu-backend.mjs','gpu-programs.mjs','gpu-textures.mjs','gpu-samplers.mjs','gpu-render.mjs','gpu-draw.mjs','gpu-depth-sampling.mjs','gpu-logical-sampling.mjs','spirv-uniform-branches.mjs','gpu-depth.mjs','gpu-program-inspect.mjs','wgsl-interface.mjs','spirv-compat.mjs','maxwell-pipeline.mjs','game-shaders.mjs'):
+    for name in ('runtime-worker.mjs', 'index.html', 'app.mjs', 'game-input.mjs', 'font-input.mjs','movie-webm.mjs','movie-video.mjs','movie-audio.mjs','movie-backend.mjs', 'gpu-guest-pool-diagnostics.mjs', 'gpu-backend.mjs','gpu-programs.mjs','gpu-textures.mjs','gpu-samplers.mjs','gpu-render.mjs','gpu-draw.mjs','gpu-depth-sampling.mjs','gpu-logical-sampling.mjs','spirv-uniform-branches.mjs','gpu-depth.mjs','gpu-program-inspect.mjs','wgsl-interface.mjs','spirv-compat.mjs','maxwell-pipeline.mjs','game-shaders.mjs'):
         shutil.copy2(WEB / name, OUT / name)
     print(f'Linked {flavor}.mjs', flush=True)
 

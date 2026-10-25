@@ -16,7 +16,7 @@
 #define SOURCE_CHUNK 1048576u
 typedef struct Extractor {
     uint64_t key;uint32_t backend,tracks;int64_t duration;unsigned references;
-    int pending,consumed,selected;uint8_t sample[24];atomic_int closing;
+    int pending,consumed;uint8_t sample[24];atomic_int closing;
     pthread_mutex_t gate;struct Extractor *next;
 } Extractor;
 static pthread_mutex_t codec_lock=PTHREAD_MUTEX_INITIALIZER;
@@ -47,7 +47,7 @@ static void extractor_destroy(Ctx *c,uint64_t object,int deleting){
 }
 static void extractor_construct(Ctx *c){
     Extractor *e=calloc(1,sizeof *e);if(!e)guest_trap("movie Extractor allocation failed",c->x[0]);
-    e->key=c->x[0];e->selected=-1;pthread_mutex_init(&e->gate,NULL);atomic_init(&e->closing,0);
+    e->key=c->x[0];pthread_mutex_init(&e->gate,NULL);atomic_init(&e->closing,0);
     WebMovieReply reply=web_movie_request(MOVIE_CREATE,0,0,0,0,NULL,0);if(!reply.status)e->backend=reply.value;
     pthread_mutex_lock(&codec_lock);e->next=extractors;extractors=e;pthread_mutex_unlock(&codec_lock);
     for(unsigned i=0;i<64;i++)wr64(EXTRACTOR_VTABLE+i*8,EXTRACTOR_FUNCTION+i*16);
@@ -56,7 +56,7 @@ static void extractor_construct(Ctx *c){
 static int source_begin(Extractor *e){
     if(e->backend)request(MOVIE_CLOSE,e,0,0,0,NULL,0);
     WebMovieReply reply=web_movie_request(MOVIE_CREATE,0,0,0,0,NULL,0);
-    e->backend=reply.status?0:reply.value;e->tracks=0;e->duration=0;e->pending=0;e->consumed=0;e->selected=-1;
+    e->backend=reply.status?0:reply.value;e->tracks=0;e->duration=0;e->pending=0;e->consumed=0;
     wr64(e->key+8,e->backend);return reply.status;
 }
 static int source_open(Extractor *e){
@@ -134,7 +134,7 @@ int web_movie_codec_indirect(Ctx *c,uint64_t address){
         case 3:status=source_memory(e,a,(int64_t)(int32_t)b);break;
         case 4:if(a){wr32(a,e->tracks);status=e->tracks?MOVIE_OK:MOVIE_FAILED;}break;
         case 5:status=track_configuration(c,e,(int)a,b);break;
-        case 6:case 7:status=request(MOVIE_SELECT,e,(int)a,slot==6,0,NULL,0).status;if(!status&&((slot==6&&e->selected!=(int)a)||(slot==7&&e->selected==(int)a))){e->selected=slot==6?(int)a:-1;e->pending=0;e->consumed=0;}break;
+        case 6:case 7:status=request(MOVIE_SELECT,e,(int)a,slot==6,0,NULL,0).status;if(!status&&slot==7&&e->pending&&u32(e->sample)==(uint32_t)a){e->pending=0;e->consumed=0;}break;
         case 8:status=request(MOVIE_SEEK,e,0,0,(int64_t)a,NULL,0).status;if(!status){e->pending=0;e->consumed=0;}break;
         case 9:if(a){status=peek(e);if(!status)wr64(a,u32(e->sample));}break;
         case 10:if(a){

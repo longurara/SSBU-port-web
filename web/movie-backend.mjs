@@ -1,5 +1,6 @@
 import {WebmDemuxer} from './movie-webm.mjs';
 import {MovieVideoDecoder} from './movie-video.mjs';
+import {MovieAudioDecoder,audioTrackConfig} from './movie-audio.mjs';
 
 // Fixed-width bridge headers are mirrored in host_movie_bridge.h. SDK results,
 // not boolean "success", cross the bridge. END is only actual extractor EOF.
@@ -10,7 +11,7 @@ class StatusError extends Error {constructor(status,message){super(message);this
 const invalid=message=>{throw new StatusError(MovieStatus.INVALID,message);};
 const unsupported=message=>{throw new StatusError(MovieStatus.UNSUPPORTED,message);};
 const codecType=t=>({V_VP8:2,V_VP9:3,A_VORBIS:5,A_OPUS:6}[t.codecId]??0);
-const supported=t=>t.type===1&&[2,3].includes(codecType(t))&&!t.codecPrivate.length;
+const supported=t=>{if(t.type===1)return [2,3].includes(codecType(t))&&!t.codecPrivate.length;if(t.type===2&&codecType(t)===5){try{audioTrackConfig(t);return true;}catch{}}return false;};
 function header(size,write){const bytes=new Uint8Array(size);write(new DataView(bytes.buffer));return bytes;}
 
 export class MovieBackend {
@@ -39,14 +40,15 @@ export class MovieBackend {
     finally{e.pumping=false;}
   }
   async configureDecoder(e,track){
-    let decoder;decoder=await MovieVideoDecoder.create(track,{capacity:48,onChange:()=>{if(decoder&&e.decoder===decoder)this.decoderChanged(e);}});
+    const audio=track.type===2;
+    let decoder;decoder=await (audio?MovieAudioDecoder:MovieVideoDecoder).create(track,{capacity:audio?64:48,onChange:()=>{if(decoder&&e.decoder===decoder)this.decoderChanged(e);}});
     e.decoder=decoder;
   }
   add(entry){if(this.next>0x7fffffff)throw Error('Movie handle space exhausted');const id=this.next++;Object.assign(entry,{tail:Promise.resolve(),closed:false});this.entries.set(id,entry);return id;}
   async request(request){
     if(this.closed)invalid('Movie backend closed');
     const {operation,handle=0}=request;
-    if(operation===MovieOp.CREATE)return {status:0,value:this.add({kind:'extractor',parts:[],bytes:0,demux:null,selected:-1,pending:null,iterator:null,eof:false,start:null,keys:new Map()})};
+    if(operation===MovieOp.CREATE)return {status:0,value:this.add({kind:'extractor',parts:[],bytes:0,demux:null,selected:new Map(),pending:null,iterator:null,eof:false,start:null,keys:new Map()})};
     const entry=this.entries.get(handle);if(!entry)invalid('Unknown movie handle');
     const run=entry.tail.then(async()=>{
       if(entry.closed)invalid('Movie handle closed');const reply=await this.perform(entry,request);
@@ -71,8 +73,8 @@ export class MovieBackend {
           e.maximum=new Map();
           for(const t of e.demux.tracks)if(supported(t)){
             let maximum=0;const keys=[];
-            for await(const sample of e.demux.samples({trackNumber:t.number})){maximum=Math.max(maximum,sample.data.length);if(sample.key)keys.push({timestamp:sample.timestamp,clusterOffset:sample.clusterOffset,blockOffset:sample.blockOffset,laceIndex:sample.laceIndex});}
-            if(!keys.length)unsupported('Movie video has no key frames');e.keys.set(t.number,keys);e.maximum.set(t.number,maximum);
+            for await(const sample of e.demux.samples({trackNumber:t.number})){maximum=Math.max(maximum,sample.data.length);if(t.type===2||sample.key)keys.push({timestamp:sample.timestamp,clusterOffset:sample.clusterOffset,blockOffset:sample.blockOffset,laceIndex:sample.laceIndex});}
+            if(!keys.length)unsupported('Movie track has no seekable samples');e.keys.set(t.number,keys);e.maximum.set(t.number,maximum);
           }
           return {status:0,value:e.demux.tracks.length};
         }
@@ -81,35 +83,38 @@ export class MovieBackend {
           v.setBigInt64(32,BigInt(Math.round(e.demux.durationUs)),true);
         })};}
         case MovieOp.SELECT:{const t=track();
-          const previous=e.selected;
-          if(flags){if(!supported(t))unsupported(`Movie track codec is unsupported: ${t.codecId}`);if(e.selected>=0&&e.selected!==index)unsupported('Multiple selected video tracks are unsupported');e.selected=index;}
-          else if(e.selected===index)e.selected=-1;
-          if(previous!==e.selected){e.iterator=null;e.pending=null;e.eof=false;e.start=null;}return {status:0};
+          if(flags){if(!supported(t))unsupported(`Movie track codec is unsupported: ${t.codecId}`);e.selected.set(t.number,index);}
+          else{e.selected.delete(t.number);if(e.pending?.trackNumber===t.number)e.pending=null;}
+          // Selection does not rewind the shared container cursor. Each feed
+          // thread observes the same pending sample until its owner advances.
+          return {status:0};
         }
         case MovieOp.PEEK:{
           if(!e.demux)invalid('Movie source is not open');
-          if(e.selected<0)return {status:MovieStatus.END};
-          const t=e.demux.tracks[e.selected];
-          if(!e.iterator)e.iterator=e.demux.samples({trackNumber:t.number,startOffset:e.start?.clusterOffset})[Symbol.asyncIterator]();
+          if(!e.selected.size)return {status:MovieStatus.END};
+          if(!e.iterator)e.iterator=e.demux.samples({trackNumbers:e.selected,startOffset:e.start?.clusterOffset})[Symbol.asyncIterator]();
           while(!e.pending){const next=await e.iterator.next();if(next.done){e.eof=true;return {status:MovieStatus.END};}
+            if(!e.selected.has(next.value.trackNumber))continue;
             if(e.start){if(next.value.blockOffset!==e.start.blockOffset||next.value.laceIndex!==e.start.laceIndex)continue;e.start=null;}
             e.pending=next.value;
           }
-          const p=e.pending;return {status:0,value:p.data.length,bytes:header(24,v=>{v.setUint32(0,e.selected,true);v.setUint32(4,p.data.length,true);v.setBigInt64(8,BigInt(p.timestamp),true);v.setUint32(16,+p.key,true);v.setUint32(20,p.duration??0,true);})};
+          const p=e.pending;return {status:0,value:p.data.length,bytes:header(24,v=>{v.setUint32(0,e.selected.get(p.trackNumber),true);v.setUint32(4,p.data.length,true);v.setBigInt64(8,BigInt(p.timestamp),true);v.setUint32(16,+p.key,true);v.setUint32(20,p.duration??0,true);})};
         }
         case MovieOp.READ:if(!e.pending)invalid('No current movie sample');return {status:0,bytes:e.pending.data};
         case MovieOp.ADVANCE:if(!e.pending)invalid('No current movie sample');e.pending=null;return {status:0};
         case MovieOp.SEEK:{
-          if(!e.demux||e.selected<0||time<0)invalid('Invalid movie seek');
-          const keys=e.keys.get(e.demux.tracks[e.selected].number);e.start=keys[0];
-          for(const key of keys){if(key.timestamp>time)break;e.start=key;}
+          if(!e.demux||!e.selected.size||time<0)invalid('Invalid movie seek');
+          const tracks=[...e.selected.values()].map(i=>e.demux.tracks[i]),t=tracks.find(t=>t.type===1)??tracks[0],keys=e.keys.get(t.number);
+          let at=0;for(let i=1;i<keys.length&&keys[i].timestamp<=time;i++)at=i;
+          if(t.type===2&&at)at--; // One real Vorbis overlap block before the target.
+          e.start=time===0?null:keys[at];
           e.pending=null;e.iterator=null;e.eof=false;return {status:0};
         }
         case MovieOp.CLOSE:e.closed=true;e.parts=[];e.demux=null;e.pending=null;e.iterator=null;e.keys.clear();this.entries.delete(handle);return {status:0};
         case MovieOp.CONFIGURE:{
           const t=track();if(!supported(t))unsupported(`Movie decoder codec is unsupported: ${t.codecId}`);
           if(time!==0&&time!==8)invalid('Unsupported movie input slot count');
-          const d={kind:'decoder',source:e,track:index,trackInfo:t,owner:flags,held:new Map(),nextOutput:1,eos:false,eosDelivered:false,decoder:null,
+          const d={kind:'decoder',source:e,track:index,trackInfo:t,owner:flags,held:new Map(),nextOutput:1,eos:false,eosDelivered:false,lastOutputEnd:0,decoder:null,
             inputSlots:time,inputs:[],busyInputs:0,returnedInputs:0,pumping:false,draining:false,eosRequested:false};
           await this.configureDecoder(d,t);
           return {status:0,value:this.add(d)};
@@ -120,7 +125,7 @@ export class MovieBackend {
         case MovieOp.SUBMIT:{
           if(e.eos||e.eosRequested)invalid('Movie input submitted after EOS');
           if(e.source.closed)invalid('Movie source was closed');
-          const t=e.source.demux.tracks[e.track],key=e.source.keys.get(t.number).some(k=>k.timestamp===time);
+          const t=e.source.demux.tracks[e.track],key=t.type===2||e.source.keys.get(t.number).some(k=>k.timestamp===time);
           const sample={timestamp:time,key,data:bytes};
           if(e.inputSlots){
             if(index<0||index>=e.inputSlots||((e.busyInputs|e.returnedInputs)&(1<<index)))invalid('Movie input slot is not owned by the caller');
@@ -142,15 +147,16 @@ export class MovieBackend {
           await e.decoder.flush();e.eos=true;this.notify(e.owner,2);return {status:0};
         case MovieOp.ACQUIRE:{
           const frame=e.decoder.take({retain:true});
-          if(!frame){if(e.eos&&!e.eosDelivered){e.eosDelivered=true;return {status:0,value:0,bytes:header(40,v=>{v.setUint32(20,4,true);})};}return {status:MovieStatus.NO_OUTPUT};}
+          if(!frame){if(e.eos&&!e.eosDelivered){e.eosDelivered=true;return {status:0,value:0,bytes:header(40,v=>{v.setBigInt64(8,BigInt(Math.round(e.lastOutputEnd)),true);v.setUint32(20,4,true);})};}return {status:MovieStatus.NO_OUTPUT};}
           if(e.nextOutput>0x7fffffff)throw Error('Movie output handle space exhausted');
           const slot=e.nextOutput++;e.held.set(slot,frame);
-          return {status:0,value:slot,bytes:header(40,v=>{v.setUint32(0,slot,true);v.setUint32(4,frame.data.length,true);v.setBigInt64(8,BigInt(frame.timestamp),true);v.setUint32(16,e.decoder.frames.length,true);v.setUint32(24,frame.width,true);v.setUint32(28,frame.height,true);v.setUint32(32,frame.yStride,true);v.setUint32(36,frame.uvOffset,true);})};
+          e.lastOutputEnd=Math.max(e.lastOutputEnd,frame.timestamp+(frame.duration??0));
+          return {status:0,value:slot,bytes:header(40,v=>{v.setUint32(0,slot,true);v.setUint32(4,frame.data.length,true);v.setBigInt64(8,BigInt(frame.timestamp),true);v.setUint32(16,e.decoder.frames.length,true);v.setUint32(24,frame.width??0,true);v.setUint32(28,frame.height??0,true);v.setUint32(32,frame.yStride??0,true);v.setUint32(36,frame.uvOffset??0,true);})};
         }
         case MovieOp.COPY:{const frame=e.held.get(index);if(!frame)invalid('Unknown movie output slot');return {status:0,bytes:frame.data};}
         case MovieOp.RELEASE:{if(index===0&&e.eosDelivered)return {status:0};const frame=e.held.get(index);if(!frame)invalid('Unknown movie output slot');e.held.delete(index);e.decoder.release(frame);return {status:0};}
         case MovieOp.RESET:{
-          e.decoder.close();e.held.clear();e.eos=false;e.eosDelivered=false;e.eosRequested=false;e.draining=false;e.inputs=[];e.busyInputs=0;e.returnedInputs=0;
+          e.decoder.close();e.held.clear();e.eos=false;e.eosDelivered=false;e.lastOutputEnd=0;e.eosRequested=false;e.draining=false;e.inputs=[];e.busyInputs=0;e.returnedInputs=0;
           await this.configureDecoder(e,e.trackInfo);return {status:0};
         }
         case MovieOp.DECODER_CLOSE:e.closed=true;e.decoder.close();e.held.clear();this.entries.delete(handle);return {status:0};

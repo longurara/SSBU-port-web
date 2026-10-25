@@ -78,6 +78,9 @@ WebMovieReply movie_sdk_probe_track(int index,void *info){
         if(rd8(number("mime",WEB_MOVIE_STRING))!='v')errors++;
         if(storage)web_movie_guest_free(&(Ctx){0},storage);capacity=(uint32_t)number("max-input-size",WEB_MOVIE_I32);put32(info,24,capacity);storage=web_movie_guest_alloc(&(Ctx){0},capacity);if(!storage)return (WebMovieReply){MOVIE_FAILED,0};values("_ZN5movie6BufferC1EPvm",BUFFER,storage,capacity);
     }
+    else if(!strcmp(mime,"audio/vorbis")){
+        put32(info,4,2);put32(info,16,(uint32_t)number("sample-rate",WEB_MOVIE_I32));put32(info,20,(uint32_t)number("channel-count",WEB_MOVIE_I32));put32(info,24,(uint32_t)number("max-input-size",WEB_MOVIE_I32));put32(info,44,1);
+    }
     uint64_t duration=number("durationUs",WEB_MOVIE_I64);memcpy((uint8_t *)info+32,&duration,8);return r;
 }
 WebMovieReply movie_sdk_probe_select(int index){

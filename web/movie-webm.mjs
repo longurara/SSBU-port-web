@@ -96,7 +96,7 @@ export class WebmDemuxer {
     if(new Set(this.tracks.map(t=>t.number)).size!==this.tracks.length)throw Error('Duplicate WebM track number');
     return this;
   }
-  async *samples({trackNumber,startOffset}={}){
+  async *samples({trackNumber,trackNumbers,startOffset}={}){
     if(!this.segment)await this.open();let pos=startOffset??this.segment.start;
     if(!Number.isSafeInteger(pos)||pos<this.segment.start||pos>=this.segment.end)throw Error('Invalid WebM sample start offset');
     while(pos<this.segment.end){const cluster=await this.element(pos,this.segment.end);
@@ -112,7 +112,7 @@ export class WebmDemuxer {
           if(e.id===ID.group){const group=children(data),b=group.find(g=>g.id===ID.block);if(!b)throw Error('Missing Block in BlockGroup');block=b.data;key=!group.some(g=>g.id===0xfb);const d=group.find(g=>g.id===0x9b);if(d)duration=uint(d.data)*this.timestampScaleNs;}
           const parsed=splitBlock(block),t=this.tracks.find(t=>t.number===parsed.track);if(!t)throw Error('Block references missing track');
           if(e.id===ID.simple)key=!!(parsed.flags&128);
-          if(trackNumber===undefined||trackNumber===parsed.track){
+          if((trackNumber===undefined||trackNumber===parsed.track)&&(!trackNumbers||trackNumbers.has(parsed.track))){
             const step=duration!==undefined?duration/parsed.frames.length:t.defaultDurationNs;
             if(parsed.frames.length>1&&!step)throw Error('Laced sample timestamps require a duration');
             for(let i=0;i<parsed.frames.length;i++)yield {trackNumber:parsed.track,timestamp:Math.round(((time+parsed.relative)*this.timestampScaleNs+i*step)/1000),duration:step?Math.round(step/1000):undefined,key,clusterOffset:pos,blockOffset:at,laceIndex:i,data:parsed.frames[i].slice()};

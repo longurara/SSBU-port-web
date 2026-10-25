@@ -1,0 +1,34 @@
+async(page)=>{
+ const tab=await page.context().newPage();
+ try{
+  await tab.goto('http://127.0.0.1:8787/index.html?media-probe=1');
+  await tab.evaluate(()=>{const input=document.createElement('input');input.type='file';input.id='movie';document.body.appendChild(input);});
+  await tab.locator('#movie').setInputFiles(__MOVIE_PATH__);
+  return await tab.evaluate(async()=>{
+   const {movieAvExcerpt}=await import('/movie_av_probe_excerpt.mjs');
+   const file=document.querySelector('#movie').files[0],excerpt=await movieAvExcerpt(file.slice(__OFFSET__,__OFFSET__+__LENGTH__),__PACKETS__);
+   const worker=new Worker('/movie-sdk-av-probe/worker.mjs',{type:'module'});let timer,result;
+   try{
+    result=await new Promise((resolve,reject)=>{
+     timer=setTimeout(()=>reject(Error('SDK AV fixture timed out')),60000);worker.onerror=e=>reject(Error(e.message));
+     worker.onmessage=({data})=>data.error?reject(Error(data.error+' '+(data.bridgeError??''))):resolve(data.result);
+     worker.postMessage({file:excerpt.blob,limit:__PACKETS__,expectEof:true});
+    });
+   }finally{clearTimeout(timer);worker.terminate();}
+   const {WebmDemuxer}=await import('/movie-webm.mjs'),{MovieVideoDecoder}=await import('/movie-video.mjs'),{MovieAudioDecoder}=await import('/movie-audio.mjs');
+   const demux=await new WebmDemuxer(excerpt.blob).open(),direct={video:[],audio:[]};
+   for(const [number,kind,Decoder] of [[excerpt.videoTrack,'video',MovieVideoDecoder],[excerpt.audioTrack,'audio',MovieAudioDecoder]]){
+    let wake=null;const decoder=await Decoder.create(demux.tracks.find(t=>t.number===number),{onChange:()=>{if(wake){const resolve=wake;wake=null;resolve();}}});
+    const drain=()=>{let frame;while(frame=decoder.take()){let hash=2166136261;for(const byte of frame.data)hash=Math.imul(hash^byte,16777619)>>>0;direct[kind].push({timestamp:frame.timestamp,bytes:frame.data.length,hash:hash.toString(16)});}};
+    const change=()=>new Promise((resolve,reject)=>{const timeout=setTimeout(()=>{wake=null;reject(Error('Direct AV decoder stalled'));},5000);wake=()=>{clearTimeout(timeout);resolve();};});
+    try{
+     for await(const sample of demux.samples({trackNumber:number})){while(!decoder.canSubmit(sample)){if(decoder.failure)throw decoder.failure;drain();if(!decoder.canSubmit(sample))await change();}decoder.submit(sample);}
+     await decoder.flush();drain();
+    }finally{decoder.close();}
+   }
+   return {...result,hashesMatch:JSON.stringify(direct.video)===JSON.stringify(result.videoFrames)&&JSON.stringify(direct.audio)===JSON.stringify(result.audioFrames),
+    fixtureTracks:demux.tracks.map(t=>({number:t.number,type:t.type,codecId:t.codecId})),
+    scope:'Production OS/SDK Extractor plus simultaneous SDK VP9/Vorbis Decoders; actual unchanged packets in a finite test container; direct PCM/NV12 hashes compared. No game state patched.'};
+  });
+ }finally{await tab.close();}
+}

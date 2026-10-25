@@ -55,7 +55,7 @@ def main():
     if not publication.is_dir():
         raise SystemExit('Build publication directory does not exist')
     base = f'http://127.0.0.1:{args.port}'
-    for name in ['movie-webm.mjs', 'movie-video.mjs', *(['movie-backend.mjs','movie_probe_excerpt.mjs'] if args.bridge or args.queued_excerpt else [])]:
+    for name in ['movie-webm.mjs', 'movie-video.mjs','movie-audio.mjs', *(['movie-backend.mjs','movie_probe_excerpt.mjs'] if args.bridge or args.queued_excerpt else [])]:
         source = ROOT / 'web' / name
         shutil.copy2(source, publication / name)
         with urllib.request.urlopen(f'{base}/{name}', timeout=10) as response:

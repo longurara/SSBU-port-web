@@ -14,9 +14,9 @@
 #define BYTE_LIMIT (32u*1024u*1024u)
 typedef struct {unsigned used;uint32_t backend,size,flags,width,height,stride,uv;int64_t time;} Output;
 typedef struct Decoder {
-    uint64_t key,input[8];uint32_t owner,backend,capacity,width,height,type,format,mode;
+    uint64_t key,input[8];uint32_t owner,backend,capacity,width,height,type,format,mode,rate,channels,output_count;
     unsigned offered,client,pending,references;int started,flushed,eos,last_error;
-    Output output[48];atomic_int closing;pthread_mutex_t gate;struct Decoder *next;
+    Output output[64];atomic_int closing;pthread_mutex_t gate;struct Decoder *next;
 } Decoder;
 static Decoder *decoders;
 static pthread_mutex_t decoder_lock=PTHREAD_MUTEX_INITIALIZER;
@@ -79,6 +79,7 @@ static void decoder_destroy(Ctx *c,uint64_t key,int deleting){
 static void decoder_construct(Ctx *c){
     Decoder *d=calloc(1,sizeof *d);if(!d)guest_trap("movie Decoder allocation failed",c->x[0]);
     d->key=c->x[0];d->type=(uint32_t)c->x[1];d->format=(uint32_t)c->x[2];d->mode=(uint32_t)c->x[3];d->owner=notifier_create();
+    d->output_count=d->type==5?64:48;
     pthread_mutex_init(&d->gate,NULL);atomic_init(&d->closing,0);
     pthread_mutex_lock(&decoder_lock);d->next=decoders;decoders=d;pthread_mutex_unlock(&decoder_lock);
     for(unsigned i=0;i<64;i++)wr64(DECODER_VTABLE+i*8,DECODER_FUNCTION+i*16);wr64(d->key,DECODER_VTABLE);wr64(d->key+8,d->owner);
@@ -86,24 +87,32 @@ static void decoder_construct(Ctx *c){
 static int configure(Ctx *c,Decoder *d,uint64_t md){
     uint64_t source=0,track=0,capacity=0;if(!md||d->started)return MOVIE_INVALID;
     if(!d->owner)return MOVIE_FAILED;
-    if((d->type!=2&&d->type!=3)||d->format!=4||d->mode!=1)return MOVIE_UNSUPPORTED;
+    int audio=d->type==5;
+    if((!audio&&d->type!=2&&d->type!=3)||d->format!=(audio?1u:4u)||d->mode!=1)return MOVIE_UNSUPPORTED;
     if(!web_movie_metadata_get(md,"nn-extractor",WEB_MOVIE_POINTER,&source)||!source||source>INT32_MAX||!web_movie_metadata_get(md,"nn-track",WEB_MOVIE_I32,&track)||track>INT32_MAX)return MOVIE_INVALID;
     uint8_t info[64];WebMovieReply reply=web_movie_request(MOVIE_TRACK,(uint32_t)source,(int)track,0,0,info,sizeof info);if(reply.status)return reply.status;
-    uint32_t w=u32(info+8),h=u32(info+12),minimum=u32(info+24);
+    uint32_t w=u32(info+8),h=u32(info+12),rate=u32(info+16),channels=u32(info+20),minimum=u32(info+24);
     if(u32(info)!=d->type||!u32(info+44))return MOVIE_UNSUPPORTED;
     uint64_t pixels=(uint64_t)w*h+2*((w+1)/2)*((h+1)/2);
-    if(!w||!h||w>8192||h>8192||pixels>BYTE_LIMIT)return MOVIE_UNSUPPORTED;
+    if(audio){if(rate<8000||rate>192000||channels<1||channels>8)return MOVIE_UNSUPPORTED;}
+    else if(!w||!h||w>8192||h>8192||pixels>BYTE_LIMIT)return MOVIE_UNSUPPORTED;
     if(!web_movie_metadata_get(md,"max-input-size",WEB_MOVIE_I32,&capacity))capacity=minimum;
     if(capacity<minimum||!capacity||capacity>BYTE_LIMIT)return MOVIE_INVALID;
     uint64_t input[8]={0};for(unsigned i=0;i<8;i++)if(!(input[i]=web_movie_guest_alloc(c,capacity))){for(unsigned j=0;j<i;j++)web_movie_guest_free(c,input[j]);return MOVIE_FAILED;}
     reply=web_movie_request(MOVIE_CONFIGURE,(uint32_t)source,(int)track,d->owner,8,NULL,0);
     if(reply.status){for(unsigned i=0;i<8;i++)web_movie_guest_free(c,input[i]);return reply.status;}
     if(d->backend)request(d,MOVIE_DECODER_CLOSE,0,0,NULL,0);free_inputs(c,d);
-    d->backend=reply.value;memcpy(d->input,input,sizeof input);d->capacity=(uint32_t)capacity;d->width=w;d->height=h;
+    d->backend=reply.value;memcpy(d->input,input,sizeof input);d->capacity=(uint32_t)capacity;d->width=w;d->height=h;d->rate=rate;d->channels=channels;
     d->offered=d->client=d->pending=0;d->flushed=0;d->eos=0;d->last_error=0;memset(d->output,0,sizeof d->output);notifier_clear(d->owner,15);return MOVIE_OK;
 }
 static int fill_format(Ctx *c,Decoder *d,uint64_t md,const Output *out){
     if(!md||!d->backend)return MOVIE_INVALID;uint32_t w=out&&out->width?out->width:d->width,h=out&&out->height?out->height:d->height;
+    if(d->type==5){
+        web_movie_metadata_clear(c,md);int ok=web_movie_metadata_string(c,md,"mime","audio/raw");
+        ok&=web_movie_metadata_set(c,md,"sample-rate",WEB_MOVIE_I32,d->rate);
+        ok&=web_movie_metadata_set(c,md,"channel-count",WEB_MOVIE_I32,d->channels);
+        ok&=web_movie_metadata_set(c,md,"pcm-encoding",WEB_MOVIE_I32,2);return ok?MOVIE_OK:MOVIE_FAILED;
+    }
     web_movie_metadata_clear(c,md);int ok=web_movie_metadata_string(c,md,"mime","video/raw");
     const struct {const char *key;uint32_t value;} fields[]={
         {"width",w},{"height",h},{"stride",w},{"slice-height",h},{"crop-width",w},{"crop-height",h},{"color-format",21},
@@ -142,14 +151,14 @@ static int send_input(Decoder *d,int index,int offset,int size,int64_t time,unsi
 static int acquire_output(Decoder *d,uint64_t index,uint64_t time,uint64_t flags,uint64_t more){
     if(!index||!time||!flags||!more)return MOVIE_INVALID;wr32(index,UINT32_MAX);wr64(time,0);wr32(flags,0);wr32(more,0);
     if(!d->backend||!d->started||d->flushed)return MOVIE_NO_OUTPUT;
-    unsigned slot=0;while(slot<48&&d->output[slot].used)slot++;if(slot==48)return MOVIE_NO_OUTPUT;
+    unsigned slot=0;while(slot<d->output_count&&d->output[slot].used)slot++;if(slot==d->output_count)return MOVIE_NO_OUTPUT;
     uint8_t info[40];WebMovieReply reply=request(d,MOVIE_ACQUIRE,0,0,info,sizeof info);
     if(reply.status){if(reply.status==MOVIE_NO_OUTPUT)notifier_clear(d->owner,2);return reply.status;}
     Output out={.used=1,.backend=reply.value,.size=u32(info+4),.time=i64(info+8),.flags=u32(info+20),.width=u32(info+24),.height=u32(info+28),.stride=u32(info+32),.uv=u32(info+36)};
     d->output[slot]=out;wr32(index,slot);wr64(time,(uint64_t)out.time);wr32(flags,out.flags);wr32(more,u32(info+16));return MOVIE_OK;
 }
 static int output_buffer(Ctx *c,Decoder *d,int index,uint64_t buffer,uint64_t md){
-    if(!buffer||index<0||index>=48||!d->output[index].used)return MOVIE_INVALID;Output *out=&d->output[index];
+    if(!buffer||index<0||(unsigned)index>=d->output_count||!d->output[index].used)return MOVIE_INVALID;Output *out=&d->output[index];
     uint64_t base=rd64(buffer+40),capacity=rd64(buffer+24);if(out->size&&(!base||capacity<out->size||out->size>BYTE_LIMIT))return MOVIE_INVALID;
     if(out->size){uint8_t *bytes=malloc(out->size);if(!bytes)return MOVIE_FAILED;int status=request(d,MOVIE_COPY,(int)out->backend,0,bytes,out->size).status;if(!status)web_write(base,bytes,out->size);free(bytes);if(status)return status;}
     wr32(buffer,0);wr32(buffer+4,out->size);wr64(buffer+32,(uint64_t)out->time);wr32(buffer+12,out->flags);
@@ -174,11 +183,11 @@ int web_movie_decoder_indirect(Ctx *c,uint64_t address){
         case 11:status=send_input(d,(int)a,(int)b,(int)p,(int64_t)q,(unsigned)c->x[5]);break;
         case 12:status=acquire_output(d,a,b,p,q);break;
         case 13:status=output_buffer(c,d,(int)a,b,0);break;
-        case 14:if(a&&d->backend){wr32(a,d->width*d->height+2*((d->width+1)/2)*((d->height+1)/2));if(b)wr32(b,1);status=MOVIE_OK;}break;
-        case 15:if((int)a>=0&&a<48&&d->output[a].used){status=request(d,MOVIE_RELEASE,(int)d->output[a].backend,0,NULL,0).status;if(!status)memset(&d->output[a],0,sizeof d->output[a]);}break;
+        case 14:if(a&&d->backend){uint32_t size=d->type==5?(d->channels>4?8192*d->channels:32768):d->width*d->height+2*((d->width+1)/2)*((d->height+1)/2);wr32(a,size);if(b)wr32(b,1);status=MOVIE_OK;}break;
+        case 15:if((int)a>=0&&a<d->output_count&&d->output[a].used){status=request(d,MOVIE_RELEASE,(int)d->output[a].backend,0,NULL,0).status;if(!status)memset(&d->output[a],0,sizeof d->output[a]);}break;
         case 16:status=d->last_error?d->last_error:d->backend?request(d,MOVIE_STATUS,0,0,NULL,0).status:MOVIE_FAILED;break;
         case 17:status=output_buffer(c,d,(int)a,b,p);break;
-        case 18:if((int)a>=0&&a<48&&d->output[a].used)status=fill_format(c,d,b,&d->output[a]);break;
+        case 18:if((int)a>=0&&a<d->output_count&&d->output[a].used)status=fill_format(c,d,b,&d->output[a]);break;
         default:status=MOVIE_UNSUPPORTED;break;
     }
     if(status!=MOVIE_NO_INPUT&&status!=MOVIE_NO_OUTPUT&&status!=MOVIE_INVALID&&status)d->last_error=status;
