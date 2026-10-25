@@ -1,3 +1,17 @@
+> **25/10/2026 14:22 VN — BUILD KHỞI ĐỘNG LẠI SAU WINDOWS CRASH.**
+> Đã xác minh không còn coordinator/optimizer/observer cũ. OS boot 23/10 10:45;
+> Event41/6008 và Application1001 ghi BlueScreen/P1=116; chưa kết luận nguyên nhân.
+> Staging Wasm 0byte (23/10 10:43), publication cũ vẫn281992236byte/f40835ac.
+> Không coi state building-font-runtime cũ là process còn chạy.
+> Build mới coordinator57768/builder37168/wasm-opt55572, exec61649; flags giữ nguyên,
+> --fibers --compact-codegen --jobs8, optimize-level1/normalvalidation, không debuggraph.
+> Follow-up mới build/codex-font-after-build.py PID16372/exec48964, state .json tương ứng:
+> chờ đúng coordinator và validated publication; KHÔNG mở Chrome khi compiler đang chạy.
+> Sau SHA/4GiB/Node306 pass mới mở server8787 + riêng session ssbu-web nếu chưa có,
+> rồi chạy codex-font-browser-followup.py (PID coordinator đọc từ state, không hardcode).
+> Mọi browser/runtime khác được guard bảo vệ; chỉ boot một lần sau validation.
+> Hủy tự mở game bằng build/codex-font-browser.cancel trước khi dừng/pause build.
+> Chưa publish font build, chưa có bằng chứng menu/input/match chơi được.
 > **ĐÃ CHẠY TIẾP — 23/10/2026 08:15 VN, theo yêu cầu người dùng.**
 > Full build mới coordinator169108/builder177332/wasm-opt181088, exec1648.
 > --fibers --compact-codegen --jobs8; dùng cache object, chạy lại Asyncify đã bị dừng.
