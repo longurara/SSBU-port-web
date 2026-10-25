@@ -1,3 +1,14 @@
+> **26/10/2026 — BUILD SỬA CALLBACK TITLE ĐANG CHẠY, KHÔNG RESTART.**
+> Code e2360f4 thêm observed lifted callback71023263b0; prepare --main --pointer-tables
+> đã xong: functions70281(+2), ctors306, referencedPointerTableTargets18677,
+> callback tables378/targets2443, missing definitions0. Generated body/table đã kiểm tra.
+> Full build PID56760 bắt đầu2026-10-25T18:33:24.6677128Z, --fibers --compact-codegen --jobs8.
+> Log/state build/codex-title-e2360f4-build{,.err}.log / -state.json.
+> runtime_c02ed.c và runtime_table.c đã compile; chưa publish bản mới.
+> Phiên game5ef2 trước đã terminal sau A trên title; giữ bằng chứng, không boot lại bản cũ.
+> TIẾP: xác minh build terminal/receipt/hash/source, boot bản mới1lần, A bỏ intro,
+> A tiếp title rồi kiểm tra menu/input/CPU match. Goal còn active, chưa chơi được trận.
+
 > **26/10/2026 — GAME THẬT ĐÃ HIỆN PHIM + TITLE, A CÓ TÁC DỤNG; THIẾU CALLBACK KHI VÀO TIẾP.**
 > Boot5ef2 đã tiến qua nạp tài nguyên: tạo VP9 decoder3 và Vorbis decoder4,
 > selected video0/audio2. Lúc đầu chưa Start/feed; các mẫu poll8/9 không chứng minh
@@ -12,7 +23,8 @@
 > build/codex-av-5ef2-terminal-page.json. Không reload/boot lại phiên đã terminal.
 > Target có lifted definition thật trong gen_eh_o2/c_02ed.c, chưa trong runtime_table.
 > Đã thêm đúng observed target vào runtime_roots.json, prepare --main --pointer-tables
-> đang chạy (log build/codex-title-callback-prepare.log). Không dùng stub hoặc bỏ qua hàm.
+> đã xong: graph70281(+2), ctors306, missing definitions0.
+> Log build/codex-title-callback-prepare.log. Không dùng stub hoặc bỏ qua hàm.
 > TIẾP: kiểm tra graph mới chứa callback + referenced vtables, compile full
 > --fibers --compact-codegen --jobs8 (giữ optimizer/validation), receipt/sourcehash,
 > boot đúng1lần rồi vào menu và thử trận CPU. Chưa đạt goal; âm thanh nghe được chưa test.
