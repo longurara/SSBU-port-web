@@ -1,3 +1,19 @@
+> **26/10/2026 — FULL BUILD AV ĐÃ XONG; ĐANG BOOT GAME THẬT 5ef2.**
+> PID25188/wasm-opt63736 đã kết thúc; log Linked runtime-fibers-compact.mjs.
+> Receipt publish 2026-10-25T18:07:10Z: SHA256
+> 5ef2ab1b3e7ac388d60245096727a1327ee421a923460b46ee3e21a97ebac8ce,
+> 282925256 bytes / 100260 functions / maximumLocals10812.
+> File hash và HTTP served WASM đều khớp receipt; runtime-worker/movie-webm/
+> movie-video/movie-audio/movie-backend served đều khớp source hiện tại.
+> Đã Stop runtime5c88 bằng nút thật, done=true; boot5ef2 đúng1lần với7fonts+romfs.
+> Session ssbu-web giữ URL runtime=fibers-compact&diagnosticFrames=1, 33workers,
+> 306ctors/threadFailed0. 104s: frames0/draws0, chưa movie handle, manager0;
+> chưa chứng minh audio clock/readiness/menu/input/match. KHÔNG coi fixture là game chạy.
+> Bounded movie trace đã cài; unique GuestMemory mới20118712, reader đã cài.
+> Evidence build/codex-av-5ef2-{boot,trace-install,reader,poll-1,poll-2,clock-1}.log.
+> TIẾP: giữ phiên hiện tại, poll actual movies/clock, chụp canvas khi present,
+> kiểm tra input thật và trận CPU. Không restart compiler hoặc reload game tùy tiện.
+
 # Browser movie adapter
 
 The currently running game Wasm includes the movie adapter (SHA
