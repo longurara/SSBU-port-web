@@ -1,0 +1,66 @@
+async(page)=>{
+ const tab=await page.context().newPage();
+ try{
+  await tab.goto(__PROBE_URL__);
+  await tab.evaluate(()=>{const input=document.createElement('input');input.type='file';input.id='codex-movie-probe-input';document.body.appendChild(input);});
+  await tab.locator('#codex-movie-probe-input').setInputFiles(__MOVIE_PATH__);
+  return await tab.evaluate(async()=>{
+   const {MovieBackend,MovieOp:OP,MovieStatus:ST}=await import('/movie-backend.mjs');
+   const {movieProbeExcerpt}=await import('/movie_probe_excerpt.mjs');
+   const {videoPacketOutputs}=await import('/movie-video.mjs');
+   const file=document.querySelector('#codex-movie-probe-input').files[0];
+   const excerpt=await movieProbeExcerpt(file.slice(__MEDIA_OFFSET__,__MEDIA_OFFSET__+__MEDIA_LENGTH__),__PACKET_COUNT__);
+   let wake=null,epoch=0;
+   const backend=new MovieBackend({notify:()=>{epoch++;if(wake){const resolve=wake;wake=null;resolve();}}});
+   const call=(operation,handle,args={})=>backend.request({operation,handle,...args});
+   const change=()=>new Promise((resolve,reject)=>{const timer=setTimeout(()=>{wake=null;reject(Error('SDK movie queues stalled'));},5000);wake=()=>{clearTimeout(timer);resolve();};});
+   const frames=[],samples=[],held=[];let maxHeldOutputs=0,maxQueuedInputs=0,eos=0;
+   let occupiedAfterDrain,awaitingAfterDrain;
+   try{
+    const source=(await call(OP.CREATE)).value;
+    for(let at=0;at<excerpt.size;at+=1048576)await call(OP.APPEND,source,{bytes:new Uint8Array(await excerpt.slice(at,at+1048576).arrayBuffer())});
+    await call(OP.OPEN,source);await call(OP.SELECT,source,{index:0,flags:1});
+    const decoder=(await call(OP.CONFIGURE,source,{index:0,flags:777,time:8})).value;
+    const d=backend.entries.get(decoder);
+    let free=255,eosRequested=false;
+    while(!eos){
+     const previous=epoch;let progressed=false;
+     free|=(await call(OP.INPUT_AVAILABLE,decoder)).value;
+     while(free&&samples.length<__PACKET_COUNT__){
+      const peek=await call(OP.PEEK,source);if(peek.status!==0)throw Error('Unexpected extractor EOF');
+      const v=new DataView(peek.bytes.buffer),time=Number(v.getBigInt64(8,true));
+      const bytes=(await call(OP.READ,source)).bytes,index=31-Math.clz32(free&-free);
+      const reply=await call(OP.SUBMIT,decoder,{index,time,bytes});if(reply.status)throw Error('SDK submit failed: '+reply.status);
+      free&=~(1<<index);samples.push({timestamp:time,outputs:videoPacketOutputs(d.decoder.config.codec,bytes),bytes:bytes.length});
+      maxQueuedInputs=Math.max(maxQueuedInputs,d.inputs.length);await call(OP.ADVANCE,source);progressed=true;
+     }
+     if(samples.length===__PACKET_COUNT__&&!eosRequested){
+      if((await call(OP.PEEK,source)).status!==ST.END)throw Error('Fixture must reach actual container EOF');
+      if((await call(OP.EOS,decoder)).status)throw Error('EOS request failed');eosRequested=true;
+     }
+     for(;;){
+      const reply=await call(OP.ACQUIRE,decoder);if(reply.status===ST.NO_OUTPUT)break;if(reply.status)throw Error('SDK output failed');
+      const v=new DataView(reply.bytes.buffer);
+      if(v.getUint32(20,true)&4){eos++;await call(OP.RELEASE,decoder,{index:0});break;}
+      const bytes=(await call(OP.COPY,decoder,{index:reply.value})).bytes;let hash=2166136261;for(const byte of bytes)hash=Math.imul(hash^byte,16777619)>>>0;
+      frames.push({timestamp:Number(v.getBigInt64(8,true)),width:v.getUint32(24,true),height:v.getUint32(28,true),bytes:bytes.length,hash:hash.toString(16)});
+      held.push(reply.value);maxHeldOutputs=Math.max(maxHeldOutputs,held.length);progressed=true;
+     }
+     // Fill all output leases before releasing: this forces the queued SDK
+     // input path to wait, rather than merely testing a fast producer/consumer.
+     if(held.length===48||eosRequested){
+      const count=eosRequested?held.length:1;
+      for(let i=0;i<count;i++)await call(OP.RELEASE,decoder,{index:held.shift()});
+      if(count)progressed=true;
+     }
+     if(!progressed&&!eos&&epoch===previous)await change();
+    }
+    occupiedAfterDrain=d.decoder.occupied;awaitingAfterDrain=d.decoder.awaitingOutput;
+    if((await call(OP.ACQUIRE,decoder)).status!==ST.NO_OUTPUT)throw Error('Duplicate EOS');
+    await call(OP.DECODER_CLOSE,decoder);await call(OP.CLOSE,source);
+    return {samples,frames,eos,maxHeldOutputs,maxQueuedInputs,occupiedAfterDrain,awaitingAfterDrain,liveHandles:backend.entries.size,fixtureExcerpt:true,
+     scope:'Production JS backend, eight SDK input slots and 48 output leases. Finite test container holds unchanged actual VP9 packets; natural EOF/EOS. SDK C Decoder and game integration remain unverified.'};
+   }finally{await backend.close();}
+  });
+ }finally{await tab.close();}
+}

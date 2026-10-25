@@ -5,15 +5,40 @@ async(page)=>{
   await tab.evaluate(()=>{const input=document.createElement('input');input.type='file';input.id='codex-movie-probe-input';document.body.appendChild(input);});
   await tab.locator('#codex-movie-probe-input').setInputFiles(__MOVIE_PATH__);
   return await tab.evaluate(async()=>{
-   const {WebmDemuxer}=await import('/movie-webm.mjs');const {MovieVideoDecoder}=await import('/movie-video.mjs');
+   const {WebmDemuxer}=await import('/movie-webm.mjs');const {MovieVideoDecoder,videoPacketOutputs,videoPacketFrames}=await import('/movie-video.mjs');
    const file=document.querySelector('#codex-movie-probe-input').files[0];
    const source=file.slice(__MEDIA_OFFSET__,__MEDIA_OFFSET__+__MEDIA_LENGTH__),demux=await new WebmDemuxer(source).open();
-   const track=demux.tracks.find(t=>t.type===1),decoder=await MovieVideoDecoder.create(track),samples=[];
+   let wake=null;
+   const track=demux.tracks.find(t=>t.type===1),decoder=await MovieVideoDecoder.create(track,{onChange:()=>{if(wake){const resolve=wake;wake=null;resolve();}}}),samples=[],frames=[],firstPackets=[];
+   let backpressureCount=0,maxOccupied=0;
+   const drain=()=>{let frame;while(frame=decoder.take()){let hash=2166136261;for(const byte of frame.data)hash=Math.imul(hash^byte,16777619)>>>0;frames.push({timestamp:frame.timestamp,width:frame.width,height:frame.height,bytes:frame.data.length,hash:hash.toString(16),yStride:frame.yStride,uvStride:frame.uvStride});}};
+   const change=()=>new Promise((resolve,reject)=>{const timer=setTimeout(()=>{wake=null;reject(Error('Movie decoder stalled under backpressure'));},5000);wake=()=>{clearTimeout(timer);resolve();};});
    try{
-    for await(const sample of demux.samples({trackNumber:track.number})){samples.push({timestamp:sample.timestamp,key:sample.key,bytes:sample.data.length});decoder.submit(sample);if(samples.length===12)break;}
-    await decoder.flush();const frames=[];let frame;
-    while(frame=decoder.take()){let hash=2166136261;for(const byte of frame.data)hash=Math.imul(hash^byte,16777619)>>>0;frames.push({timestamp:frame.timestamp,width:frame.width,height:frame.height,bytes:frame.data.length,hash:hash.toString(16),yStride:frame.yStride,uvStride:frame.uvStride});}
-    return {samples,frames,tracks:demux.tracks.map(({codecPrivate,...track})=>({...track,privateBytes:codecPrivate.length})),durationUs:demux.durationUs,scope:'Twelve actual VP9 samples from local archive decoded by real browser WebCodecs and copied to NV12. Separate probe page, no game reload or guest writes; no claim of game adapter integration.'};
+    for await(const sample of demux.samples({trackNumber:track.number})){
+     while(!decoder.canSubmit(sample)){if(decoder.failure)throw decoder.failure;backpressureCount++;drain();if(!decoder.canSubmit(sample))await change();}
+     if(firstPackets.length<2)firstPackets.push(sample);
+     samples.push({timestamp:sample.timestamp,key:sample.key,bytes:sample.data.length,outputs:videoPacketOutputs(decoder.config.codec,sample.data)});decoder.submit(sample);maxOccupied=Math.max(maxOccupied,decoder.occupied);if(samples.length===__PACKET_COUNT__)break;
+    }
+    await decoder.flush();drain();
+    // Repackage unchanged real coded frames into a legal multi-output VP9
+    // superframe. This checks the browser's one-coded-frame chunk contract;
+    // ordinary game packets often hold one hidden plus one visible frame.
+    let superframe;
+    if(track.codecId==='V_VP9'&&firstPackets.length===2){
+     const parts=firstPackets.flatMap(s=>videoPacketFrames(decoder.config.codec,s.data));
+     if(parts.length<=8){
+      const payload=parts.reduce((n,p)=>n+p.data.length,0),data=new Uint8Array(payload+2+parts.length*4),marker=0xd8+parts.length-1;let at=0;
+      for(const p of parts){data.set(p.data,at);at+=p.data.length;}
+      data[at++]=marker;const v=new DataView(data.buffer);for(const p of parts){v.setUint32(at,p.data.length,true);at+=4;}data[at]=marker;
+      const grouped=await MovieVideoDecoder.create(track);const hashes=[];
+      try{
+       grouped.submit({timestamp:firstPackets[0].timestamp,key:firstPackets[0].key,data});await grouped.flush();let frame;
+       while(frame=grouped.take()){let hash=2166136261;for(const byte of frame.data)hash=Math.imul(hash^byte,16777619)>>>0;hashes.push(hash.toString(16));}
+       superframe={codedFrames:parts.length,expected:parts.reduce((n,p)=>n+p.visible,0),hashes,occupiedAfterDrain:grouped.occupied};
+      }finally{grouped.close();}
+     }
+    }
+    return {samples,frames,superframe,backpressureCount,maxOccupied,occupiedAfterDrain:decoder.occupied,awaitingAfterDrain:decoder.awaitingOutput,tracks:demux.tracks.map(({codecPrivate,...track})=>({...track,privateBytes:codecPrivate.length})),durationUs:demux.durationUs,scope:'Actual VP9 packets from local archive decoded by real browser WebCodecs and copied to NV12. Separate probe page, no game reload or guest writes; no claim of game adapter integration.'};
    }finally{decoder.close();}
   });
  }finally{await tab.close();}

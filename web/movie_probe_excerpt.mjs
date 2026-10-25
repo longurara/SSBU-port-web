@@ -8,7 +8,7 @@ function el(id,data){const hex=id.toString(16).padStart(Math.ceil(id.toString(16
 function uint(id,n){let width=1;while(BigInt(n)>=(1n<<BigInt(8*width)))width++;const data=new Uint8Array(width);let value=BigInt(n);for(let i=width-1;i>=0;i--){data[i]=Number(value&255n);value>>=8n;}return el(id,data);}
 const str=(id,s)=>el(id,new TextEncoder().encode(s));
 export async function movieProbeExcerpt(source,count=12){
-  if(!Number.isInteger(count)||count<1||count>16)throw Error('Invalid movie excerpt size');
+  if(!Number.isInteger(count)||count<1||count>3000)throw Error('Invalid movie excerpt size');
   const d=await new WebmDemuxer(source).open(),track=d.tracks.find(t=>t.type===1);
   if(track?.codecId!=='V_VP9'||track.codecPrivate.length)throw Error('Excerpt fixture requires VP9 without CodecPrivate');
   const samples=[];for await(const s of d.samples({trackNumber:track.number})){samples.push(s);if(samples.length===count)break;}

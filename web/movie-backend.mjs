@@ -5,7 +5,7 @@ import {MovieVideoDecoder} from './movie-video.mjs';
 // not boolean "success", cross the bridge. END is only actual extractor EOF.
 export const MovieStatus=Object.freeze({OK:0,FAILED:0x1000,INVALID:0x100b,UNSUPPORTED:0x1006,END:0x2000,NO_INPUT:0x1011,NO_OUTPUT:0x100e});
 export const MovieOp=Object.freeze({CREATE:1,APPEND:2,OPEN:3,TRACK:4,SELECT:5,PEEK:6,READ:7,ADVANCE:8,SEEK:9,CLOSE:10,
-  CONFIGURE:20,SUBMIT:21,ACQUIRE:22,COPY:23,RELEASE:24,RESET:25,FLUSH:26,DECODER_CLOSE:27,EOS:28});
+  CONFIGURE:20,SUBMIT:21,ACQUIRE:22,COPY:23,RELEASE:24,RESET:25,FLUSH:26,DECODER_CLOSE:27,EOS:28,INPUT_AVAILABLE:29,STATUS:30});
 class StatusError extends Error {constructor(status,message){super(message);this.status=status;}}
 const invalid=message=>{throw new StatusError(MovieStatus.INVALID,message);};
 const unsupported=message=>{throw new StatusError(MovieStatus.UNSUPPORTED,message);};
@@ -15,6 +15,33 @@ function header(size,write){const bytes=new Uint8Array(size);write(new DataView(
 
 export class MovieBackend {
   constructor({notify=()=>{}}={}){this.entries=new Map();this.next=1;this.notify=notify;this.closed=false;this.pending=new Set();}
+  decoderChanged(e){
+    if(e.closed)return;
+    this.pump(e);
+    this.notify(e.owner,(e.inputSlots?(e.returnedInputs?1:0):1)|(e.decoder?.frames.length||e.eos?2:0)|(e.decoder?.failure?8:0));
+  }
+  pump(e){
+    if(!e.inputSlots||e.pumping||e.closed||e.draining||e.decoder.failure)return;
+    e.pumping=true;
+    try{
+      while(e.inputs.length&&e.decoder.canSubmit(e.inputs[0].sample)){
+        const input=e.inputs[0];e.decoder.submit(input.sample);e.inputs.shift();
+        e.busyInputs&=~(1<<input.index);e.returnedInputs|=1<<input.index;
+      }
+      // Draining runs outside the per-handle request chain. Output leases can
+      // still be released while queued inputs wait for display-buffer space.
+      if(e.eosRequested&&!e.inputs.length){
+        e.draining=true;const decoder=e.decoder;
+        decoder.flush().then(()=>{if(!e.closed&&e.decoder===decoder){e.eos=true;this.notify(e.owner,2);}})
+          .catch(error=>{if(!e.closed&&e.decoder===decoder)decoder.fail(error);});
+      }
+    }catch(error){e.decoder.fail(error);}
+    finally{e.pumping=false;}
+  }
+  async configureDecoder(e,track){
+    let decoder;decoder=await MovieVideoDecoder.create(track,{capacity:48,onChange:()=>{if(decoder&&e.decoder===decoder)this.decoderChanged(e);}});
+    e.decoder=decoder;
+  }
   add(entry){if(this.next>0x7fffffff)throw Error('Movie handle space exhausted');const id=this.next++;Object.assign(entry,{tail:Promise.resolve(),closed:false});this.entries.set(id,entry);return id;}
   async request(request){
     if(this.closed)invalid('Movie backend closed');
@@ -81,38 +108,51 @@ export class MovieBackend {
         case MovieOp.CLOSE:e.closed=true;e.parts=[];e.demux=null;e.pending=null;e.iterator=null;e.keys.clear();this.entries.delete(handle);return {status:0};
         case MovieOp.CONFIGURE:{
           const t=track();if(!supported(t))unsupported(`Movie decoder codec is unsupported: ${t.codecId}`);
-          const d={kind:'decoder',source:e,track:index,owner:flags,held:new Map(),nextOutput:1,eos:false,eosDelivered:false,decoder:null};
-          const changed=()=>{if(!d.closed)this.notify(d.owner,1|(d.decoder?.frames.length?2:0)|(d.decoder?.failure?8:0));};
-          d.decoder=await MovieVideoDecoder.create(t,{onChange:changed,capacity:48});
+          if(time!==0&&time!==8)invalid('Unsupported movie input slot count');
+          const d={kind:'decoder',source:e,track:index,owner:flags,held:new Map(),nextOutput:1,eos:false,eosDelivered:false,decoder:null,
+            inputSlots:time,inputs:[],busyInputs:0,returnedInputs:0,pumping:false,draining:false,eosRequested:false};
+          await this.configureDecoder(d,t);
           return {status:0,value:this.add(d)};
         }
       }
     }else if(e.kind==='decoder'){
       switch(operation){
         case MovieOp.SUBMIT:{
-          if(e.eos)invalid('Movie input submitted after EOS');
+          if(e.eos||e.eosRequested)invalid('Movie input submitted after EOS');
           if(e.source.closed)invalid('Movie source was closed');
-          if(!e.decoder.available||e.held.size+e.decoder.frames.length+e.decoder.copying+e.decoder.decoder.decodeQueueSize>=48)return {status:MovieStatus.NO_INPUT};
           const t=e.source.demux.tracks[e.track],key=e.source.keys.get(t.number).some(k=>k.timestamp===time);
-          e.decoder.submit({timestamp:time,key,data:bytes});return {status:0};
+          const sample={timestamp:time,key,data:bytes};
+          if(e.inputSlots){
+            if(index<0||index>=e.inputSlots||((e.busyInputs|e.returnedInputs)&(1<<index)))invalid('Movie input slot is not owned by the caller');
+            if(e.decoder.failure)throw e.decoder.failure;
+            // canSubmit validates the compressed header whenever output space
+            // exists; deferred packets are checked by the pump before decode.
+            e.inputs.push({index,sample:{...sample,data:bytes.slice()}});e.busyInputs|=1<<index;
+            this.decoderChanged(e);return {status:e.decoder.failure?MovieStatus.FAILED:0};
+          }
+          if(!e.decoder.canSubmit(sample))return {status:MovieStatus.NO_INPUT};
+          e.decoder.submit(sample);return {status:0};
         }
-        case MovieOp.FLUSH:await e.decoder.flush();return {status:0};
+        case MovieOp.INPUT_AVAILABLE:{if(!e.inputSlots)invalid('Movie decoder has no SDK input slots');const value=e.returnedInputs;e.returnedInputs=0;return {status:0,value};}
+        case MovieOp.STATUS:return {status:e.decoder.failure?MovieStatus.FAILED:0};
+        case MovieOp.FLUSH:if(e.inputSlots)unsupported('Use decoder reset to flush SDK input/output queues');await e.decoder.flush();return {status:0};
         case MovieOp.EOS:
           if(!e.source.eof)invalid('Movie EOS requires actual extractor EOF');
+          if(e.inputSlots){e.eosRequested=true;this.decoderChanged(e);return {status:e.decoder.failure?MovieStatus.FAILED:0};}
           await e.decoder.flush();e.eos=true;this.notify(e.owner,2);return {status:0};
         case MovieOp.ACQUIRE:{
-          const frame=e.decoder.take();
+          const frame=e.decoder.take({retain:true});
           if(!frame){if(e.eos&&!e.eosDelivered){e.eosDelivered=true;return {status:0,value:0,bytes:header(40,v=>{v.setUint32(20,4,true);})};}return {status:MovieStatus.NO_OUTPUT};}
           if(e.nextOutput>0x7fffffff)throw Error('Movie output handle space exhausted');
           const slot=e.nextOutput++;e.held.set(slot,frame);
           return {status:0,value:slot,bytes:header(40,v=>{v.setUint32(0,slot,true);v.setUint32(4,frame.data.length,true);v.setBigInt64(8,BigInt(frame.timestamp),true);v.setUint32(16,e.decoder.frames.length,true);v.setUint32(24,frame.width,true);v.setUint32(28,frame.height,true);v.setUint32(32,frame.yStride,true);v.setUint32(36,frame.uvOffset,true);})};
         }
         case MovieOp.COPY:{const frame=e.held.get(index);if(!frame)invalid('Unknown movie output slot');return {status:0,bytes:frame.data};}
-        case MovieOp.RELEASE:if(index===0&&e.eosDelivered)return {status:0};if(!e.held.delete(index))invalid('Unknown movie output slot');this.notify(e.owner,1);return {status:0};
+        case MovieOp.RELEASE:{if(index===0&&e.eosDelivered)return {status:0};const frame=e.held.get(index);if(!frame)invalid('Unknown movie output slot');e.held.delete(index);e.decoder.release(frame);return {status:0};}
         case MovieOp.RESET:{
-          e.decoder.close();e.held.clear();e.eos=false;e.eosDelivered=false;
+          e.decoder.close();e.held.clear();e.eos=false;e.eosDelivered=false;e.eosRequested=false;e.draining=false;e.inputs=[];e.busyInputs=0;e.returnedInputs=0;
           if(e.source.closed)invalid('Movie source was closed');
-          e.decoder=await MovieVideoDecoder.create(e.source.demux.tracks[e.track],{capacity:48,onChange:()=>{if(!e.closed)this.notify(e.owner,1|(e.decoder.frames.length?2:0)|(e.decoder.failure?8:0));}});return {status:0};
+          await this.configureDecoder(e,e.source.demux.tracks[e.track]);return {status:0};
         }
         case MovieOp.DECODER_CLOSE:e.closed=true;e.decoder.close();e.held.clear();this.entries.delete(handle);return {status:0};
       }
