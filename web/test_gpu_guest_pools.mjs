@@ -27,4 +27,20 @@ await backend.request(2,{handle:7});assert.equal(calls,1);assert.equal(diagnosti
 assert.deepEqual(heap,before);diagnostic.close();assert.equal(backend.request,original);
 const invalid=installGuestPoolDiagnostics(backend,()=>null);await backend.request(2,{handle:7});
 assert.equal(calls,2);assert.equal(invalid.report().errors.length,1);invalid.close();
-console.log('Guest GPU pool diagnostics: PASS (18 contracts; read-only discovery, source ranges, ambiguity, malformed records, nonfatal diagnostics and cleanup)');
+// The game creates its UI pool361 after the startup uploads. A discovery budget
+// must not freeze an already located registry before that pool appears.
+const lateHeap=new Uint8Array(256*1024),lateView=new DataView(lateHeap.buffer);
+const lateBackend={buffers:new Map(),request(){return Promise.resolve({ok:true});}};
+const late=installGuestPoolDiagnostics(lateBackend,()=>lateHeap);
+for(let i=0;i<362;i++){
+  const entry=pointer+i*80,entryKey=key+BigInt(i)*16n;
+  const slot=Number(((entryKey>>4n)*2654435761n)&4095n);
+  lateView.setUint32(base+slot*4,entry,true);
+  lateView.setBigUint64(entry,entryKey,true);lateView.setBigUint64(entry+8,memory+BigInt(i)*4096n,true);
+  lateView.setBigUint64(entry+16,4096n,true);lateView.setUint32(entry+48,1,true);lateView.setUint32(entry+56,i+1,true);
+  lateBackend.buffers.set(i+1,{size:4096});
+  const unchanged=lateHeap.slice();await lateBackend.request(2,{handle:i+1});assert.deepEqual(lateHeap,unchanged);
+}
+assert.equal(late.describe([361,256,560]).guestAddress,'0x8000168100');
+assert.equal(late.report().pools.length,362);assert.deepEqual(late.report().errors,[]);late.close();
+console.log('Guest GPU pool diagnostics: PASS (read-only discovery, source ranges, ambiguity, malformed records, nonfatal diagnostics, cleanup and late pool361)');

@@ -70,7 +70,9 @@ export function installGuestPoolDiagnostics(backend,getHeap){
   let arrayAddress=null,attempts=0,closed=false;
   const pools=new Map(),errors=[],original=backend.request;
   const wrapped=function(operation,args={}){
-    if(!closed&&operation===2&&!pools.has(args.handle)&&pools.size<4096&&attempts<256){
+    // Discover at most256 times; a known table can grow beyond the first256
+    // buffers during game startup. Keep later refreshes bounded separately.
+    if(!closed&&operation===2&&!pools.has(args.handle)&&pools.size<4096&&attempts<(arrayAddress===null?256:4096)){
       attempts++;
       try{
         const heap=getHeap();
