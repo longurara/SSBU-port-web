@@ -1,3 +1,22 @@
+> **26/10/2026 — BOOT349e VÀO TITLE ĐƯỢC; THIẾU CALLBACK TIẾP71023265a0.**
+> Boot349e giữ nguyên, loading logo hiện ở302s. Movie mở/VP9+Vorbis configure ở~465s,
+> còn chờ Start đến~800s; poll zero queues trước đó không chứng minh decoder treo.
+> Actual clock3 video3707000us/audio5241333us, canvas có openingKirby thật.
+> A862s được giữ qua10presents rồi thả, phim→title SSBU Ultimate ở878s;
+> screenshot output/playwright/codex-title-349e-{opening,title}.png.
+> A tiếp930s: game terminal946s, uncompiled indirect target71023265a0,
+> caller71017f4a60/lr7103725c7c, threadFailed1. Actual report
+> build/codex-title-349e-terminal-page.json và after-title-a.log. Chưa menu/match.
+> Đã xác minh original relocation code-pointer group71050b6a78:19hàm,6chưa compile
+> (23264e0/2326540/23265a0/2326b90/2326bd0/2326e40), tất cả có lifted body thật.
+> Evidence build/codex-title-349e-callback-group.json. Không băng qua null/table header
+> để đoán callback; thêm actual observed target65a0 sẽ kéo toàn bộ group theo cơ chế sẵn có.
+> runtime_roots.json đã thêm65a0; prepare --main --pointer-tables đã xong:
+> functions70351(+70), ctors306, callback missing0, đủ19targets trong generated table.
+> log build/codex-title-65a0-prepare.log. Không restart/reload bản349e đã terminal.
+> TIẾP: xác minh generated table có đủ19targets, full build --fibers --compact-codegen
+> --jobs8 giữ optimizer/validation, hash/receipt rồi boot mới1lần/menu/CPU match.
+
 > **26/10/2026 — BUILD CALLBACK ĐÃ XONG; GAME349e ĐANG BOOT ĐÚNG1LẦN.**
 > Build PID56760/wasm-opt65988 đã kết thúc; Linked runtime-fibers-compact.mjs.
 > Publish2026-10-25T19:55:11Z, SHA256
