@@ -9,7 +9,7 @@ def main():
     output=ROOT/'build/web-os';output.mkdir(parents=True,exist_ok=True)
     subprocess.run([sys.executable,str(ROOT/'deps/emsdk/upstream/emscripten/emcc.py'),'-std=gnu11','-O1',
        '-DRECOMP_WEB_MEMORY','-DWEB_FULL_RUNTIME','-I',str(ROOT/'runtime'),'-I',str(ROOT/'web'),
-       *[str(ROOT/'web'/name) for name in ('os_probe.c','host_os.c','host_movie.c','host_font.c','font_raster.c','font_otf.c','host_fs.c','host_mutex.c','guest_sort.c','guest_memory.c','runtime_memory.c')],
+       *[str(ROOT/'web'/name) for name in ('os_probe.c','host_os.c','host_movie.c','host_movie_codec.c','host_movie_decoder.c','host_movie_bridge.c','host_font.c','font_raster.c','font_otf.c','host_fs.c','host_mutex.c','guest_sort.c','guest_memory.c','runtime_memory.c')],
        '-sUSE_FREETYPE=1',
        '--no-entry','-pthread','-sPTHREAD_POOL_SIZE=3','-sMODULARIZE=1','-sEXPORT_ES6=1','-sENVIRONMENT=node',
        '-sINITIAL_MEMORY=16777216','-sALLOW_MEMORY_GROWTH=1','-sMAXIMUM_MEMORY=67108864',

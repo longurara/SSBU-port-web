@@ -86,7 +86,7 @@ def main():
     sources += [WEB/'host_gpu_texture_objects.c',WEB/'host_gpu_texture_views.c',ROOT/'runtime/tex_decode.c']
     sources += [WEB/'host_gpu_copy.c',WEB/'host_gpu_render.c',WEB/'host_gpu_draw.c']
     sources += [WEB/'runtime_frame.c',WEB/'runtime_trap.c',WEB/'host_mutex.c',WEB/'host_semaphore.c']
-    sources += [WEB/'host_font.c',WEB/'font_raster.c',WEB/'font_otf.c',WEB/'host_movie.c']
+    sources += [WEB/'host_font.c',WEB/'font_raster.c',WEB/'font_otf.c',*[WEB/name for name in ('host_movie.c','host_movie_codec.c','host_movie_decoder.c','host_movie_bridge.c')]]
     if args.fibers:
         flags += ['-DWEB_FIBERS','-sSUPPORT_LONGJMP=emscripten']
         sources += [WEB/name for name in ('host_fiber.c','host_fiber_tls.c','portable_fiber.c')]
@@ -100,7 +100,7 @@ def main():
             local_flags=[*unit_flags,'-Xclang','-disable-llvm-passes']
         if source.name == 'font_raster.c':
             local_flags=[*local_flags,'-sUSE_FREETYPE=1']
-        if source.name in ('host_runtime.c','host_gpu.c','host_gpu_bridge.c','portable_fiber.c','runtime_trap.c'):
+        if source.name in ('host_runtime.c','host_gpu.c','host_gpu_bridge.c','host_movie_bridge.c','portable_fiber.c','runtime_trap.c'):
             local_flags = ['-std=gnu11' if flag == '-std=c11' else flag for flag in local_flags]
         target = objects / (source.stem + ('-debug' if debug else '') + ('-fibers' if args.fibers and not guest else '') + ('-compact' if args.compact_codegen else '') + '.o')
         compact = target.with_suffix('.compact')
@@ -115,7 +115,7 @@ def main():
                                      ((WEB/'host_mutex.h').read_bytes() if source.name in ('host_runtime.c','host_mutex.c') else b'') +
                                      ((WEB/'host_semaphore.h').read_bytes() if source.name in ('host_runtime.c','host_semaphore.c') else b'') +
                                      (b''.join((WEB/header).read_bytes() for header in ('host_font.h','font_raster.h','font_otf.h')) if source.name in ('host_font.c','font_raster.c','font_otf.c','host_os.c') else b'') +
-                                     ((WEB/'host_movie.h').read_bytes() if source.name in ('host_movie.c','host_os.c') else b'') +
+                                     (b''.join((WEB/header).read_bytes() for header in ('host_movie.h','host_movie_bridge.h','host_event.h')) if source.name.startswith('host_movie') or source.name=='host_os.c' else b'') +
                                      (b''.join(header.read_bytes() for header in sorted(WEB.glob('*fiber*.h'))) if args.fibers and not guest else b'') +
                                      ((ROOT/'runtime/tex_decode.h').read_bytes() if source.name in ('host_gpu_texture_objects.c','host_gpu_copy.c','tex_decode.c') else b'') +
                                      (b''.join(header.read_bytes() for header in sorted(WEB.glob('host_gpu*.h'))) if source.name.startswith(('host_gpu','host_nvn')) else b'')).hexdigest()
@@ -176,7 +176,7 @@ def main():
     if args.trace_asyncify:link_environment['BINARYEN_PASS_DEBUG']='1'
     subprocess.run([sys.executable, str(EMCC), '@' + str(response)], check=True,env=link_environment)
     publish_module(staging/f'{flavor}.mjs',OUT/f'{flavor}.mjs')
-    for name in ('runtime-worker.mjs', 'index.html', 'app.mjs', 'game-input.mjs', 'font-input.mjs', 'gpu-guest-pool-diagnostics.mjs', 'gpu-backend.mjs','gpu-programs.mjs','gpu-textures.mjs','gpu-samplers.mjs','gpu-render.mjs','gpu-draw.mjs','gpu-depth-sampling.mjs','gpu-logical-sampling.mjs','spirv-uniform-branches.mjs','gpu-depth.mjs','gpu-program-inspect.mjs','wgsl-interface.mjs','spirv-compat.mjs','maxwell-pipeline.mjs','game-shaders.mjs'):
+    for name in ('runtime-worker.mjs', 'index.html', 'app.mjs', 'game-input.mjs', 'font-input.mjs','movie-webm.mjs','movie-video.mjs','movie-backend.mjs', 'gpu-guest-pool-diagnostics.mjs', 'gpu-backend.mjs','gpu-programs.mjs','gpu-textures.mjs','gpu-samplers.mjs','gpu-render.mjs','gpu-draw.mjs','gpu-depth-sampling.mjs','gpu-logical-sampling.mjs','spirv-uniform-branches.mjs','gpu-depth.mjs','gpu-program-inspect.mjs','wgsl-interface.mjs','spirv-compat.mjs','maxwell-pipeline.mjs','game-shaders.mjs'):
         shutil.copy2(WEB / name, OUT / name)
     print(f'Linked {flavor}.mjs', flush=True)
 

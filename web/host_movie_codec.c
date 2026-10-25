@@ -22,6 +22,7 @@ typedef struct Extractor {
 static pthread_mutex_t codec_lock=PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t codec_changed=PTHREAD_COND_INITIALIZER;
 static Extractor *extractors;
+static atomic_int thread_priority;
 static uint32_t u32(const void *p){uint32_t value;memcpy(&value,p,4);return value;}
 static int64_t i64(const void *p){int64_t value;memcpy(&value,p,8);return value;}
 static WebMovieReply request(unsigned op,Extractor *e,int index,unsigned flags,int64_t time,void *data,size_t size){return web_movie_request(op,e->backend,index,flags,time,data,size);}
@@ -114,10 +115,16 @@ static int track_configuration(Ctx *c,Extractor *e,int index,uint64_t out){
     return ok?MOVIE_OK:MOVIE_FAILED;
 }
 int web_movie_codec_import(Ctx *c,const char *name){
+    if(!strcmp(name,"_ZN5movie11SetCoreMaskEm"))return 1;
+    if(!strcmp(name,"_ZN5movie17SetThreadPriorityEi")){atomic_store(&thread_priority,(int)c->x[0]);return 1;}
+    if(!strcmp(name,"_ZN5movie17GetThreadPriorityEv")){c->x[0]=(uint64_t)(int64_t)atomic_load(&thread_priority);return 1;}
+    if(!strcmp(name,"_ZN5movie34CreateH264DecoderConfigurationDataEPKhmS1_mPNS_9MediaDataE")){c->x[0]=MOVIE_UNSUPPORTED;return 1;}
+    if(!strcmp(name,"_ZN5movie37GetH264NalUnitStartPositionAndNalSizeEPPhPmS1_S2_")||!strcmp(name,"_ZN5movie37GetH264PropertiresFromSeqParamSetDataEPKhmPiS2_Pd")){c->x[0]=0;return 1;}
     if(!strcmp(name,"_ZN5movie9ExtractorC1ENS_13ContainerTypeE")||!strcmp(name,"_ZN5movie9ExtractorC2ENS_13ContainerTypeE")){extractor_construct(c);return 1;}
-    return 0;
+    return web_movie_decoder_import(c,name);
 }
 int web_movie_codec_indirect(Ctx *c,uint64_t address){
+    if(web_movie_decoder_indirect(c,address))return 1;
     if(address<EXTRACTOR_FUNCTION||address>=EXTRACTOR_FUNCTION+64*16||(address&15))return 0;
     unsigned slot=(unsigned)((address-EXTRACTOR_FUNCTION)/16);uint64_t object=c->x[0],a=c->x[1],b=c->x[2];
     if(slot<2){extractor_destroy(c,object,slot==1);return 1;}
@@ -147,6 +154,8 @@ int web_movie_codec_indirect(Ctx *c,uint64_t address){
     extractor_release(e);c->x[0]=(uint64_t)status;return 1;
 }
 void web_movie_codec_reset(void){
+    web_movie_decoder_reset();
+    atomic_store(&thread_priority,0);
     /* Worker teardown has already stopped all callers and closes the JS backend. */
     pthread_mutex_lock(&codec_lock);while(extractors){Extractor *next=extractors->next;pthread_mutex_destroy(&extractors->gate);free(extractors);extractors=next;}pthread_mutex_unlock(&codec_lock);
 }

@@ -27,16 +27,20 @@ def main():
     parser.add_argument('--bridge', action='store_true', help='Test the C pthread bridge fixture (build_movie_bridge_probe.py first)')
     parser.add_argument('--excerpt-eof', action='store_true', help='C bridge: finite test container holding twelve unchanged real packets, to verify natural EOF/EOS')
     parser.add_argument('--sdk-extractor',action='store_true',help='Use production Extractor virtual calls and guest ClientStreamReader callbacks')
+    parser.add_argument('--sdk-decoder',action='store_true',help='Use production SDK Extractor/Decoder and OS events; requires --excerpt-eof')
     parser.add_argument('--frames',type=int,default=12,help='Direct decoder: packet count; larger counts exercise sustained backpressure')
     parser.add_argument('--queued-excerpt',action='store_true',help='Test eight SDK input slots with a finite container of unchanged real packets, including natural EOF/EOS')
     args = parser.parse_args()
+    if args.sdk_decoder:
+        args.sdk_extractor=True
+        if not args.excerpt_eof:parser.error('--sdk-decoder currently requires --excerpt-eof')
     if args.sdk_extractor:
         args.bridge=True
     if args.queued_excerpt:
         if args.bridge:
             parser.error('--queued-excerpt is a JS backend probe, separate from --bridge')
         args.excerpt_eof=True
-    if args.frames<1 or args.frames>3000 or (args.bridge and args.frames!=12):
+    if args.frames<1 or args.frames>3000 or (args.bridge and args.frames!=12 and not args.sdk_decoder) or (args.sdk_decoder and args.frames>256):
         parser.error('--frames must be 1..3000; C bridge fixtures currently require 12')
     if args.excerpt_eof and not (args.bridge or args.queued_excerpt):
         parser.error('--excerpt-eof requires --bridge or --queued-excerpt')
@@ -57,7 +61,7 @@ def main():
         with urllib.request.urlopen(f'{base}/{name}', timeout=10) as response:
             if response.read() != source.read_bytes():
                 raise SystemExit(f'Server is not serving current {name}')
-    directory = ROOT / ('build/movie-sdk-extractor-probe' if args.sdk_extractor else 'build/movie-bridge-probe' if args.bridge else 'build/movie-queue-probe' if args.queued_excerpt else 'build/movie-video-probe')
+    directory = ROOT / ('build/movie-sdk-decoder-probe' if args.sdk_decoder else 'build/movie-sdk-extractor-probe' if args.sdk_extractor else 'build/movie-bridge-probe' if args.bridge else 'build/movie-queue-probe' if args.queued_excerpt else 'build/movie-video-probe')
     directory.mkdir(parents=True, exist_ok=True)
     helper = directory / 'probe.cjs'
     template = (ROOT / 'web' / ('movie_bridge_probe.cjs.in' if args.bridge else 'movie_queue_probe.cjs.in' if args.queued_excerpt else 'movie_video_probe.cjs.in')).read_text(encoding='utf-8')
@@ -66,7 +70,7 @@ def main():
                       .replace('__MEDIA_OFFSET__', str(args.offset)).replace('__MEDIA_LENGTH__', str(length))
                       .replace('__PACKET_COUNT__',str(args.frames))
                       .replace('__EXCERPT_EOF__', str(args.excerpt_eof).lower())
-                      .replace('__PROBE_WORKER__',json.dumps('/movie-sdk-extractor-probe/worker.mjs' if args.sdk_extractor else '/movie-bridge-probe/worker.mjs')),
+                      .replace('__PROBE_WORKER__',json.dumps('/movie-sdk-decoder-probe/worker.mjs' if args.sdk_decoder else '/movie-sdk-extractor-probe/worker.mjs' if args.sdk_extractor else '/movie-bridge-probe/worker.mjs')),
                       encoding='utf-8')
     result = subprocess.run([cli, '--yes', '--package', '@playwright/cli', 'playwright-cli',
                              f'-s={args.session}', 'run-code', '--filename', str(helper)],
@@ -90,7 +94,7 @@ def main():
         report['sourceSha256'] = digest.hexdigest()
     report['sourceRange'] = {'offset': args.offset, 'length': length}
     (directory / 'report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
-    expected_frames=12 if args.bridge else sum(s['outputs'] for s in report['samples'])
+    expected_frames=args.frames if args.bridge else sum(s['outputs'] for s in report['samples'])
     if (report.get('fed') if args.bridge else len(report['samples'])) != args.frames or len(report['frames']) != expected_frames:
         raise SystemExit('Actual decoded frame count differs from the requested packets; inspect report.json')
     if args.bridge and (not report['ok'] or report['liveHandles'] or report['pendingCompletions']):
@@ -99,6 +103,8 @@ def main():
         raise SystemExit('Movie EOF/EOS result differs from the actual test container; inspect report.json')
     if args.sdk_extractor and (not report['sdkExtractor'] or report['readerCalls']<2):
         raise SystemExit('SDK Extractor callbacks were not exercised')
+    if args.sdk_decoder and (not report['sdkDecoder'] or not report['concurrentDestroy'] or (args.frames>=64 and report['maxHeldOutputs']!=48)):
+        raise SystemExit('SDK Decoder/event/backpressure fixture did not exercise required paths')
     if not args.bridge and [s['timestamp'] for s in report['samples'] for _ in range(s['outputs'])] != [f['timestamp'] for f in report['frames']]:
         raise SystemExit('Decoded timestamps differ from actual container sample timestamps')
     for frame in report['frames']:

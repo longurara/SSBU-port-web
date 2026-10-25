@@ -8,14 +8,14 @@ async(page)=>{
    const file=document.querySelector('#codex-movie-probe-input').files[0];
    let source=file.slice(__MEDIA_OFFSET__,__MEDIA_OFFSET__+__MEDIA_LENGTH__);
    let fixtureSha256;
-   if(__EXCERPT_EOF__){const {movieProbeExcerpt}=await import('/movie_probe_excerpt.mjs');source=await movieProbeExcerpt(source,12);fixtureSha256=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await source.arrayBuffer())),x=>x.toString(16).padStart(2,'0')).join('');}
+   if(__EXCERPT_EOF__){const {movieProbeExcerpt}=await import('/movie_probe_excerpt.mjs');source=await movieProbeExcerpt(source,__PACKET_COUNT__);fixtureSha256=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await source.arrayBuffer())),x=>x.toString(16).padStart(2,'0')).join('');}
    const worker=new Worker(__PROBE_WORKER__,{type:'module'});let timer;
    try{
     return await new Promise((resolve,reject)=>{
      timer=setTimeout(()=>reject(Error('Movie bridge fixture timed out')),60000);
      worker.onerror=event=>reject(Error(event.message));
      worker.onmessage=({data})=>data.error?reject(Error(data.error+' '+(data.bridgeError??''))):resolve({...data.result,fixtureExcerpt:__EXCERPT_EOF__,fixtureSha256});
-     worker.postMessage({file:source,limit:12,expectEof:__EXCERPT_EOF__});
+     worker.postMessage({file:source,limit:__PACKET_COUNT__,expectEof:__EXCERPT_EOF__});
     });
    }finally{clearTimeout(timer);worker.terminate();}
   });

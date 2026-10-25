@@ -17,6 +17,9 @@
 #define OUT (BASE+0x800)
 #define FN UINT64_C(0x710000a000)
 static GuestMemory memory;
+GuestMemory *elf_memory(void){return &memory;}
+int web_runtime_thread_call(Ctx *c,uint64_t function){(void)c;guest_trap("guest thread execution is outside movie fixture",function);return 0;}
+void web_os_reset(void);
 static unsigned errors,reader_calls,reader_closed,deleted,source_closed,current;
 static FILE *file;
 static uint64_t storage;
@@ -54,7 +57,7 @@ void call_indirect(Ctx *c,uint64_t function){
 }
 int movie_sdk_probe_begin(void){
     gm_init_limit(&memory,16384);if(gm_reserve(&memory,BASE,64*1024*1024)!=GM_OK||gm_commit(&memory,BASE,65536)!=GM_OK||gm_reserve(&memory,UINT64_C(0x7800000000),4096)!=GM_OK||gm_commit(&memory,UINT64_C(0x7800000000),4096)!=GM_OK)return 1;
-    web_memory_bind(&memory);web_movie_reset();web_movie_codec_reset();
+    web_memory_bind(&memory);web_movie_codec_reset();web_os_reset();
     Ctx c={0};c.x[0]=FN;c.x[1]=FN+16;c.x[3]=123;if(!web_movie_import(&c,"_ZN5movie12SetAllocatorEPFPvmmS0_EPFvS0_S0_EPFS0_S0_mS0_ES0_"))errors++;
     wr64(READER,READER_TABLE);for(unsigned i=0;i<4;i++)wr64(READER_TABLE+16+i*8,FN+32+i*16);web_write(PATH,"local.webm",11);
     values("_ZN5movie9MediaDataC1Ev",MD,0,0);values("_ZN5movie9MediaDataC1Ev",SAMPLE_MD,0,0);values("_ZN5movie6BufferC1Ev",BUFFER,0,0);return 0;
@@ -68,6 +71,8 @@ static uint64_t number(const char *key,unsigned type){uint64_t value=0;if(!web_m
 static void put32(void *info,unsigned offset,uint32_t value){memcpy((uint8_t *)info+offset,&value,4);}
 WebMovieReply movie_sdk_probe_track(int index,void *info){
     WebMovieReply r=call(5,(uint64_t)index,MD);if(r.status)return r;memset(info,0,64);
+    uint64_t mime_address=number("mime",WEB_MOVIE_STRING);char mime[64];unsigned m;for(m=0;m<sizeof mime-1;m++){mime[m]=(char)rd8(mime_address+m);if(!mime[m])break;}mime[m]=0;
+    put32(info,0,!strcmp(mime,"video/x-vnd.on2.vp9")?3:!strcmp(mime,"video/x-vnd.on2.vp8")?2:!strcmp(mime,"audio/vorbis")?5:!strcmp(mime,"audio/opus")?6:0);
     if(number("nn-extractor",WEB_MOVIE_POINTER)!=rd64(EX+8)||number("nn-track",WEB_MOVIE_I32)!=(uint64_t)index)errors++;
     uint64_t width=0;if(web_movie_metadata_get(MD,"width",WEB_MOVIE_I32,&width)){put32(info,4,1);put32(info,8,(uint32_t)width);put32(info,12,(uint32_t)number("height",WEB_MOVIE_I32));put32(info,44,1);
         if(rd8(number("mime",WEB_MOVIE_STRING))!='v')errors++;
@@ -96,10 +101,12 @@ WebMovieReply movie_sdk_probe_read(void *bytes,size_t size){uint32_t n=rd32(BUFF
 WebMovieReply movie_sdk_probe_advance(void){WebMovieReply r=call(11,0,0);if(!r.status)current=0;return r;}
 WebMovieReply movie_sdk_probe_close(void){call(0,0,0);source_closed=1;return (WebMovieReply){0,0};}
 unsigned movie_sdk_probe_reader_calls(void){return reader_calls;}
+uint64_t movie_sdk_probe_extractor(void){return EX;}
+uint64_t movie_sdk_probe_metadata(void){return MD;}
 int movie_sdk_probe_finish(void){
     if(!source_closed)movie_sdk_probe_close();if(reader_closed!=1||reader_calls<2||file)errors++;
     Ctx c={0};c.x[0]=EX+16;c.x[1]=3;web_movie_codec_import(&c,"_ZN5movie9ExtractorC2ENS_13ContainerTypeE");c.x[0]=EX+16;if(!web_movie_codec_indirect(&c,rd64(rd64(EX+16)+8))||deleted!=1)errors++;
     values("_ZN5movie9MediaDataD1Ev",MD,0,0);values("_ZN5movie9MediaDataD1Ev",SAMPLE_MD,0,0);values("_ZN5movie6BufferD1Ev",BUFFER,0,0);if(storage)web_movie_guest_free(&(Ctx){0},storage);
-    if(web_movie_live_allocations()||web_movie_live_metadata()||web_movie_live_extractors())errors++;
+    if(web_movie_live_allocations()||web_movie_live_metadata()||web_movie_live_extractors()||web_movie_live_decoders())errors++;
     web_movie_codec_reset();web_movie_reset();web_memory_bind(NULL);gm_destroy(&memory);return (int)errors;
 }

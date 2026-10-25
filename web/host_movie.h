@@ -18,4 +18,9 @@ int web_movie_codec_import(Ctx *,const char *name);
 int web_movie_codec_indirect(Ctx *,uint64_t address);
 void web_movie_codec_reset(void);
 unsigned web_movie_live_extractors(void);
+int web_movie_decoder_import(Ctx *,const char *name);
+int web_movie_decoder_indirect(Ctx *,uint64_t address);
+void web_movie_decoder_reset(void);
+unsigned web_movie_live_decoders(void);
+void web_movie_notify(uint32_t owner,unsigned mask);
 #endif

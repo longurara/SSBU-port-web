@@ -11,4 +11,6 @@ WebMovieReply movie_sdk_probe_advance(void);
 WebMovieReply movie_sdk_probe_close(void);
 int movie_sdk_probe_finish(void);
 unsigned movie_sdk_probe_reader_calls(void);
+uint64_t movie_sdk_probe_extractor(void);
+uint64_t movie_sdk_probe_metadata(void);
 #endif

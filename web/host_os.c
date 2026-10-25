@@ -4,6 +4,7 @@
 #include "runtime.h"
 #include "host_font.h"
 #include "host_movie.h"
+#include "host_event.h"
 #ifdef WEB_FIBERS
 #include "host_fiber.h"
 #endif
@@ -130,6 +131,7 @@ static int audio_pump_locked(uint64_t now) {
 }
 void web_os_reset(void) {
     web_font_reset();
+    web_movie_codec_reset();
     web_movie_reset();
     // One fresh instance/ELF per worker run. Live workers must be stopped before reset.
     for (unsigned i = 0; i < 64; i++) { free(numberlines[i].bits); free(numberlines[i].run_len); }
@@ -184,6 +186,15 @@ static void release_event(HostEvent *event) {
     pthread_mutex_lock(&registry);
     if(!event->references){pthread_mutex_unlock(&registry);guest_trap("invalid event lease",event->key);}
     event->references--;pthread_mutex_unlock(&registry);
+}
+int web_os_try_signal_event(uint64_t key) {
+    HostEvent *event=NULL;
+    pthread_mutex_lock(&registry);
+    for(unsigned i=0;i<512;i++)if(events[i].used&&events[i].key==key){event=&events[i];event->references++;break;}
+    pthread_mutex_unlock(&registry);if(!event)return 0;
+    pthread_mutex_lock(&event->mutex);event->signaled=1;pthread_cond_broadcast(&event->changed);pthread_mutex_unlock(&event->mutex);
+    pthread_mutex_lock(&registry);pthread_cond_broadcast(&multiwait_cv);pthread_mutex_unlock(&registry);
+    release_event(event);return 1;
 }
 static void finalize_event(uint64_t key) {
     pthread_mutex_lock(&registry);HostEvent *event=NULL;
@@ -307,13 +318,8 @@ static uint64_t wait_event(HostEvent *event, int block, int timed, uint64_t ns) 
     if(rc&&rc!=ETIMEDOUT)guest_trap("event wait failed",key);
     return (uint64_t)ready;
 }
-#define MOVIE_VTABLE 0x7800000a00ULL
-#define MOVIE_FN_BASE 0x7500002000ULL
-
 int web_os_indirect(Ctx *c, uint64_t address) {
-    if (address >= MOVIE_FN_BASE && address < MOVIE_FN_BASE + 64 * 16 && !(address & 15)) {
-        c->x[0] = 0x4000u; return 1;
-    }
+    if(web_movie_codec_indirect(c,address))return 1;
     if (address < OPUS_FN_BASE || address >= OPUS_FN_BASE + 10 * 16 || (address & 15)) return 0;
     unsigned slot = (unsigned)((address - OPUS_FN_BASE) / 16);
     uint64_t self = c->x[0];
@@ -715,6 +721,7 @@ static int zlib_decompress(uint8_t *dst, size_t dst_cap, const uint8_t *src, siz
 int web_os_import(Ctx *c, const char *name) {
     if(web_font_import(c,name))return 1;
     if(web_movie_import(c,name))return 1;
+    if(web_movie_codec_import(c,name))return 1;
 #ifdef WEB_FIBERS
     if(web_fiber_import(c,name))return 1;
 #endif
@@ -1709,16 +1716,7 @@ int web_os_import(Ctx *c, const char *name) {
         c->x[0] = 0; return 1;
     }
     if (!strncmp(name, "_ZN5movie", 9) || !strncmp(name, "_ZNK5movie", 10)) {
-        if (!strcmp(name, "_ZN5movie9ExtractorC1ENS_13ContainerTypeE") ||
-            !strcmp(name, "_ZN5movie7DecoderC1ENS_11DecoderTypeENS_19DecoderOutputFormatENS_11DecoderModeEi")) {
-            for (unsigned i = 0; i < 64; i++) wr64(MOVIE_VTABLE + i * 8, MOVIE_FN_BASE + i * 16);
-            wr64(c->x[0], MOVIE_VTABLE); wr64(c->x[0] + 8, 0);
-            return 1;
-        }
-        if (!strcmp(name, "_ZNK5movie9MediaData9FindInt32EPKcPi") ||
-            !strcmp(name, "_ZNK5movie9MediaData9FindInt64EPKcPl") ||
-            !strcmp(name, "_ZNK5movie9MediaData10FindStringEPKcPS2_")) { c->x[0] = 0; return 1; }
-        c->x[0] = 0; return 1;
+        return 0;
     }
     if (!strcmp(name, "_ZN2nn4time13ClockSnapshotC1Ev")) {
         for (uint64_t off = 0; off < 0xd0; off += 8) wr64(c->x[0] + off, 0);

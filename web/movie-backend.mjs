@@ -109,7 +109,7 @@ export class MovieBackend {
         case MovieOp.CONFIGURE:{
           const t=track();if(!supported(t))unsupported(`Movie decoder codec is unsupported: ${t.codecId}`);
           if(time!==0&&time!==8)invalid('Unsupported movie input slot count');
-          const d={kind:'decoder',source:e,track:index,owner:flags,held:new Map(),nextOutput:1,eos:false,eosDelivered:false,decoder:null,
+          const d={kind:'decoder',source:e,track:index,trackInfo:t,owner:flags,held:new Map(),nextOutput:1,eos:false,eosDelivered:false,decoder:null,
             inputSlots:time,inputs:[],busyInputs:0,returnedInputs:0,pumping:false,draining:false,eosRequested:false};
           await this.configureDecoder(d,t);
           return {status:0,value:this.add(d)};
@@ -151,8 +151,7 @@ export class MovieBackend {
         case MovieOp.RELEASE:{if(index===0&&e.eosDelivered)return {status:0};const frame=e.held.get(index);if(!frame)invalid('Unknown movie output slot');e.held.delete(index);e.decoder.release(frame);return {status:0};}
         case MovieOp.RESET:{
           e.decoder.close();e.held.clear();e.eos=false;e.eosDelivered=false;e.eosRequested=false;e.draining=false;e.inputs=[];e.busyInputs=0;e.returnedInputs=0;
-          if(e.source.closed)invalid('Movie source was closed');
-          await this.configureDecoder(e,e.source.demux.tracks[e.track]);return {status:0};
+          await this.configureDecoder(e,e.trackInfo);return {status:0};
         }
         case MovieOp.DECODER_CLOSE:e.closed=true;e.decoder.close();e.held.clear();this.entries.delete(handle);return {status:0};
       }

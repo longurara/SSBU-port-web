@@ -70,6 +70,8 @@ assert.equal(full.closed,true);assert.equal(full.occupied,0);assert.equal(d.inpu
 assert.equal(d.held.size,0);assert.equal(d.busyInputs,0);
 await assert.rejects(()=>call(OP.RELEASE,decoder,{index:staleLease}),e=>e.status===ST.INVALID);
 assert.equal((await call(OP.ACQUIRE,decoder)).status,ST.NO_OUTPUT);
+await call(OP.CLOSE,source);await call(OP.RESET,decoder);
+await assert.rejects(()=>submit(0,56),e=>e.status===ST.INVALID);
 let finishDrain;const previous=d.decoder;
 previous.decoder.flush=()=>new Promise(resolve=>{finishDrain=resolve;});
 await call(OP.EOS,decoder);assert.equal(d.draining,true);
@@ -77,5 +79,5 @@ await call(OP.RESET,decoder);finishDrain();await previous.chain;await Promise.re
 assert.equal(d.eos,false);assert.equal(d.draining,false);
 const beforeClose=events.length;
 await call(OP.DECODER_CLOSE,decoder);d.decoder.onChange();assert.equal(events.length,beforeClose);
-await call(OP.CLOSE,source);assert.equal(backend.entries.size,0);await backend.close();
+assert.equal(backend.entries.size,0);await backend.close();
 console.log('PASS: eight SDK input slots, 48 retained outputs, nonblocking EOS drain, reset and stale notification suppression');

@@ -1,10 +1,12 @@
 import {WebGpuBackend,dispatchGpuRequest} from './gpu-backend.mjs';
 import {localFontInputs} from './font-input.mjs';
+import {MovieBackend} from './movie-backend.mjs';
 
 self.onmessage = async ({data}) => {
   let module;
   let device;
   let backend;
+  let movies;
   try {
     const fonts=localFontInputs(data.fonts,{required:data.boot===true});
     const runtimeModules={debug:'./runtime-debug.mjs',fibers:'./runtime-fibers.mjs',compact:'./runtime-debug-compact.mjs','fibers-compact':'./runtime-fibers-compact.mjs'};
@@ -25,7 +27,9 @@ self.onmessage = async ({data}) => {
     // Opt-in access for the local browser diagnostic harness. Never expose a
     // running backend in the normal game flow; clear the reference on shutdown.
     if(data.diagnosticFrames===true)self.__ssbuDiagnosticGpu=backend;
+    movies=new MovieBackend({notify:(owner,mask)=>module?._web_movie_notify(owner,mask)});
     module = await create({webgpuDevice:device,webgpuBackend:backend,
+      webmovieDispatch:request=>movies.dispatch(module,request).catch(failed),
       webgpuDispatch:request=>dispatchGpuRequest(module,request).catch(failed),onRuntimeReport:text => completed(JSON.parse(text))});
     // The local diagnostic harness can inspect exports and bounded guest data
     // directly, without heap-wide DevTools object queries on a large live Wasm.
@@ -114,5 +118,5 @@ self.onmessage = async ({data}) => {
       scope:'Runtime worker failure snapshot; a recorded draw packet does not prove GPU submission or game rendering'
     }});
   }
-  finally { delete self.__ssbuDiagnosticModule;delete self.__ssbuDiagnosticGpu;if(module){module.webgpuBridgeClosed=true;module.PThread.terminateAllThreads();}backend?.close();device?.destroy();self.close(); }
+  finally { delete self.__ssbuDiagnosticModule;delete self.__ssbuDiagnosticGpu;await movies?.close();if(module){module.webgpuBridgeClosed=true;module.PThread.terminateAllThreads();}backend?.close();device?.destroy();self.close(); }
 };
