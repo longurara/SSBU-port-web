@@ -1,3 +1,40 @@
+> **FONT BUILD ĐÃ PUBLISH VÀ GAME MỚI ĐANG LIVE — 25/10/2026.**
+> SHA030a73c0998b986bbb35819038f793a04b4da8ace9a71dd9b2f2327514d40fa5,
+> 282880087bytes/100199functions/maxlocals10812. Build xong15:38; hash/4GiB
+> shared max65536pages/Node306ctors đều pass đúngSHA. Không còn compiler chạy.
+> Coordinator57768 đã kết thúc thành công; after-build16372/browser-followup56984
+> đã hoàn tất quan sát và giữ nguyên game. KHÔNG rerun coordinator/observers/boot.
+> Sessionssbu-web đã boot bản font mới đúng1lần với7font local. Đã thấy logo loading,
+> sau đó canvas đen; CHƯA có menu, input tác động vào game hoặc match chơi được.
+> Checkpoint build/codex-font-game-checkpoint.json tại1648s:heap1332477952,
+> allocated1286712152/system1291745440,188126draws/8216presents,
+> snapshots118551created/156live. Đã vượt lỗi65536 cũ. Screenshot hiện tại:
+> output/playwright/codex-font-030a73c0-current.png (đen); không reload để chụp lại logo.
+> Actual font arena4267mappedpages, đọc được2SFNT thật (std8256glyphs/upem1024,
+> zh-cn28944glyphs/upem1024). Đây chưa phải bằng chứng live glyph/menu.
+> Evidence codex-font-live-arena-check.log; helper đã thêm boundedretry cho SFNT đầu.
+> Input A476s và Plus1074s: focus/visible=true, C buttons1/1024, phím đã thả;
+> không có bằng chứng menu phản hồi. Logs codex-font-game-press-{a,plus}.log.
+> Recent512presentation calls:6.43FPS, gap p50=144.14ms/p95=177.34ms;
+> present-call p50=1.755ms/p95=2.76ms. Có diagnostic overhead; không phải GPU timing,
+> không coi là FPS animation/gameplay hoặc quy nguyên nhân chỉ từ số này.
+> Thread helper mới codex-font-read-threads.cjs tự tìm unique array20730080,
+> ABI208/name76; read-only/unlocked snapshot, không dùng địa chỉ cũ. 25threads;
+> MOVIE_INIT/MoviePlayerThread đều finished1. Không kết luận active decoder treo.
+> GameMemory mới20114328, resource registry21376416; địa chỉ chỉ choSHA này.
+> Initial8UIsamples:1worldXYidentity lúc frame1243,7zero; late8samples sau frame6465
+> worldXY đều0, đủ560byte khớp C gm_read upload staging với GPU. Shaders trùng bản
+> đã phân tích. codex-font-{initial,upload}-uniform-analysis.json; raw
+> codex-font-upload-pass-probe-refreshed.json. Không sửa matrix/clock/fakeEOS.
+> Đã sửa diagnostic pool discovery cạn256attempt trước UIpool361: refresh bounded4096
+> sau khi đã tìm registry. Test latepool361 fail old/pass fixed;396a2cd đã push.
+> 8d1ae99 chỉ thêm copy JS diagnostic vào publication; Python syntax/hashcopy pass,
+> không đổi C/flags/Wasm hoặc rebuild. build_runtime.py source hash hiện khác receipt
+> cũ chỉ do bước copy này; KHÔNG rerun observer để so frozen inputs rồi boot lại.
+> Bản game hiện tại dùng probe đã refresh thủ công trước fix; đọc đủpool361,8uploads
+> đều equal. JS mới đã copy vào served folder cho lần dùng sau, không reload game.
+> Tiếp theo: giữ game, tìm guest producer/scene state làm UI worldXY0; font thật chưa
+> giải quyết màn hình đen. Mục tiêu vẫn menu thật/input có tác dụng/match hoàn chỉnh.
 > **Đã chuẩn bị đo present timing cho lần boot font mới (chưa có số đo).**
 > build/codex-font-present-timing.cjs bọc render.present, giữ tối đa512 bản ghi;
 > báo average present FPS, p50/p95 khoảng cách khung và thời gian gọi present.
