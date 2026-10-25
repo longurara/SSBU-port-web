@@ -1,3 +1,56 @@
+> **MỚI 25/10/2026 17:10 VN — ĐÃ TÌM ĐƯỢC NHÁNH UI BỊ COLLAPSE.**
+> Game030a73c0 vẫn live tại5516s/306ctors, ssbu-web; KHÔNG rebuild/reload.
+> Không sửa production C hoặc protected headers trong lượt này. Chưa menu/match.
+> Dữ liệu mới đổi hướng điều tra: matrix không hỏng đồng loạt. Actual pane set_bg
+> 0x804ab6a680 và các parent fade/RootPane có matrix112 identity, local72/76=1/1.
+> Nhánh 06_S0x801f74b900 ->pos_06_S0x802eb74880 ->scale0x802eb747a0 ->us0x802eb746c0
+> ->mask_root0x805013c1c0 ->inout_null0x802eb74500 ->RootPane0x802eb73d20.
+> RootPane local72/76=1/1 và matrix112 identity; inout_null local72/76=0/0,
+> matrixXY0. Các con kế thừaXY0; 06_S có local72/76=10.29/0. Pane flags vẫn visible.
+> Evidence build/codex-font-pane-chain.json/.log (read-only, parent+24/name176).
+> Không force identity/unhide/animation frame. Tìm vì sao sequence chưa kích hoạt in.
+>
+> Layout owner đã khôi phục từ stack thật:0x80059ea340, root+24=0x802eb73d20.
+> Intrusive animation list+8/+16 có4object:in804abceae0,press_any804abceb80,
+> out804abcecc0,insert_01804abcec20. Hai lượt đọc vẫn frame32=0/speed60=0 cho cả4;
+> applyEnabled36 chỉ insert_01=1. Resource pai1 hợp lệ, frameCount193/120/1/183.
+> Fields được xác nhận từ lifted f00410a0(frame+=speed*delta),f003e230/f003f070
+> (enabled36),f003e210(resource+24,frameCount+8); tên88 từ f37a04b0.
+> codex-font-layout-anims{,-first}.json/.log. Tên gợi ý title/press-any, chưa chốt
+> sequence cụ thể hoặc nguyên nhân animation chưa chạy. Focus web=1 giống native;
+> chưa có bằng chứng focus notification hay movie là nguyên nhân, không tự sửa giả.
+>
+> Truy nguồn mới không cần boot lại: Ctx ABI840/flags768/TLS784/fn816 được emcc
+> static_assert (build/codex-font-ctx-abi.c/.o). Bounded scan32MiB+64KiB/pthread
+> tìm30contexts, main20707944, UI fiber16155184/TLS7800040000(TaskWorker2).
+> ShaderUI GPUprogram7812 được chọn bằng full Maxwell control/data equality với
+> capture15/25. Op20 C program snapshot chỉ được gọi từ BindProgram. Actual caller
+> f00324a0 tail-dispatch qua x3! Vì vậy sampler chỉ x8..x17 trước đó không đủ.
+> Probe codex-font-install-ui-record-contexts.cjs dùng x0..x30, actual LR0047858,
+> stack004493c ->0060640 ->00594ac ->recursive0059530 ->379c0bc ->004b6e8
+> ->37857a0 ->374d328. Captures codex-font-ui-record-contexts{,-stack,-panes}.json.
+> Captured guest stack page một lần dưới map_lock để tránh busy nhiều lần.
+> Pane pointer khôi phục ở child f0044900 saved parent x20 tại FP-16; caller
+> f00604b0 đặt x20=this. Layout khôi phục ở root f0059450 saved parent x21 FP-24;
+> caller f004b6a0 đặt x21=thisLayout, root+24. Tất cả probe wrappers đã close.
+> backend.perform đã restore prototype sau upload-cache/context probes; game giữ nguyên.
+>
+> NVN registry static21114224 có517name128-byte, anchored actual QueueSubmit slot58.
+> BindProgram379/0x7a00017b00;BindUniformBuffer382;BindUniformBuffers383;
+> UpdateUniformBuffer452;CBFenceSync467. Registration không chứng minh invocation.
+> Actual guest proc slots:QueueSubmit710593fab0,UpdateUniform7105940700.
+> 560-byte uploads phát sinh cả từ draw_range lúc submit, không chỉ NVNFlush;
+> transfer-argument probe không match đã bỏ. QueueSubmit context main LR37f0b40
+> và FP chain384f51c/37495cc/02c5cf0 đã ghi, chưa phải matrix producer.
+>
+> Hướng tiếp cụ thể: unique main.elf string insert_01 ởrelative43ce3b5
+> (=guest71043ce3b5), xref7101865e30/34 trong f_7101865650(runtime_c0208.c).
+> Hàm này có alloc/init/lookup animation, không mặc định coi là per-frame updater.
+> press_any string offsets42d59a6/437b456/4453979. Raw locations
+> codex-font-title-string-locations.json. Tìm sequence/controller StartAnimation(in),
+> các điều kiện readiness/input/movie quanh constructor/caller; giữ chứng cứ actual.
+> Nguồn có fallback UpdateUniformBuffer immediate và CBFenceSync immediate đáng audit,
+> nhưng chưa chứng minh chúng được gọi ở nhánh lỗi này; không coi là root cause.
 > **FONT BUILD ĐÃ PUBLISH VÀ GAME MỚI ĐANG LIVE — 25/10/2026.**
 > SHA030a73c0998b986bbb35819038f793a04b4da8ace9a71dd9b2f2327514d40fa5,
 > 282880087bytes/100199functions/maxlocals10812. Build xong15:38; hash/4GiB
