@@ -1,3 +1,42 @@
+> **25/10/2026 — FULL BUILD XONG, GAME THẬT ĐÃ GIẢI MÃ HẾT VIDEO; CÒN KẸT AUDIO CLOCK.**
+> Bản mới: SHA 5c88f7a92ccc717481213c2de4b282344f7470890828efb231142fcbcda32e57,
+> 282924589 bytes / 100259 functions / maxLocals10812, publish 13:49:08Z.
+> Build PID61344/wasm-opt22848 đã kết thúc, log Linked runtime-fibers-compact.mjs;
+> state build/codex-movie-dc49f05-build-state.json đã cập nhật complete. KHÔNG restart.
+> Game mới đang chạy session ssbu-web, URL runtime=fibers-compact&diagnosticFrames=1,
+> 306 ctors/33 workers. Khi chuyển bản, page cũ đã about:blank/0 worker; boot đúng một lần.
+> Source JS/receipt/Wasm hash kiểm tra khớp. Chưa có menu/input hiệu lực/match.
+> Movie thật hash40 0x1dcc80344b, 108813844 bytes, duration129799000us, VP9 1280x720
+> +2 Vorbis48k stereo. Entry data.arc offset1689801320 (khớp manifest streams).
+> Actual backend: Extractor2/Decoder3, video track0 selected, 3890 packets submitted,
+> 3891 output acquired/released gồm EOS thật=1, 1945 COPY, source EOFtrue, không còn
+> video input/frame/held/reservation. Audio SelectTrack trả unsupported1006.
+> Player lần này CÒN SỐNG, không bị placeholder xóa như bản030a; vẫn đen sau video.
+> Root sequence0x80545a3900 state2/callback1865010; chain +232→0x804abcf1c0,
+> +128→0x805013c580,+248→0x80051f7310,+8→0x805013c6c0,+232→player0x802eb75ca0.
+> Component state216=3/callback3398860. Readiness vtable+120=f36e26c0.
+> Root cause đã đọc đúng chain: global7105339028→manager80051e0030,+8→state8004e80000,
+> +0→session8049630000. Session+88→video holder804faeb5d0,+0→video8048845680,
+> video+168=129733000us; session+104→audio holder804faeb600,+0→audio80487f5480,
+> audio+264=0. f36e26c0 ưu tiên audio pointer không-null và trả clock0 này, nên title
+> gate không mở dù video đã EOF/EOS. Không sửa pointer/clock/flags/animation để ép qua.
+> A và Plus thật đã giữ qua10 presents, shared Npad bits1/1024 đúng, chưa thấy chuyển cảnh.
+> Screenshot output/playwright/codex-movie-5c88-live.png đen. Preserve runtime hiện tại.
+> BROWSER VORBIS ĐÃ THỬ THẬT: AudioDecoder.isConfigSupported({codec:'vorbis',rate48000,
+> channels2,description:actualCodecPrivate4344bytes}) supported=true. Probe riêng trên
+> Blob của game, không đổi backend/guest: 256 packet →255 PCM s16 interleaved blocks,
+> 163 block có tín hiệu, không lỗi; first packet priming không có output. First audible
+> block t1953333us/hash ea5a6b25, last t5222666/hash6f85525a. AudioData f32-planar được
+> copyTo({format:'s16',planeIndex:0}) thành PCM thật; không tạo PCM im lặng giả.
+> Evidence build/codex-movie-{after-a,title-gate,player,clock,audio-decode-256}.json/.log;
+> guest reader signature unique ở20118696; helper build/codex-install-live-guest-reader.cjs.
+> Diagnostic worker có self.__ssbuDiagnosticMovies; trace self.__ssbuMovieTrace giữ64
+> control results và aggregate counts, không đổi kết quả request. Helpers ignored:
+> codex-movie-install-trace.cjs, codex-movie-poll.cjs, codex-movie-read-clock.cjs.
+> TIẾP: implement Vorbis AudioDecoder/PCM adapter, đa-track Extractor và SDK audio
+> Configure/format/64 output slots/events. Browser/SDK fixture real audio+video trước
+> full rebuild --fibers --compact-codegen --jobs8. H264 còn unsupported. Goal ACTIVE.
+>
 > **Cập nhật 25/10/2026: Decoder SDK và sự kiện đã qua video thật; source đã nối runtime.**
 > host_movie_decoder.c mới có ctor/vtable 0..18, 8 input allocation qua guest
 > allocator, 48 output lease, NV12 metadata/copy và Stop/Reset/Flush/Start/EOS.

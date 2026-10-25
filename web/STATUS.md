@@ -1,3 +1,17 @@
+> **25/10/2026: build5c88 xong; actual game video EOF/EOS được, kẹt audio clock0.**
+> SHA5c88f7a92ccc717481213c2de4b282344f7470890828efb231142fcbcda32e57; 282924589bytes,
+> 100259functions/maxLocals10812. Build PID61344/wasm-opt22848 đã kết thúc, không restart.
+> Game mới session ssbu-web/306ctors/33workers đang chạy; KHÔNG reload. Chưa menu/match.
+> Actual opening hash0x1dcc80344b,108813844bytes,129.799s,VP9+2Vorbis. Video3890 packets,
+> 3891 output acquire/release gồm EOS thật1, COPY1945, không còn held/queued video.
+> Player còn sống; title root80545a3900 vẫn state2/callback1865010. f36e26c0 chọn
+> audio không-null: audio80487f5480+264=0, trong khi video8048845680+168=129733000us.
+> Vì Vorbis unsupported, audio clock không tiến, gate không mở. Không ép clock/pointer.
+> AudioDecoder browser hỗ trợ Vorbis với actual private4344bytes. Probe256 packet thật
+> →255 PCM s16 blocks/163 có tín hiệu, không lỗi. Evidence codex-movie-audio-decode-256.json.
+> Tiếp real Vorbis decode + đa-track Extractor + SDK audio/events, fixture trước rebuild.
+> web/HANDOFF.md và web/MOVIE.md có địa chỉ/evidence chi tiết. Goal ACTIVE.
+>
 > **25/10/2026: SDK Decoder + OS events đã qua 240 frame thật; đã nối source vào runtime.**
 > host_movie_decoder.c triển khai vtable 0..18, guest input allocations/output
 > lease/NV12/Stop/Reset/Flush/EOS; JS notify dùng key OS event và owner ID tăng dần.

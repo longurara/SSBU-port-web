@@ -1,10 +1,46 @@
 # Browser movie adapter
 
-The currently running game Wasm predates the movie adapter. Source now routes
+The currently running game Wasm includes the movie adapter (SHA
+`5c88f7a92ccc717481213c2de4b282344f7470890828efb231142fcbcda32e57`). Source routes
 Buffer, MediaData, SDK Extractor and Decoder virtual calls through `host_os.c`.
 The full build and runtime worker include the real WebM/WebCodecs bridge.
-The production SDK path has passed real-video browser fixtures; a new game
-build and boot are required before claiming that the title is unblocked.
+The production SDK path has passed real-video browser fixtures and actual game
+video playback through natural EOF/EOS. The title is still blocked by its audio
+clock: Vorbis decoding and SDK audio support remain unimplemented.
+
+## Actual game result after the integrated build
+
+The build finished at 2026-10-25T13:49:08Z with 100259 functions, 282924589 bytes
+and maximum 10812 locals. The game booted with 306 constructors and 33 workers.
+Its actual movie is hash40 `0x1dcc80344b`, 108813844 bytes at data.arc offset
+1689801320, duration 129.799 seconds, VP9 1280x720 plus two Vorbis stereo tracks.
+This differs from the earlier 419-second opening candidate; the new capture
+identifies the movie actually used by this boot.
+
+The real game submitted 3890 compressed video packets, acquired/released 3891
+outputs including exactly one natural EOS, and copied 1945 decoded frames.
+The remaining frames were consumed/released by the game's playback logic.
+No video input, frame, output lease or reservation remained after EOS. The
+movie player now survives; the old failing placeholder had deleted it.
+The canvas remains black, and real A/Plus presses have not changed the scene.
+
+The outer title sequence remains in state2 at `0x80545a3900`. Its readiness
+method `f_71036e26c0` checks the global movie manager, then returns the audio
+clock when an audio object exists. Actual audio object `0x80487f5480 + 264`
+is zero, while actual video object `0x8048845680 + 168` is 129733000 us.
+Thus completing video alone does not satisfy this game's title gate. Evidence:
+`build/codex-movie-title-gate.json`, `codex-movie-clock.json`, and
+`codex-movie-after-a.json`. Do not force that clock, pointer or readiness result.
+
+A separate read-only probe on the active movie's real audio track confirmed
+browser AudioDecoder support for `vorbis`, with the actual 4344-byte Xiph
+CodecPrivate, 48000 Hz and two channels. It decoded 256 packets to 255 real
+interleaved s16 PCM blocks; 163 contained nonzero audio. The first Vorbis packet
+primes the decoder and produces no PCM. AudioData.copyTo supports conversion
+from the browser's f32-planar output to s16. The first nonzero block is at
+1953333 us, hash `ea5a6b25`; last is 5222666 us, hash `6f85525a`.
+Report: `build/codex-movie-audio-decode-256.json`. This is not SDK audio support
+yet; the next implementation must carry these real samples through the SDK.
 
 ## Implemented and checked
 
@@ -224,9 +260,11 @@ the previously verified bridge directly. The original game remains intact.
 
 ## Integration remaining
 
-1. Build the integrated runtime with `--fibers --compact-codegen --jobs 8`,
-   keeping `-sBINARYEN_EXTRA_PASSES=--optimize-level=1` and normal validation.
-   Then boot and capture the real movie path and title readiness transition.
+1. Implement real Vorbis AudioDecoder/PCM output, multi-selected video/audio
+   extraction, and SDK audio configuration, format, events and 64 output slots.
+   Preserve actual Vorbis priming and decoder-derived PCM timestamps. Test
+   real audio/video through the SDK before another full build. Then build with
+   `--fibers --compact-codegen --jobs 8`, preserving optimize-level1/validation.
 2. Verify nonzero seek followed by SDK Flush/Start on real media. Backend seek
    and reset have separate tests; their combined game sequence is unproven.
    The SDK Extractor's concurrent destruction remains untested.
