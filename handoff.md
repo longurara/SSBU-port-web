@@ -1,3 +1,34 @@
+> **MỚI 25/10/2026 — SDK EXTRACTOR ĐÃ ĐỌC REAL VIDEO QUA GUEST CALLBACK.**
+> Source host_movie_codec.c mới: ExtractorC1/C2, vtable7800000a00/functionbase
+> 7500003000, SourceReader/Path/Memory, Count/Config/Select/Unselect/Seek,
+> Peek/Read/Advance/Time/MetaData/BufferedRange vàD0/D1. ChưaDecoderSDK!
+> CHƯA routecodec vàohost_os.c,fullbuildsources hoặc runtime-worker. Game030a
+> giữnguyên. Khôngfullbuild/reload, protectedheaders khôngsửa.
+> ReaderABI từnnmovie_mf.c:vt+16Open(reader,path,outHandle),+24ReadAt(reader,
+> handle,offset,guestBuf,size),+32Close,+40GetSize. Gm scratchqua guestallocator,
+> callbackCtxfullrestore. Partialreadloop, bounds512MiB/chunk1MiB; release
+> handle+scratchTRƯỚCJSmetadataOpen nhưnative. GUEST_DELETE710392e590 chỉcho
+> deletingwrapperdtor, khôngnhầmvớifreecallbackmoviebuffers. Perinstancegate/
+> refcount/remove-before-wait teardown; concurrentdestroy chưafixturetest.
+> host_movie.c/.h mởtypedmetadata/guestalloc/call5 helpers; valuesfixture2820PASS.
+> New SDKfixture: build_movie_bridge_probe.py --sdk-extractor;
+> test_movie_video.py --movie <localfile> --sdk-extractor [--excerpt-eof].
+> Tệp90.670s thật80762819bytes qua467ClientReadercallbacks,134topchecksPASS,
+> 12frameVP9hash+timekhớpdirectdecode; EOS0/EOFfalse, handle/pending0.
+> Report codex-movie-sdk-extractor-real.json. Fake-readerfixture lấyFILEthật,
+> cốýpartialReadAt173123byte vàGetSize trả0x123 đểkiểmtraSDKignoreresult,
+> khôngreturnhostpointerchohandle/guestbuffer. Đâyfixturekhôngphảibootgame.
+> SDKexcerptfixture136checksPASS/reader2/EOFtrue/EOS1/12frame, giữnguyên
+> packetpayload từsource; metadata/sampleinfo/bufferedrange/SDKSeek0 vàdtor/
+> liveextractor/valueallocation0 đềuđượccheck. SourcePath/Memory+nonzeroSDKseek
+> chưafixturecover; Decodercủafixture vẫnprotocolbridgeC→JS, chưaSDKslots/events.
+> Report codex-movie-sdk-extractor-eof.json. C11 -Wall -Wextra syntaxPASScorecodec.
+> TIẾP:SDKDecoderctor/vtableConfigure→backendhandle, slotinput/outputlifetime,
+> events+notify vớiCregistrygeneration, guestmemorycopy/frameformat, Stop/Reset/
+> Flush/EOS/destroy. SauproductionSDKfixturemớirouteOS+runtimeworker vàfullbuild
+> --fibers --compact-codegen --jobs8. Vorbis/H264 vẫnchưa, khôngfakeEOS/readiness.
+> Chưa menu/inputhiệulực/match; goalactive. Chi tiết web/MOVIE.md.
+>
 > **MỚI 25/10/2026 — C PTHREAD ↔ JS MOVIE BRIDGE ĐÃ QUA REAL VIDEO.**
 > web/movie-backend.mjs: serializedWebM source/track/peek/read/advance/seek,
 > realVP9decode/output acquire/copy/release/reset/drain/EOS. Seekdùngkeyframe

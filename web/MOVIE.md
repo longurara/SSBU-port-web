@@ -2,9 +2,9 @@
 
 The current game build still uses the failing movie placeholder in `host_os.c`.
 The JavaScript modules below are working decoder components. The source now
-also implements Buffer and MediaData imports, but the Extractor/Decoder adapter
-has not been connected to the game's SDK virtual calls. A C/JS bridge now works
-in a separate browser fixture. These components do not yet unblock the title.
+also implements Buffer, MediaData, and SDK Extractor virtual calls. Decoder SDK
+virtual calls and the runtime wiring remain unfinished. A C/JS bridge and the
+Extractor work in separate browser fixtures. These do not yet unblock the title.
 
 ## Implemented and checked
 
@@ -48,6 +48,21 @@ headers are validated before consuming outputs. This adapter uses
 with `host_gpu_bridge.c`. It is not yet added to the full runtime source list;
 that belongs with the upcoming SDK Extractor/Decoder integration.
 
+`host_movie_codec.c` implements SDK Extractor constructors and virtual methods:
+client reader/path/memory sources, track configuration/selection, sample
+peek/read/advance/time/metadata, seek and buffered range, and both destructor
+forms. ClientStreamReader calls use real guest scratch storage and preserve
+the full guest context. Partial reads are accumulated; handles and scratch are
+released before metadata parsing. Metadata links carry the backend extractor
+handle and track index for the upcoming Decoder configuration.
+
+Instances serialize operations with a gate, and destruction removes the object
+from lookup before waiting for in-flight references. This lifetime mechanism
+still needs a concurrent SDK destruction test. Deleting destructors use the
+same version-pinned guest delete function as the native adapter; movie buffers
+and wrapper objects have different allocators. The codec adapter is not yet
+routed through `host_os.c`, linked by the full build, or wired to runtime-worker.
+
 Validation on 25 October 2026:
 
 - Unit checks: lacing byte layouts, timestamps, BlockGroup references, unknown
@@ -57,13 +72,13 @@ Validation on 25 October 2026:
 - One complete 90.670 s file: 5,440 video samples read to actual EOF, from
   3,000 to 90,653,000 microseconds.
 - Real Chrome: twelve frames from that file decoded, with sample/output
-  timestamps equal; each 1280×720 NV12 frame contains 1,382,400 bytes.
+  timestamps equal; each 1280Ã—720 NV12 frame contains 1,382,400 bytes.
 - Real Chrome: twelve frames also decoded from the 419.855 s, three-track
   opening candidate, archive hash40 `0x20e266a6d8`. This matches the duration
   described in the native adapter, but its role in this boot is not proven by
   a captured file-open path. Media SHA256:
   `0fcd53c42de14577b81f8b9934a332da811b7e52f2ea3d772192d9a40d312976`.
-- Actual production C imports in a small Wasm fixture: 2,819 checks of raw SDK
+- Actual production C imports in a small Wasm fixture: 2,820 checks of raw SDK
   offsets, numeric metadata conversions, guest string lifetimes, owning and
   borrowed copies, assignment/swap/destruction, allocation failure, allocator
   replacement, callback reentry and context preservation, with two concurrent
@@ -72,7 +87,7 @@ Validation on 25 October 2026:
   MediaData calls routed through `web_os_import`. Strict runtime C11 syntax
   check of `host_movie.c` passes with `-Wall -Wextra`.
 - Real C pthread bridge: twelve frames of the 419.855 s opening candidate
-  cross C → JS demux/decoder → C NV12 output. All twelve timestamps and hashes
+  cross C â†’ JS demux/decoder â†’ C NV12 output. All twelve timestamps and hashes
   match direct browser decoding. 382 checks pass, with zero live handles or
   pending completions. An early EOS request is rejected; no EOS is delivered.
 - Actual finite test container: a test-only muxer wraps twelve unchanged real
@@ -81,12 +96,25 @@ Validation on 25 October 2026:
   This is a protocol fixture, never a shortened game input or a game skip.
 - Backend checks cover serialization, selection, keyframe seeking, EOF, handle
   lifetime, and error completion without modifying invalid staging buffers.
+- Production SDK Extractor: an actual 80,762,819-byte movie is read through 467
+  ClientStreamReader callbacks into guest memory, including partial reads.
+  Twelve resulting VP9 packets decode to exactly the same timestamps and NV12
+  hashes as direct decoding. The fixture validates metadata links, callback
+  context, short/repeated buffer-read failures, and destructor ownership, and
+  ends with zero live extractor/value allocations and zero backend handles.
+- SDK Extractor finite-container fixture: actual EOF and one EOS after twelve
+  unchanged real packets, plus sample metadata, buffered range and SDK seek to
+  zero. Decoder calls still use the bridge protocol directly, not the pending
+  SDK Decoder implementation. Path/memory sources and nonzero SDK seek need
+  additional fixture coverage before claiming all Extractor methods verified.
 
 Local evidence is under ignored `build/`: `codex-movie-webm-metadata.json`,
 `codex-real-movie-browser-probe.json`, and
 `codex-opening-candidate-browser-decode.json`. No media is committed.
 Bridge evidence: `codex-movie-bridge-opening.json` and
 `codex-movie-bridge-excerpt-eof.json`.
+SDK Extractor evidence: `codex-movie-sdk-extractor-real.json` and
+`codex-movie-sdk-extractor-eof.json`.
 
 ## Run the checks
 
@@ -99,6 +127,9 @@ node web/test_movie_backend.mjs
 python web/build_movie_bridge_probe.py
 python web/test_movie_video.py --movie C:/path/to/local.webm --bridge
 python web/test_movie_video.py --movie C:/path/to/local.webm --bridge --excerpt-eof
+python web/build_movie_bridge_probe.py --sdk-extractor
+python web/test_movie_video.py --movie C:/path/to/local.webm --sdk-extractor
+python web/test_movie_video.py --movie C:/path/to/local.webm --sdk-extractor --excerpt-eof
 ```
 
 The browser check uses an existing Playwright CLI session `ssbu-web` and the
@@ -116,11 +147,16 @@ JavaScript modules, preserving the game's Wasm and worker script. Reports go
 to `build/movie-bridge-probe/`. `--excerpt-eof` constructs its finite test
 container in memory and records its separate hash. It does not change the
 source file. The worker terminates its pthread pool before returning results.
+The SDK mode publishes its fixture under `movie-sdk-extractor-probe` and saves
+reports under `build/movie-sdk-extractor-probe/`. It exercises actual SDK
+Extractor virtual calls and guest-memory callbacks; its decoder still uses
+the previously verified bridge directly. The original game remains intact.
 
 ## Integration remaining
 
-1. Replace the blanket movie failure handling with an SDK adapter. Preserve
-   guest callbacks, allocator ownership, thread context, and real reader data.
+1. Complete SDK Decoder virtual calls and route the codec adapter ahead of the
+   blanket failure placeholder. Preserve guest callbacks, allocator ownership,
+   thread context, and real reader data.
    Use `runtime/nnmovie_mf.c` for the source-verified SDK protocol, rather than
    treating the native placeholder's failure as a successful movie skip.
 2. Connect the existing value objects to the new codec adapter. The corrected
