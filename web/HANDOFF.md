@@ -1,3 +1,13 @@
+> **26/10/2026 — BUILD GROUP CALLBACK65a0 ĐANG CHẠY, KHÔNG RESTART.**
+> Code4338f4e thêm observed target71023265a0. Graph70351(+70), đủ19hàm từ
+> actual relocation group71050b6a78, ctors306/callback missing0 đã xác minh.
+> Full build PID64564 bắt đầu2026-10-25T20:17:21.9782289Z, --fibers --compact-codegen --jobs8.
+> Log/state build/codex-title-4338f4e-build{,.err}.log / -state.json.
+> Build trước e2360f4 đã complete349e; phiên349e đã terminal ở65a0 sau A trên title.
+> Giữ evidence349e, không reboot bản cũ/không nhầm pid56760/65988 là build hiện tại.
+> TIẾP: chờ build4338f4e thành công, xác minh served WASM/receipt/source,
+> boot mới1lần và thử menu/CPU match. Goal chưa đạt.
+
 > **26/10/2026 — BOOT349e VÀO TITLE ĐƯỢC; THIẾU CALLBACK TIẾP71023265a0.**
 > Boot349e giữ nguyên, loading logo hiện ở302s. Movie mở/VP9+Vorbis configure ở~465s,
 > còn chờ Start đến~800s; poll zero queues trước đó không chứng minh decoder treo.
