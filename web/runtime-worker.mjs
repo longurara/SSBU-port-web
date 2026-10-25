@@ -28,6 +28,7 @@ self.onmessage = async ({data}) => {
     // running backend in the normal game flow; clear the reference on shutdown.
     if(data.diagnosticFrames===true)self.__ssbuDiagnosticGpu=backend;
     movies=new MovieBackend({notify:(owner,mask)=>module?._web_movie_notify(owner,mask)});
+    if(data.diagnosticFrames===true)self.__ssbuDiagnosticMovies=movies;
     module = await create({webgpuDevice:device,webgpuBackend:backend,
       webmovieDispatch:request=>movies.dispatch(module,request).catch(failed),
       webgpuDispatch:request=>dispatchGpuRequest(module,request).catch(failed),onRuntimeReport:text => completed(JSON.parse(text))});
@@ -118,5 +119,5 @@ self.onmessage = async ({data}) => {
       scope:'Runtime worker failure snapshot; a recorded draw packet does not prove GPU submission or game rendering'
     }});
   }
-  finally { delete self.__ssbuDiagnosticModule;delete self.__ssbuDiagnosticGpu;await movies?.close();if(module){module.webgpuBridgeClosed=true;module.PThread.terminateAllThreads();}backend?.close();device?.destroy();self.close(); }
+  finally { delete self.__ssbuDiagnosticModule;delete self.__ssbuDiagnosticGpu;delete self.__ssbuDiagnosticMovies;await movies?.close();if(module){module.webgpuBridgeClosed=true;module.PThread.terminateAllThreads();}backend?.close();device?.destroy();self.close(); }
 };
