@@ -1,3 +1,28 @@
+> **MỚI 25/10/2026 — ĐÃ CÓ GIẢI MÃ VP9 THẬT TRÊN BROWSER, CHƯA NỐI GAME.**
+> web/movie-webm.mjs + movie-video.mjs đọc WebM và giải mã WebCodecs thật,
+> copy I420/NV12 thành SDK NV12. Không fake sample/frame/EOS. Chưa import vào
+> runtime-worker hoặc thay C movie stub; game030a73c0 vẫn ở title gate cũ.
+> node web/test_movie_webm.mjs PASS (lacing/timestamps/bounds/NV12 odd sizes).
+> Đã đọc metadata+firstvideo của toàn bộ128 WebM archive, không lỗi;
+> VP9 +Vorbis, VP9CodecPrivate0. Manifest codex-movie-webm-metadata.json.
+> Một file90.670s được demux hết5440frame tớiEOF thực, first3000/last90653000us.
+> Browser thật decode12frame1280x720, timestamps khớp, NV12=1382400byte/frame.
+> Đã lặp lại với opening candidate419.855s/3tracks/hash40=20e266a6d8,12framePASS;
+> chưa xác nhận candidate bằng captured movie file-open của boot này.
+> MediaSHA0fcd53c42de14577b81f8b9934a332da811b7e52f2ea3d772192d9a40d312976.
+> Repro: python web/test_movie_video.py --movie <localfile> [--offset N --length N].
+> Probe mở/đóng tab phụ, inputFile local, không đưa media lên served directory.
+> Nó copy chỉ2newJS vào build/web-poc, không reload/rebuild/boot game.
+> browser reports build/movie-video-probe/report.json và
+> codex-opening-candidate-browser-decode.json. Media giữignored.
+> Heartbeat sau probe:7418s,33workers,306ctors,SHA030a...,donefalse.
+> Chi tiết protocol/giới hạn/bước nối C: web/MOVIE.md. Tiếp theo làm SDK adapter
+> +Buffer ABI/MediaData/guest allocator+callbacks/events+worker bridge, fixture
+> production imports với real video trước fullbuild. Chưa audioVorbis/rawH264/MP4.
+> Node openAsBlob(data.arc>4GiB) báosize sai trên máy này; QA đọc archive dùng
+> FileHandle.read với offset64-bit, browserFile.slice thực không gặp lỗi đó.
+> Chưa menu hoặc match; goal vẫn active.
+>
 > **MỚI 25/10/2026 17:28 VN — TITLE ĐANG CHỜ MOVIE OBJECT ĐÃ BỊ DỌN, KHÔNG PHẢI CHỜ BUILD.**
 > Actual runtime030a73c0/ssbu-web giữ nguyên, không reload/rebuild/ghi guest state.
 > Đã xác nhận layout thật bằng resource string tạiLayout+48: title+us_en,
