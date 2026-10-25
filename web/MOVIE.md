@@ -20,6 +20,15 @@ I420/NV12 frames into the SDK's tightly packed NV12 layout. The decoder has a
 bounded output queue, reports unsupported formats/errors, and closes frames
 after copying. It does not synthesize video frames or end-of-stream events.
 
+Output capacity is now reserved before decode and remains occupied through
+the caller's output lease. WebCodecs `decodeQueueSize` alone is insufficient:
+it can reach zero before delayed output callbacks. VP8/VP9 header parsing
+counts visible frames, including hidden VP9 reference frames, show-existing
+frames and indexed superframes. VP9 superframes are split into individual
+coded frames before WebCodecs submission. A real browser test found that
+submitting three coded frames with two visible outputs as one chunk produced
+only the final image; splitting preserves both original frame hashes.
+
 `host_movie.c` implements Buffer's actual SDK layout and common MediaData
 imports. Owned data uses registered guest allocator callbacks; callback context
 is preserved and no registry lock is held across guest callbacks. Allocations
@@ -39,6 +48,26 @@ sample, and seeking starts at a real preceding keyframe. Decoded outputs remain
 owned until release, including after source closure. Unsupported audio is
 reported explicitly. SDK event notification currently reaches a fixture
 callback; the game's event objects are not connected yet.
+
+`CONFIGURE time=8` enables the SDK's eight indexed input slots. Submitted
+packets are copied into a bounded queue and the slot is returned by the new
+`INPUT_AVAILABLE` bitmask operation only after the codec accepts its data.
+`STATUS` reports asynchronous decoder failures. Output capacity is 48 including
+held leases. Releasing an output pumps pending inputs. Queued EOS starts its
+codec drain outside the serialized request chain, allowing output releases
+while inputs wait for capacity. EOS is still accepted only at actual extractor
+EOF and emitted only after decoding finishes and visible outputs are acquired.
+SDK Stop/Flush must use `RESET`, rather than the direct probe's codec drain.
+Reset drops pending input/leases; old decoder callbacks/drains cannot notify
+the replacement decoder. `CONFIGURE time=0` retains the direct bridge protocol.
+
+The production JS backend passed 240 unchanged real VP9 packets in a finite
+test container: eight inputs waiting, 48 held outputs, 240 decoded frames,
+one natural EOS, and zero handles/reservations after cleanup. All 240 hashes
+and timestamps match direct decoding of the original file. Direct decoding
+also filled its 16-frame capacity and resumed under backpressure. Reports:
+`build/codex-movie-direct-240.json` and `build/codex-movie-queue-240.json`.
+These remain separate fixtures; the C SDK Decoder and game are not wired yet.
 
 `host_movie_bridge.c/.h` transfers bounded staging buffers from a C pthread to
 the JavaScript worker, then completes the waiting pthread with an SDK status.
@@ -120,7 +149,11 @@ SDK Extractor evidence: `codex-movie-sdk-extractor-real.json` and
 
 ```powershell
 node web/test_movie_webm.mjs
+node web/test_movie_video.mjs
+node web/test_movie_backend_queue.mjs
 python web/test_movie_video.py --movie C:/path/to/local.webm
+python web/test_movie_video.py --movie C:/path/to/local.webm --frames 240
+python web/test_movie_video.py --movie C:/path/to/local.webm --frames 240 --queued-excerpt
 python web/build_movie_values_probe.py
 python web/build_os_probe.py
 node web/test_movie_backend.mjs
@@ -135,11 +168,19 @@ python web/test_movie_video.py --movie C:/path/to/local.webm --sdk-extractor --e
 The browser check uses an existing Playwright CLI session `ssbu-web` and the
 existing server on port 8787. It opens and closes a temporary page, selects the
 local file with a file input, and keeps the game page intact. It publishes only
-the two new JavaScript modules into `build/web-poc`; it does not rebuild, boot,
+the movie JavaScript modules into `build/web-poc`; it does not rebuild, boot,
 or reload the game. Override `--session` or `--port` as needed. For a movie
 inside an archive, pass `--offset` and `--length`. The report hashes that exact
-byte range, validates twelve frames and timestamps, and saves under
+byte range, validates decoded frames and timestamps, and saves under
 `build/movie-video-probe/`.
+
+`--frames` defaults to twelve packets and supports up to 3000. Direct probes
+also regroup the first two VP9 packets' unchanged coded frames into a legal
+superframe and compare its output hashes against the original frames.
+`--queued-excerpt` uses a finite test container of the selected packet count,
+exercises the production JS backend's SDK queue protocol, and saves under
+`build/movie-queue-probe/`. Counts of at least 64 must fill all eight queued
+inputs and 48 output leases. This container is never used by the game.
 
 The bridge mode uses a temporary worker and C pthread fixture. It publishes
 only fixture files under `build/web-poc/movie-bridge-probe` plus the new movie

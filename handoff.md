@@ -1,3 +1,25 @@
+> **Cập nhật 25/10/2026: hàng đợi Decoder JS đã qua 240 khung hình thật.**
+> Đã giữ chỗ output trước decode và trong suốt thời gian giữ lease; không dùng
+> decodeQueueSize để suy ra số output còn chờ. Đọc header VP8/VP9 để đếm frame
+> hiển thị, hidden reference, show-existing và superframe. Tách superframe thành
+> từng coded frame trước WebCodecs: browser thử nghiệm làm mất một ảnh nếu gửi
+> chung packet có hai output; sau sửa cả hai hash khớp ảnh gốc.
+> Backend CONFIGURE time=8 bật 8 input slot, INPUT_AVAILABLE=29 trả bitmask slot
+> khi codec đã nhận dữ liệu, STATUS=30 trả lỗi. Output gồm cả lease giới hạn 48.
+> EOS drain chạy ngoài request chain để Release vẫn tiếp tục giải phóng chỗ;
+> chỉ báo EOS sau EOF thật và decode xong. SDK Stop/Flush dùng RESET, không dùng
+> FLUSH của probe. Reset hủy input/lease; callback/drain cũ không tác động decoder mới.
+> Test thật: 240 packet VP9 giữ nguyên payload trong container thử hữu hạn,
+> đạt 8 input chờ và 48 output giữ; 240 hash/time khớp direct decode, EOS=1,
+> handle và reservation còn lại=0. Direct decode đầy queue 16 rồi chạy tiếp.
+> Reports: build/codex-movie-direct-240.json, build/codex-movie-queue-240.json.
+> Node test_movie_video.mjs, test_movie_backend_queue.mjs, test_movie_backend.mjs,
+> test_movie_webm.mjs đều PASS; SDK Extractor real/excerpt 12-frame vẫn PASS.
+> Repro: test_movie_video.py --movie <file> --frames 240 [--queued-excerpt].
+> CHƯA Decoder C SDK/events, runtime wiring hay full build; game vẫn bản 030a,
+> chưa menu hoặc match. Tiếp tục Decoder vtable/guest buffer/event, dùng backend
+> time=8 và INPUT_AVAILABLE; xem web/MOVIE.md. Không dùng excerpt trong game.
+>
 > **MỚI 25/10/2026 — SDK EXTRACTOR ĐÃ ĐỌC REAL VIDEO QUA GUEST CALLBACK.**
 > Source host_movie_codec.c mới: ExtractorC1/C2, vtable7800000a00/functionbase
 > 7500003000, SourceReader/Path/Memory, Count/Config/Select/Unselect/Seek,

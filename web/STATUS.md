@@ -1,3 +1,14 @@
+> **Cập nhật 25/10/2026: Decoder JS qua kiểm tra hàng đợi bằng 240 frame thật.**
+> Giữ chỗ output trước decode và qua lease, phân tích hidden frame/superframe,
+> tách coded frame trước WebCodecs để không mất ảnh trong packet nhiều output.
+> CONFIGURE time=8 bật 8 input slot; INPUT_AVAILABLE=29 trả slot khi codec đã nhận,
+> STATUS=30 trả lỗi. Output giới hạn 48; EOS drain không chặn Release trong chain.
+> Fixture hữu hạn chứa 240 packet VP9 nguyên payload đạt 8 input chờ/48 output giữ,
+> 240 hash+timestamp khớp direct decode, EOS thật=1, handle/reservation=0.
+> Node queue/lifetime/reset/stale-drain tests PASS; SDK Extractor 12-frame vẫn PASS.
+> Reports build/codex-movie-{direct,queue}-240.json; chi tiết web/MOVIE.md.
+> CHƯA Decoder C SDK/events/runtime wiring/full build. Game bản 030a vẫn chưa menu/match.
+>
 > **MỚI 25/10/2026 — SDK EXTRACTOR ĐÃ ĐỌC REAL VIDEO QUA GUEST CALLBACK.**
 > Source host_movie_codec.c mới: ExtractorC1/C2, vtable7800000a00/functionbase
 > 7500003000, SourceReader/Path/Memory, Count/Config/Select/Unselect/Seek,
