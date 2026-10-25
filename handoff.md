@@ -1,3 +1,29 @@
+> **MỚI 25/10/2026 — C PTHREAD ↔ JS MOVIE BRIDGE ĐÃ QUA REAL VIDEO.**
+> web/movie-backend.mjs: serializedWebM source/track/peek/read/advance/seek,
+> realVP9decode/output acquire/copy/release/reset/drain/EOS. Seekdùngkeyframe
+> indexthật, outputgiữsởhữusauSourceClose. UnsupportedVorbis báo1006 rõràng.
+> MovieBackendEOS chỉchấpnhận khiextractorđãđọctớiEOFthật; earlyEOSbịreject.
+> host_movie_bridge.c/.h: pthreadcond completion +boundedstaging +SDKstatus,
+> EMASMproxy yêu cầugnu11 nhưGPUbridge. Chưađưa vào fullruntime source list,
+> chưa nốiExtractor/Decoder virtualcalls/events tronggame hoặc runtime-worker.
+> Buffer/MediaData C adapter từlượttrướcvẫnsourceonly, game030a...chưarebuild.
+> Fixture browser: build_movie_bridge_probe.py +test_movie_video.py --bridge.
+> Openingcandidate419.855s actual12frame C→JS→C:382checksPASS, time/hashkhớp
+> cả12frame với directbrowserdecode; EOFfalse/EOS0 (khôngfakekếtthúc).
+> codex-movie-bridge-opening.json, handle0/pendingcompletion0 saucleanup.
+> Testonlyexcerptmuxer lấy12packetVP9thật, giữnguyênpayload vàtimestamps,
+> tạoWebMhữuhạnmới trongmemory. ActualEOFtrue/EOS1/12frame/139checksPASS,
+> codex-movie-bridge-excerpt-eof.json; khôngđưaexcerpt vào game hoặc sửaasset.
+> Node test_movie_backend.mjs PASSserial/selection/seek/EOF/handle/errorcompletion
+> +shortreplyhead khôngconsumeoutput. test_movie_webm.mjs PASS.
+> Clanggnu11 -Wall -Wextra syntaxPASSbridge+fixture. Workerfixture dọnpthreadpool
+> TRƯỚCpostreport, rồi tabphụđóng. Heartbeatgame9468s/33workers/306ctors/SHA030a
+> donefalse, khôngreload/restart. Protectedheaders khôngsửa.
+> TIẾP:SDK C Extractor/Decoderobjects, ClientStreamReader callbacks qua guestCtx,
+> trackmetadata link, input/output slots+eventkeys, gluebridge vào runtimeworker;
+> productionSDKfixture realvideo trước fullgamebuild --jobs8. Web/MOVIE.md chi tiết.
+> Chưa menu/inputhiệulực/match; goalactive.
+>
 > **MỚI 25/10/2026 — C MOVIE VALUE IMPORTS ĐÃ SỬA, CHƯA FULLBUILD.**
 > Source web/host_movie.c/.h đã thay Buffer ABI sai trong host_os.c và thực hiện
 > MediaData constructors/copy/assign/destruct/Clear/Set/Find/Contains/CountEntries.

@@ -3,7 +3,8 @@
 The current game build still uses the failing movie placeholder in `host_os.c`.
 The JavaScript modules below are working decoder components. The source now
 also implements Buffer and MediaData imports, but the Extractor/Decoder adapter
-and its runtime bridge have not been connected. They do not yet unblock the title.
+has not been connected to the game's SDK virtual calls. A C/JS bridge now works
+in a separate browser fixture. These components do not yet unblock the title.
 
 ## Implemented and checked
 
@@ -31,6 +32,22 @@ The full runtime build includes this adapter, and `host_os.c` routes its value
 imports before the remaining Extractor/Decoder placeholder. This source change
 has not been published as a new game Wasm build.
 
+`movie-backend.mjs` implements serialized extractor/decoder operations for that
+bridge. Source bytes become a Blob; metadata and video packet sizes/keyframes
+are read from the actual container. Peek/read/advance preserve the current
+sample, and seeking starts at a real preceding keyframe. Decoded outputs remain
+owned until release, including after source closure. Unsupported audio is
+reported explicitly. SDK event notification currently reaches a fixture
+callback; the game's event objects are not connected yet.
+
+`host_movie_bridge.c/.h` transfers bounded staging buffers from a C pthread to
+the JavaScript worker, then completes the waiting pthread with an SDK status.
+Every dispatched success or failure completes its wait token. Fixed reply
+headers are validated before consuming outputs. This adapter uses
+`MAIN_THREAD_ASYNC_EM_ASM`, so compile this translation unit with `gnu11`, as
+with `host_gpu_bridge.c`. It is not yet added to the full runtime source list;
+that belongs with the upcoming SDK Extractor/Decoder integration.
+
 Validation on 25 October 2026:
 
 - Unit checks: lacing byte layouts, timestamps, BlockGroup references, unknown
@@ -54,10 +71,22 @@ Validation on 25 October 2026:
 - OS routing fixture: 182 checks pass, including raw Buffer offsets and actual
   MediaData calls routed through `web_os_import`. Strict runtime C11 syntax
   check of `host_movie.c` passes with `-Wall -Wextra`.
+- Real C pthread bridge: twelve frames of the 419.855 s opening candidate
+  cross C → JS demux/decoder → C NV12 output. All twelve timestamps and hashes
+  match direct browser decoding. 382 checks pass, with zero live handles or
+  pending completions. An early EOS request is rejected; no EOS is delivered.
+- Actual finite test container: a test-only muxer wraps twelve unchanged real
+  VP9 packets in a new WebM container. The C bridge reads that container to its
+  real EOF and receives exactly one EOS after twelve frames (139 checks pass).
+  This is a protocol fixture, never a shortened game input or a game skip.
+- Backend checks cover serialization, selection, keyframe seeking, EOF, handle
+  lifetime, and error completion without modifying invalid staging buffers.
 
 Local evidence is under ignored `build/`: `codex-movie-webm-metadata.json`,
 `codex-real-movie-browser-probe.json`, and
 `codex-opening-candidate-browser-decode.json`. No media is committed.
+Bridge evidence: `codex-movie-bridge-opening.json` and
+`codex-movie-bridge-excerpt-eof.json`.
 
 ## Run the checks
 
@@ -66,6 +95,10 @@ node web/test_movie_webm.mjs
 python web/test_movie_video.py --movie C:/path/to/local.webm
 python web/build_movie_values_probe.py
 python web/build_os_probe.py
+node web/test_movie_backend.mjs
+python web/build_movie_bridge_probe.py
+python web/test_movie_video.py --movie C:/path/to/local.webm --bridge
+python web/test_movie_video.py --movie C:/path/to/local.webm --bridge --excerpt-eof
 ```
 
 The browser check uses an existing Playwright CLI session `ssbu-web` and the
@@ -77,6 +110,13 @@ inside an archive, pass `--offset` and `--length`. The report hashes that exact
 byte range, validates twelve frames and timestamps, and saves under
 `build/movie-video-probe/`.
 
+The bridge mode uses a temporary worker and C pthread fixture. It publishes
+only fixture files under `build/web-poc/movie-bridge-probe` plus the new movie
+JavaScript modules, preserving the game's Wasm and worker script. Reports go
+to `build/movie-bridge-probe/`. `--excerpt-eof` constructs its finite test
+container in memory and records its separate hash. It does not change the
+source file. The worker terminates its pthread pool before returning results.
+
 ## Integration remaining
 
 1. Replace the blanket movie failure handling with an SDK adapter. Preserve
@@ -87,13 +127,13 @@ byte range, validates twelve frames and timestamps, and saves under
    Buffer ABI is offset `+0` i32, size `+4` i32, ownership `+16` u8, capacity
    `+24` u64, base pointer `+40` u64. Keep actual allocator ownership throughout
    decoder input/output buffer lifetimes.
-3. Implement track selection, source callbacks, seek, input
-   and output buffer lifetimes, decoder status, and actual event signaling.
-   The browser decoder alone does not implement the SDK's slot/event protocol.
-4. Connect a request/completion bridge to the runtime worker. Test real media
-   through the production C imports in a small browser fixture before spending
-   another full game link/Asyncify cycle. Exercise concurrent destruction,
-   backpressure, seek/reset, and exact buffer ownership.
+3. Connect source callbacks, track selection, seek, input/output slot lifetime,
+   decoder status, and event signaling through the SDK virtual tables. The
+   backend protocol is not a substitute for those calls by the game.
+4. Connect the verified request/completion bridge to the runtime worker and
+   full build. Test real media through the SDK C imports in a small browser
+   fixture before spending another full game link/Asyncify cycle. Exercise
+   concurrent destruction, backpressure, seek/reset, and exact buffer ownership.
 5. Implement or explicitly propagate unsupported audio codecs through the
    game's real track-selection behavior. Vorbis audio, raw H.264, MP4 and VP9
    CodecPrivate configurations are not implemented by these components.
