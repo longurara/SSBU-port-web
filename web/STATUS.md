@@ -1,3 +1,12 @@
+> **Đã chuẩn bị đo present timing cho lần boot font mới (chưa có số đo).**
+> build/codex-font-present-timing.cjs bọc render.present, giữ tối đa512 bản ghi;
+> báo average present FPS, p50/p95 khoảng cách khung và thời gian gọi present.
+> Không thêm GPU readback; không coi CPU/await duration là GPU execution hoặc
+> present FPS là animation/gameplay FPS. Đã kiểm tra cú pháp Node.
+> Browser-followup gọi helper sau mỗi live sample, lưu build/codex-font-game-timing.json
+> gắn SHA mới. Chỉ collector sau build validate; chưa boot/chưa có kết quả.
+> Poll15:34 ngày25/10 xác minh optimizer55572 còn chạy/CPU12883.62s;
+> coordinator57768 và after-build16372 vẫn chờ đúng build, không chạy trùng.
 > **25/10/2026 14:22 VN — BUILD KHỞI ĐỘNG LẠI SAU WINDOWS CRASH.**
 > Đã xác minh không còn coordinator/optimizer/observer cũ. OS boot 23/10 10:45;
 > Event41/6008 và Application1001 ghi BlueScreen/P1=116; chưa kết luận nguyên nhân.
