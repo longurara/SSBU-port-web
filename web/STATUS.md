@@ -6,8 +6,11 @@
 > request còn chờ JS đều PASS. Teardown không còn handle/guest allocations/objects.
 > Report build/codex-movie-sdk-decoder-240.json. OS probe 182 PASS; C11 syntax PASS.
 > Runtime worker và full build đã nối codec/bridge/backend, bridge dùng gnu11.
-> Tiếp full build --fibers --compact-codegen --jobs 8, giữ optimize-level1/validation,
-> rồi boot thật. Game hiện vẫn Wasm 030a cũ, chưa menu/match. Vorbis/H264 unsupported.
+> Full build PID 61344 đã chạy lúc 2026-10-25T12:29:37Z và chuyển sang link, flags
+> --fibers --compact-codegen --jobs 8, giữ optimize-level1/validation. State/log:
+> build/codex-movie-dc49f05-build-state.json và build/codex-movie-dc49f05-build{,.err}.log.
+> Kiểm tra process thật, không restart theo log im lặng. Sau publish mới boot thật.
+> Game hiện vẫn Wasm 030a cũ, chưa menu/match. Vorbis/H264 unsupported.
 >
 > **Cập nhật 25/10/2026: Decoder JS qua kiểm tra hàng đợi bằng 240 frame thật.**
 > Giữ chỗ output trước decode và qua lease, phân tích hidden frame/superframe,

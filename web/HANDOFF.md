@@ -18,7 +18,11 @@
 > bridge gnu11 và 3 movie modules publish; không đổi optimize-level1/validation.
 > Backend reset giữ track metadata để Stop vẫn giải phóng queue sau SourceClose;
 > Submit sau SourceClose vẫn bị từ chối. Vorbis/H264 vẫn unsupported rõ ràng.
-> TIẾP: full build --fibers --compact-codegen --jobs 8 rồi boot kiểm tra gate/menu/match.
+> Full build ĐÃ BẮT ĐẦU lúc 2026-10-25T12:29:37Z, PID 61344; đã compile các adapter
+> và chuyển sang link. State build/codex-movie-dc49f05-build-state.json; stdout/stderr
+> build/codex-movie-dc49f05-build{,.err}.log. Phải kiểm tra process thật trước restart;
+> không suy ra đã dừng chỉ vì log chưa đổi. Flags --fibers --compact-codegen --jobs 8.
+> TIẾP: theo dõi build này rồi boot kiểm tra gate/menu/match khi publish hoàn tất.
 > Game đang chạy vẫn Wasm 030a cũ; CHƯA có bằng chứng menu/match. Xem web/MOVIE.md.
 >
 > **Cập nhật 25/10/2026: hàng đợi Decoder JS đã qua 240 khung hình thật.**
