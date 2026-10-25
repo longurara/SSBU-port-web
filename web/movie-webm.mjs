@@ -96,8 +96,9 @@ export class WebmDemuxer {
     if(new Set(this.tracks.map(t=>t.number)).size!==this.tracks.length)throw Error('Duplicate WebM track number');
     return this;
   }
-  async *samples({trackNumber}={}){
-    if(!this.segment)await this.open();let pos=this.segment.start;
+  async *samples({trackNumber,startOffset}={}){
+    if(!this.segment)await this.open();let pos=startOffset??this.segment.start;
+    if(!Number.isSafeInteger(pos)||pos<this.segment.start||pos>=this.segment.end)throw Error('Invalid WebM sample start offset');
     while(pos<this.segment.end){const cluster=await this.element(pos,this.segment.end);
       if(cluster.id!==ID.cluster){if(cluster.unknown)throw Error('Unknown-size non-cluster element');pos=cluster.end;continue;}
       let at=cluster.start,time=0;
@@ -114,7 +115,7 @@ export class WebmDemuxer {
           if(trackNumber===undefined||trackNumber===parsed.track){
             const step=duration!==undefined?duration/parsed.frames.length:t.defaultDurationNs;
             if(parsed.frames.length>1&&!step)throw Error('Laced sample timestamps require a duration');
-            for(let i=0;i<parsed.frames.length;i++)yield {trackNumber:parsed.track,timestamp:Math.round(((time+parsed.relative)*this.timestampScaleNs+i*step)/1000),duration:step?Math.round(step/1000):undefined,key,data:parsed.frames[i].slice()};
+            for(let i=0;i<parsed.frames.length;i++)yield {trackNumber:parsed.track,timestamp:Math.round(((time+parsed.relative)*this.timestampScaleNs+i*step)/1000),duration:step?Math.round(step/1000):undefined,key,clusterOffset:pos,blockOffset:at,laceIndex:i,data:parsed.frames[i].slice()};
           }
         }
         at=e.end;
