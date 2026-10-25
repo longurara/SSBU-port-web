@@ -1,0 +1,20 @@
+async(page)=>{
+ const tab=await page.context().newPage();
+ try{
+  await tab.goto(__PROBE_URL__);
+  await tab.evaluate(()=>{const input=document.createElement('input');input.type='file';input.id='codex-movie-probe-input';document.body.appendChild(input);});
+  await tab.locator('#codex-movie-probe-input').setInputFiles(__MOVIE_PATH__);
+  return await tab.evaluate(async()=>{
+   const {WebmDemuxer}=await import('/movie-webm.mjs');const {MovieVideoDecoder}=await import('/movie-video.mjs');
+   const file=document.querySelector('#codex-movie-probe-input').files[0];
+   const source=file.slice(__MEDIA_OFFSET__,__MEDIA_OFFSET__+__MEDIA_LENGTH__),demux=await new WebmDemuxer(source).open();
+   const track=demux.tracks.find(t=>t.type===1),decoder=await MovieVideoDecoder.create(track),samples=[];
+   try{
+    for await(const sample of demux.samples({trackNumber:track.number})){samples.push({timestamp:sample.timestamp,key:sample.key,bytes:sample.data.length});decoder.submit(sample);if(samples.length===12)break;}
+    await decoder.flush();const frames=[];let frame;
+    while(frame=decoder.take()){let hash=2166136261;for(const byte of frame.data)hash=Math.imul(hash^byte,16777619)>>>0;frames.push({timestamp:frame.timestamp,width:frame.width,height:frame.height,bytes:frame.data.length,hash:hash.toString(16),yStride:frame.yStride,uvStride:frame.uvStride});}
+    return {samples,frames,tracks:demux.tracks.map(({codecPrivate,...track})=>({...track,privateBytes:codecPrivate.length})),durationUs:demux.durationUs,scope:'Twelve actual VP9 samples from local archive decoded by real browser WebCodecs and copied to NV12. Separate probe page, no game reload or guest writes; no claim of game adapter integration.'};
+   }finally{decoder.close();}
+  });
+ }finally{await tab.close();}
+}
