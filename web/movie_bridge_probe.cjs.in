@@ -9,7 +9,7 @@ async(page)=>{
    let source=file.slice(__MEDIA_OFFSET__,__MEDIA_OFFSET__+__MEDIA_LENGTH__);
    let fixtureSha256;
    if(__EXCERPT_EOF__){const {movieProbeExcerpt}=await import('/movie_probe_excerpt.mjs');source=await movieProbeExcerpt(source,12);fixtureSha256=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await source.arrayBuffer())),x=>x.toString(16).padStart(2,'0')).join('');}
-   const worker=new Worker('/movie-bridge-probe/worker.mjs',{type:'module'});let timer;
+   const worker=new Worker(__PROBE_WORKER__,{type:'module'});let timer;
    try{
     return await new Promise((resolve,reject)=>{
      timer=setTimeout(()=>reject(Error('Movie bridge fixture timed out')),60000);

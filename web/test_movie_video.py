@@ -26,7 +26,10 @@ def main():
     parser.add_argument('--length', type=int, help='Media entry length (default: remainder of file)')
     parser.add_argument('--bridge', action='store_true', help='Test the C pthread bridge fixture (build_movie_bridge_probe.py first)')
     parser.add_argument('--excerpt-eof', action='store_true', help='C bridge: finite test container holding twelve unchanged real packets, to verify natural EOF/EOS')
+    parser.add_argument('--sdk-extractor',action='store_true',help='Use production Extractor virtual calls and guest ClientStreamReader callbacks')
     args = parser.parse_args()
+    if args.sdk_extractor:
+        args.bridge=True
     if args.excerpt_eof and not args.bridge:
         parser.error('--excerpt-eof requires --bridge')
     movie = args.movie.resolve(strict=True)
@@ -46,14 +49,15 @@ def main():
         with urllib.request.urlopen(f'{base}/{name}', timeout=10) as response:
             if response.read() != source.read_bytes():
                 raise SystemExit(f'Server is not serving current {name}')
-    directory = ROOT / ('build/movie-bridge-probe' if args.bridge else 'build/movie-video-probe')
+    directory = ROOT / ('build/movie-sdk-extractor-probe' if args.sdk_extractor else 'build/movie-bridge-probe' if args.bridge else 'build/movie-video-probe')
     directory.mkdir(parents=True, exist_ok=True)
     helper = directory / 'probe.cjs'
     template = (ROOT / 'web' / ('movie_bridge_probe.cjs.in' if args.bridge else 'movie_video_probe.cjs.in')).read_text(encoding='utf-8')
     helper.write_text(template.replace('__MOVIE_PATH__', json.dumps(str(movie)))
                       .replace('__PROBE_URL__', json.dumps(base + '/index.html?media-probe=1'))
                       .replace('__MEDIA_OFFSET__', str(args.offset)).replace('__MEDIA_LENGTH__', str(length))
-                      .replace('__EXCERPT_EOF__', str(args.excerpt_eof).lower()),
+                      .replace('__EXCERPT_EOF__', str(args.excerpt_eof).lower())
+                      .replace('__PROBE_WORKER__',json.dumps('/movie-sdk-extractor-probe/worker.mjs' if args.sdk_extractor else '/movie-bridge-probe/worker.mjs')),
                       encoding='utf-8')
     result = subprocess.run([cli, '--yes', '--package', '@playwright/cli', 'playwright-cli',
                              f'-s={args.session}', 'run-code', '--filename', str(helper)],
@@ -83,6 +87,8 @@ def main():
         raise SystemExit('Movie C bridge checks failed or leaked handles; inspect report.json')
     if args.bridge and (report['eof'] != args.excerpt_eof or report['eos'] != int(args.excerpt_eof)):
         raise SystemExit('Movie EOF/EOS result differs from the actual test container; inspect report.json')
+    if args.sdk_extractor and (not report['sdkExtractor'] or report['readerCalls']<2):
+        raise SystemExit('SDK Extractor callbacks were not exercised')
     if not args.bridge and [s['timestamp'] for s in report['samples']] != [f['timestamp'] for f in report['frames']]:
         raise SystemExit('Decoded timestamps differ from actual container sample timestamps')
     for frame in report['frames']:

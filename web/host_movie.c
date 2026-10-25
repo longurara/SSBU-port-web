@@ -19,10 +19,11 @@ typedef struct {char key[40];unsigned type;uint64_t value;} MetadataEntry;
 typedef struct Metadata {uint64_t token;unsigned count;MetadataEntry entries[40];struct Metadata *next;} Metadata;
 static Metadata *metadata;
 static uint64_t next_metadata=1;
-static uint64_t guest_call(Ctx *c,uint64_t function,uint64_t a,uint64_t b,uint64_t d){
-    Ctx saved=*c;c->x[0]=a;c->x[1]=b;c->x[2]=d;
+uint64_t web_movie_guest_call(Ctx *c,uint64_t function,uint64_t a,uint64_t b,uint64_t d,uint64_t e,uint64_t f){
+    Ctx saved=*c;c->x[0]=a;c->x[1]=b;c->x[2]=d;c->x[3]=e;c->x[4]=f;
     call_indirect(c,function);uint64_t result=c->x[0];*c=saved;return result;
 }
+static uint64_t guest_call(Ctx *c,uint64_t function,uint64_t a,uint64_t b,uint64_t d){return web_movie_guest_call(c,function,a,b,d,0,0);}
 static uint64_t guest_allocate(Ctx *c,uint64_t size){
     if(size>BUFFER_LIMIT)return 0;
     pthread_mutex_lock(&movie_lock);Allocator owner=allocator;pthread_mutex_unlock(&movie_lock);
@@ -214,6 +215,23 @@ static int metadata_import(Ctx *c,const char *method){
         if(!metadata_set(c,object,key,type,value)&&type==MD_STRING)guest_release(c,value);
     }
     free(key);return 1;
+}
+uint64_t web_movie_guest_alloc(Ctx *c,uint64_t size){return guest_allocate(c,size);}
+void web_movie_guest_free(Ctx *c,uint64_t address){guest_release(c,address);}
+void web_movie_metadata_clear(Ctx *c,uint64_t object){metadata_clear(c,object,0);}
+int web_movie_metadata_set(Ctx *c,uint64_t object,const char *key,unsigned type,uint64_t value){
+    if(type<MD_I32||type>MD_POINTER)return 0;return metadata_set(c,object,key,type,value);
+}
+int web_movie_metadata_string(Ctx *c,uint64_t object,const char *key,const char *value){
+    if(!value||strlen(value)>4096||strlen(key)>39)return 0;
+    uint64_t address=guest_allocate(c,strlen(value)+1);if(!address)return 0;
+    web_write(address,value,strlen(value)+1);
+    if(!metadata_set(c,object,key,MD_STRING,address)){guest_release(c,address);return 0;}return 1;
+}
+int web_movie_metadata_get(uint64_t object,const char *key,unsigned type,uint64_t *value){
+    pthread_mutex_lock(&movie_lock);MetadataEntry *e=metadata_entry(metadata_for(object),key);int ok=e&&(type==e->type||((type==MD_I32||type==MD_I64)&&(e->type==MD_I32||e->type==MD_I64)));
+    if(ok){*value=e->value;if(type==MD_I64&&e->type==MD_I32)*value=(uint64_t)(int64_t)(int32_t)*value;if(type==MD_I32)*value=(uint32_t)*value;}
+    pthread_mutex_unlock(&movie_lock);return ok;
 }
 int web_movie_import(Ctx *c,const char *name){
     if(!strcmp(name,"_ZN5movie12SetAllocatorEPFPvmmS0_EPFvS0_S0_EPFS0_S0_mS0_ES0_")){

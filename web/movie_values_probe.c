@@ -89,6 +89,7 @@ const char *movie_values_probe(void){
     check(invoke("_ZNK5movie9MediaData9FindInt64EPKcPl",md,key,out)&&rd64(out)==UINT64_MAX);
     invoke("_ZN5movie9MediaData8SetInt64EPKcl",md,key,UINT64_C(0x12345678abcdef01));
     check(invoke("_ZNK5movie9MediaData9FindInt32EPKcPi",md,key,out)&&rd32(out)==0xabcdef01);
+    {uint64_t value=0;check(web_movie_metadata_get(md,"integer",WEB_MOVIE_I32,&value)&&value==0xabcdef01);}
     check(!invoke("_ZNK5movie9MediaData10FindStringEPKcPS2_",md,key,out));
     invoke("_ZN5movie9MediaData10SetPointerEPKcPv",md,key,UINT64_C(0x8012345678));
     check(invoke("_ZNK5movie9MediaData11FindPointerEPKcPPv",md,key,out)&&rd64(out)==UINT64_C(0x8012345678));
