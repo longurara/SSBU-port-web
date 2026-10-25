@@ -1,3 +1,22 @@
+> **26/10/2026 — GAME THẬT ĐÃ HIỆN PHIM + TITLE, A CÓ TÁC DỤNG; THIẾU CALLBACK KHI VÀO TIẾP.**
+> Boot5ef2 đã tiến qua nạp tài nguyên: tạo VP9 decoder3 và Vorbis decoder4,
+> selected video0/audio2. Lúc đầu chưa Start/feed; các mẫu poll8/9 không chứng minh
+> decoder bị kẹt. Sau đó input/output thật hoạt động; clock4 audio38857333us,
+> video37040000us. Không ép clock/readiness, không fake audio/EOS.
+> Ảnh actual canvas thấy opening (Dr.Mario/LittleMac) rồi title SSBU Ultimate:
+> output/playwright/codex-av-5ef2-opening.png và codex-av-5ef2-title.png.
+> Z/A ở1018s giữ qua10presents, input C buttons1 rồi thả: phim dừng/dtor cả2decoder,
+> extractor đóng; title hiện ở1056s. Đây là input có tác dụng, chưa phải trận đấu.
+> A tiếp ở1078s: nnMain terminal1090s, uncompiled indirect target71023263b0,
+> caller7103726120/lr7103726294, ctors306/threadFailed0. Actual report:
+> build/codex-av-5ef2-terminal-page.json. Không reload/boot lại phiên đã terminal.
+> Target có lifted definition thật trong gen_eh_o2/c_02ed.c, chưa trong runtime_table.
+> Đã thêm đúng observed target vào runtime_roots.json, prepare --main --pointer-tables
+> đang chạy (log build/codex-title-callback-prepare.log). Không dùng stub hoặc bỏ qua hàm.
+> TIẾP: kiểm tra graph mới chứa callback + referenced vtables, compile full
+> --fibers --compact-codegen --jobs8 (giữ optimizer/validation), receipt/sourcehash,
+> boot đúng1lần rồi vào menu và thử trận CPU. Chưa đạt goal; âm thanh nghe được chưa test.
+
 > **26/10/2026 — FULL BUILD AV ĐÃ XONG; ĐANG BOOT GAME THẬT 5ef2.**
 > PID25188/wasm-opt63736 đã kết thúc; log Linked runtime-fibers-compact.mjs.
 > Receipt publish 2026-10-25T18:07:10Z: SHA256
