@@ -1,3 +1,47 @@
+> **MỚI 25/10/2026 17:28 VN — TITLE ĐANG CHỜ MOVIE OBJECT ĐÃ BỊ DỌN, KHÔNG PHẢI CHỜ BUILD.**
+> Actual runtime030a73c0/ssbu-web giữ nguyên, không reload/rebuild/ghi guest state.
+> Đã xác nhận layout thật bằng resource string tạiLayout+48: title+us_en,
+> không còn chỉ suy đoán từ tên press_any. Captures codex-font-layout-names.json.
+> Outer sequence data0x80217d3f00: current state200=2, current callback8=
+> 0x7101865010, frame204=37838; flags240/241=1/1. Nó vẫn được cập nhật.
+> f1865010 tại5020..5050 đọc+232 -> wrapper0x804abcef40 ->+128 ->data
+> 0x805013c580 ->+248 ->0x8005277310 ->+8 ->data0x805013c6c0 ->+232.
+> Giá trị cuối bằng0 nên return tại18650c4; KHÔNG gọi readiness vtable+120.
+> Nhánh thành công5054..50c0 mới bật title layout, request animation state1,
+> clear title task flag112 và chuyển outer sequence sang state3.
+>
+> Title task wrapper0x804abcb200 vtable71050abba0 -> update7101bfb5e0,
+> data+128=0x805013c080. State216=-1/frame220=0/callback8=0, flag112=1.
+> f32ca620 scheduler tạica658..ca66c BỎ QUA task khi flag112==1. Vì vậy
+> title animation đứng yên có nguyên nhân ở gate phía trên, không phải deltaTime.
+> Source ctorf1865650 tạo các callback in/press-any tương ứng với data này.
+>
+> Movie wrapper804abcef40 đang enabled(flag112=0), data805013c580 state216=1,
+> frame220=38026, callback1bf3340. Movie component805013c6c0 state216=4,
+> frame220=11, pending state136=5, callback3398990, player pointer232=0.
+> f3398990 là cleanup: dừng/xóa player, ghi0 vào+232 tại3398a20 rồi request5.
+> f3398da0 chỉ update component khi+232!=0, nên sau cleanup giá trị này và
+> state4/pending5 có thể giữ nguyên. Không kết luận active decoder hang.
+> Actual captures: codex-font-title-{controller,wrapper,sequence,movie-gate}.json.
+> Pointer discoveries dùng bounded guest heap page scan, mỗi hit được gm_read
+> xác nhận; không CDP heap object query. Tất cả helpers build/ là ignored.
+>
+> Host movie hiện web/host_os.c: MOVIE_FN_BASE mọi slot trả0x4000; constructor
+> Extractor/Decoder chỉ cấp bảng failure. Native placeholder runtime/nnmovie.c
+> cũng có stub này, NHƯNG native chạy thật thay bằng runtime/nnmovie_mf.c.
+> Không coi placeholder là skip thành công. Bước tiếp: triển khai extractor/
+> decoder thật cho browser (real WebM/VP9 samples, event/metadata/Buffer ABI),
+> hoặc một chế độ skip được chứng minh qua protocol thật; không force EOS,
+> readiness, scene state, identity matrix hoặc animation để giả thành công.
+> Audit phát hiện Buffer ABI web hiện cũng sai so với subsdk/native: đúng là
+> offset0 i32,size4 i32,owns16,capacity24,base40 (native B_* constants).
+> Đây là việc phải sửa khi làm movie adapter; chưa sửa production trong lượt này.
+> Đã đọc W3C WebCodecs, chưa triển khai/chứng minh decoder browser hỗ trợ.
+> Local archive read-only scan xác nhận128 WebM trong2890 stream entries;
+> manifest build/codex-movie-streams.json, chưa xác nhận title movie cụ thể.
+> Python zstandard cài riêng build/python-deps, không thay Python global.
+> **Chưa menu/input hiệu lực/match. Goal vẫn active.**
+>
 > **MỚI 25/10/2026 17:10 VN — ĐÃ TÌM ĐƯỢC NHÁNH UI BỊ COLLAPSE.**
 > Game030a73c0 vẫn live tại5516s/306ctors, ssbu-web; KHÔNG rebuild/reload.
 > Không sửa production C hoặc protected headers trong lượt này. Chưa menu/match.
