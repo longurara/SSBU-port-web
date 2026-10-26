@@ -249,6 +249,7 @@ def main():
     parser.add_argument('--main', action='store_true', help='also include nnMain direct dependency graph')
     parser.add_argument('--pointer-tables',action='store_true',help='discover tables referenced by observed callback bodies or containing observed callback targets')
     parser.add_argument('--all-pointer-tables',action='store_true',help='experimental broad pointer-table discovery across the whole graph')
+    parser.add_argument('--all-functions',action='store_true',help='include every original lifted main-code function, not only currently reached callbacks')
     parser.add_argument('--callback-tables',action='store_true',help='include bounded relocation tables containing actually observed callback targets')
     args = parser.parse_args()
     generated = args.native / 'work/gen_eh_o2'
@@ -271,11 +272,19 @@ def main():
             init[(target - 0x52a7be0) // 8] = BASE + addend
     roots = [f'f_{address:x}' for address in init if address] + ['f_71002c55e0']
     discovered = json.loads((ROOT / 'web/runtime_roots.json').read_text())
+    args.all_functions=args.all_functions or discovered.get('allNativeFunctions',False)
     observed_callbacks={prefix+address for address in discovered['indirectTargets'] for prefix in ('f_','u_')}
     roots += ['f_' + address for address in discovered['indirectTargets']]
     if args.main:
         roots.append('f_71002c5620')
     cache, selected = {}, {}
+    native_roots=set()
+    if args.all_functions:
+        for path in sorted(generated.glob('c_*.c')):
+            bucket=int(path.stem[2:],16)
+            native_roots.update(name for name in load_bucket(generated,bucket,cache) if name.startswith('f_'))
+        if not native_roots:raise ValueError('No original native function definitions found')
+        roots.extend(sorted(native_roots))
     callback_tables=callback_pointer_tables((int(address,16) for address in discovered['indirectTargets']),pointer_relocations) if args.callback_tables or args.pointer_tables or args.all_pointer_tables else {}
     callback_table_roots=set();callback_table_missing=set()
     for address in {target for targets in callback_tables.values() for target in targets}:
@@ -354,6 +363,11 @@ def main():
             candidate_bucket = (pointer - BASE) // 0xc000
             if candidate in load_bucket(generated,candidate_bucket,cache,required=False):
                 todo.append(candidate)
+    if args.all_functions:
+        missing_native=native_roots-selected.keys()
+        missing_pointers={f'f_{address:x}' for address in pointer_targets}-selected.keys()
+        if missing_native or missing_pointers:
+            raise ValueError(f'Incomplete full-native coverage: {len(missing_native)} functions, {len(missing_pointers)} relocation targets')
     args.out.mkdir(parents=True, exist_ok=True)
     header = ['#include "runtime.h"', 'void nro_catch_call(Ctx *c, void (*body)(Ctx *, uint64_t));']
     for name in sorted(selected):
@@ -382,6 +396,9 @@ def main():
     (args.out / 'runtime_imports.c').write_text((generated / 'imports.c').read_text(encoding='utf-8'), encoding='utf-8')
     (args.out / 'runtime_sdkdata.c').write_text((args.native / 'work/sdkdata.c').read_text(encoding='utf-8'), encoding='utf-8')
     manifest = dict(functions=len(selected), constructors=len(init), units=units, withMain=args.main,
+                    allNativeFunctions=args.all_functions,nativeFunctionRoots=len(native_roots),
+                    relativeCodePointerTargets=len(pointer_targets),
+                    relativeCodePointerMissingDefinitions=[f'{address:x}' for address in sorted(pointer_targets) if f'f_{address:x}' not in selected] if args.all_functions else None,
                     pointerTableLeaves=len(leaf_roots),referencedPointerTableTargets=len(table_roots),
                     pointerTableDiscovery='all' if args.all_pointer_tables else 'observed' if args.pointer_tables else 'callbacks' if args.callback_tables else 'none',
                     callbackPointerTables=len(callback_tables),callbackPointerTableTargets=len(callback_table_roots),
