@@ -1,3 +1,40 @@
+> **26/10/2026 12:21Z — REAL COMPUTE f786574 PUSHED; FULL RUNTIME BUILD LIVE78396.**
+> Implemented actual DispatchCompute recording/execution in existing command/state
+> ownership path, bridge op26, WebGpuCompute pipeline/dispatch and actual shader WM
+> atomic write-mask(binding38). Misaligned storage is copied in/out; actual written
+> ranges land through host_gpu_resources GPU->guest writeback before next command.
+> GPU-only pools retain physical results. No fake/skipped dispatch. RequestedStage5
+> selects native source6; compile variants/snapshots and queue ordering preserved.
+> New prod web/gpu-compute.mjs; build/probe copy lists updated, runtime-worker captures
+> lastComputePacket on failure. Dynamic CB0, storage images, overlapping writable
+> bindings remain explicit unsupported errors until required; no invented resources.
+> Browser numeric test22checks PASS (two dependent dispatches, actual write-mask,
+> offsets/copyback/guards/alias/bounds/stale snapshot). SDK C probe3527checks PASS,
+> TWO actual recorded dispatches via pthread bridge; second stages first output
+> from guest memory. Source input unchanged, guest OUTPUT/NEXT numeric bytes correct,
+> guard words intact; lists/program refs/pools all released. Fixture WGSL injected
+> only in fixture Worker. Reports build/codex-compute-sdk-probe-check.{json,log}.
+> Actual captured Maxwell compute s00016_0.mxd -> full compiler -> GPU pipeline PASS,
+> metadata429instructions/12blocks/CB24/SSBO7/written7,6active bindings. 967619WGSL
+> bytes. NO dispatch without its real bound inputs, not proof of game's first call.
+> build/codex-compute-actual-pipeline.{json,log}. Node program/snapshot/fetch/SPIRV tests
+> PASS; short C SDK probe built. Important: withSdk:false skips texture/compute C
+> block; only the withSdk:true report3527checks proves C writeback (371does NOT).
+> Full build started12:21:16Z, parentPID78396, sourcef786574, args MUST remain
+> --fibers --compact-codegen --jobs8. State build/codex-compute-runtime-build-state.json,
+> stdout codex-compute-runtime-build.log, stderr codex-compute-runtime-build.err.log.
+> Parent verified live; changed host GPU objects compiled and linker warning emitted.
+> No native graph change/prepare required; graph70362/306ctors. Do NOT restart.
+> Served runtime STILL old7cf0 until successful guarded publication; no game active
+> (old stream-pack session terminal1272s native DispatchCompute, blue spirit card).
+> NEXT: inspect parent+children/CPU/logs, not file state alone. After completion use
+> build/codex-verify-compute-publication.py (rejects7cf0; local+HTTP hash/receipt/
+> locals+11JS including gpu-compute), then boot ONCE via existing integrated helper.
+> Install trace/reader; keep new screenshot/log names compute-runtime-*; original
+> page-safe poll codex-querylod-page-poll.cjs, real input helper always releases Z.
+> Goal active: actual compute execution/menu/CPU match/completion remain unverified.
+> No repeat codec tests, no boot stale artifact, no compiler restart on silence.
+
 > **26/10/2026 12:04Z — STREAM FIX PASSED; TERMINAL UNIMPLEMENTED COMPUTE DISPATCH.**
 > Current session TERMINATED1272s, unimplemented NVN:nvnCommandBufferDispatchCompute,
 > address/lr710009fc24,guestFunction7100031db0,sp80054af440,x0=8004db8a68,
