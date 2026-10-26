@@ -1,3 +1,23 @@
+> **26/10/2026 14:02Z — COMPUTE BUILD COMPLETE, VERIFIED ddc3 BOOTED ONCE.**
+> Parent78396/emcc68700/wasm-opt68940 finished, Linked runtime-fibers-compact.mjs.
+> Guarded publish14:02:19Z; SHA256ddc3d11b3efd4a357b29180ddd62446cf27d3b923ee663fe8d8e888b4fd6f69d,
+> 283733816bytes/100377functions/maximumLocals10812. Sourcef786574, nativegraph70362,
+> 306ctors unchanged. No compiler active. Build-state now complete with receipt.
+> Local+HTTP WASM/receipt/11JS verified14:02:36Z via compute verifier; actual artifact
+> differs7cf0. build/codex-compute-runtime-publication-verified.json.
+> Controlled integrated helper booted exactly once; compute-runtime-boot.log started.
+> Trace+bounded guest reader installed; NEW GuestMemory20120312 (old20120040 invalid).
+> compute-runtime-reader.log validated unique signature. poll-1 at38s/306ctors/
+> threadFailed0/heap720240640. Current game is LIVE; preserve it, no restart/reload.
+> NEXT: page-safe codex-querylod-page-poll.cjs -> compute-runtime-poll-N.log;
+> screenshot NEW codex-compute-runtime-screen.cjs -> compute-runtime-live.png.
+> Observe opening/title/reward before input, codex-querylod-press-a.cjs real focused
+> Z/A holds10presents then releases; C-memory input verification not claimed by it.
+> Then verify actual compute dispatch+writeback in this ddc3 game and reach actual
+> menu/CPU match/completion. Old blue-spirit-card screenshot/terminal belongs7cf0.
+> Runtime ddc3 is only verified build+boot so far; goal NOT complete. Important
+> changes only, no repeat codec/fixture tests unless new evidence requires them.
+
 > **26/10/2026 12:21Z — REAL COMPUTE f786574 PUSHED; FULL RUNTIME BUILD LIVE78396.**
 > Implemented actual DispatchCompute recording/execution in existing command/state
 > ownership path, bridge op26, WebGpuCompute pipeline/dispatch and actual shader WM
