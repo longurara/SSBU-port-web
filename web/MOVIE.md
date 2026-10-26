@@ -1,3 +1,30 @@
+> **26/10/2026 11:43Z — VERTEX STREAM FIX120660f PUSHED; NEW LIVE BOOT.**
+> Stage-fixed0b101cc session passed title/notification/reward and actual ImageQueryLod.
+> Opening724s/A752released758; title856s/A902released906; notification992s/A1024;
+> reward1122s/A1158released1160; terminal1182s: NVN streams exceed WebGPU vertex
+> binding count. Full capture build/codex-querylod-stage-terminal.{json,log};
+> failed-packet.json. Actual draw strip4 vertices/1instance/base0,9float32x4 attrs
+> on distinct instance streams, same buffer349 with16-byte ranges. Failure draw
+> capture includes all9complete16-byte vertex inputs and both actual shaders.
+> Fix120660f interleaves actual fetched attributes into <=2buffers by vertex/instance
+> step when stream count exceeds device binding limit; preserves signed/unsigned,
+> normalized/default channels, stride0, baseVertex/firstInstance, validates bounds,
+> staging64MiB/stride/attribute limits. No input/draw skipped; readback has overhead.
+> GPU fixture1040checks/25draws PASS, including5packed draws with9streams, indexed
+> base+firstInstance, typed data, zero-stride/defaults, unaligned normalized3channels,
+> rejected OOB draw/pixels unchanged. Node vertex38contracts/index11contracts PASS.
+> Evidence build/codex-stream-pack-check.json; source/published/HTTP3modules verified
+> build/codex-stream-pack-publication.json. Native pixel parity still unverified.
+> After saving terminal booted exactly once11:43Z; stream-pack-boot.log started:true.
+> Trace+reader installed; GuestMemory20120040; poll-1 at16s/306ctors/threadFailed0.
+> WASM7cf0 unchanged, no compiler active. PRESERVE current session.
+> NEXT: page-safe helper build/codex-querylod-page-poll.cjs -> stream-pack-poll-N.log;
+> screenshot build/codex-stream-pack-screen.cjs -> stream-pack-live.png. Earlier
+> querylod-stage-* screenshots/logs belong to terminated0b101cc session. Observe
+> actual scene before real Z/A input; helper codex-querylod-press-a.cjs releases key.
+> Goal active: actual menu/CPU match/completion remain unverified. No repeat build,
+> codec tests or reload on observation timeout. Notify important changes only.
+
 > **26/10/2026 11:16Z — STAGE RESOURCE FIX 0b101cc PUSHED, NEW LIVE BOOT.**
 > The f133896-only session passed actual opening714s (A736/release738), title826s
 > (A846/release850), notification940s (A960/release962), reward1032s (A1050/release1054),
