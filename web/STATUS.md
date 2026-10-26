@@ -1,3 +1,29 @@
+> **26/10/2026 11:16Z — STAGE RESOURCE FIX 0b101cc PUSHED, NEW LIVE BOOT.**
+> The f133896-only session passed actual opening714s (A736/release738), title826s
+> (A846/release850), notification940s (A960/release962), reward1032s (A1050/release1054),
+> then terminal1076s: ImageQueryLod requires actual48-byte sampler state.
+> Saved build/codex-querylod-fixed-terminal.{json,log}; full capture retained.
+> ROOT CAUSE: the same immutable program owns vertex+fragment sources. Vertex
+> compile options had lodQuerySamplers:{} and forceOutputs63, yet compileRecord
+> compiled BOTH sources, including unused fragment type5 with vertex resources.
+> Fix0b101cc passes requestedStage0/1 from draw; compileRecord selects the actual
+> bound stage BEFORE translation, preserves independent variant keys, rejects
+> invalid requested/unsupported graphics stages. No draw/guest state skipped.
+> Tests Node program ownership+combined-stage/cache+snapshots PASS; real GPU compiles
+> combined actual captured vertex+failure fragment with correct per-stage options;
+> full draw/shader-lowering fixture713checks/20draws PASS, including combined-program
+> textured pixel readback. build/codex-querylod-stage-check.json. Native pixel parity
+> and actual menu/CPU match/completion still NOT proven.
+> Source/published/HTTP3modules matched: build/codex-querylod-stage-publication.json.
+> After preserving terminal, booted once11:16Z; stage-boot.log started:true.
+> Trace+bounded reader installed, GuestMemory20120040. stage-poll-1:10s/306ctors/
+> threadFailed0. WASM7cf0 unchanged; NO compiler active. Preserve this live session.
+> NEXT: use page-safe build/codex-querylod-page-poll.cjs -> stage-poll-N.log.
+> Screenshot NEW build/codex-querylod-stage-screen.cjs -> querylod-stage-live.png;
+> earlier fixed-* evidence belongs to failed f133896-only run. Observe actual scene
+> before real input; page-only codex-querylod-press-a.cjs always releases Z.
+> Goal active. Notify important changes only; no repeat test/rebuild/reload on silence.
+
 > **26/10/2026 10:54Z — FIX f133896 NOW BOOTED ONCE; PRESERVE LIVE GAME.**
 > Previously active session reached actual title (840s), accepted A860s/released864s,
 > then terminal958s with the OLD unsupported ImageQueryLod. Captured
