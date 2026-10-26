@@ -55,5 +55,5 @@ for(const stage of [1,0])assert.equal((await stages.compileSnapshot(snapshot,{re
 assert.deepEqual(calls,[1,0]);
 await stages.compileSnapshot(snapshot,{requestedStage:1,resourceStage:1});assert.deepEqual(calls,[1,0]);
 await stages.compileSnapshot(snapshot,{requestedStage:1,resourceStage:1,variant:2});assert.deepEqual(calls,[1,0,1]);
-await assert.rejects(stages.compileSnapshot(snapshot,{requestedStage:5}),/Invalid requested/);
+await assert.rejects(stages.compileSnapshot(snapshot,{requestedStage:2}),/Invalid requested/);
 stages.close();console.log('Combined graphics program stage/resource selection and independent variant cache: PASS');

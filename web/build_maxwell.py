@@ -34,7 +34,7 @@ def main():
     shutil.copy2(ROOT/'web/game-shaders.mjs',ROOT/'build/web-poc/game-shaders.mjs')
     shutil.copy2(ROOT/'web/test-game-shaders.mjs',ROOT/'build/web-poc/test-game-shaders.mjs')
     shutil.copy2(ROOT/'web/test-gpu-program-snapshots.mjs',ROOT/'build/web-poc/test-gpu-program-snapshots.mjs')
-    for name in ('gpu-backend.mjs','gpu-programs.mjs','gpu-textures.mjs','gpu-samplers.mjs','gpu-render.mjs','gpu-draw.mjs','gpu-depth-sampling.mjs','gpu-logical-sampling.mjs','spirv-uniform-branches.mjs','gpu-depth.mjs','wgsl-interface.mjs'):
+    for name in ('gpu-backend.mjs','gpu-programs.mjs','gpu-textures.mjs','gpu-samplers.mjs','gpu-render.mjs','gpu-draw.mjs','gpu-compute.mjs','gpu-depth-sampling.mjs','gpu-logical-sampling.mjs','spirv-uniform-branches.mjs','gpu-depth.mjs','wgsl-interface.mjs'):
         shutil.copy2(ROOT/'web'/name,ROOT/'build/web-poc'/name)
 
 

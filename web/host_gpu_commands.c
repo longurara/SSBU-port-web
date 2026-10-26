@@ -137,7 +137,7 @@ static int known(const char *operation) {
     const char *names[]={"Initialize","Finalize","AddCommandMemory","AddControlMemory","GetCommandMemorySize","GetControlMemorySize",
       "GetCommandMemoryUsed","GetControlMemoryUsed","GetCommandMemoryFree","GetControlMemoryFree","IsRecording","BeginRecording","EndRecording",
       "SetMemoryCallback","SetMemoryCallbackData","GetMemoryCallback","GetMemoryCallbackData","SetCommandMemoryCallbackEnabled","SetDebugLabel",
-      "SetTexturePool","SetSamplerPool","BindProgram","CopyBufferToTexture","SetCopyRowStride","GetCopyRowStride","SetCopyImageStride","GetCopyImageStride",
+      "SetTexturePool","SetSamplerPool","BindProgram","DispatchCompute","CopyBufferToTexture","SetCopyRowStride","GetCopyRowStride","SetCopyImageStride","GetCopyImageStride",
       "SetShaderScratchMemory","SetTiledCacheAction","SetTiledCacheTileSize","SaveZCullData","RestoreZCullData","SetStencilCullCriteria","ResolveDepthBuffer",
       "SetColorReductionEnable","SetColorReductionThresholds","Barrier","DiscardColor","DiscardDepthStencil",
       "PushDebugGroup","PushDebugGroupStatic","PushDebugGroupDynamic","PopDebugGroup","PopDebugGroupId",

@@ -140,6 +140,16 @@ int web_gpu_draw_range(uint64_t address,uint64_t size,uint32_t *handle,uint64_t 
     if(ok){*handle=found->gpu;*offset=address-found->address;}
     pthread_mutex_unlock(&resource_lock);return ok;
 }
+int web_gpu_writeback_range(uint64_t address,uint64_t size) {
+    pthread_mutex_lock(&resource_lock);Resource *found=NULL;
+    for(unsigned i=0;i<4096&&!found;i++)for(Resource *r=resources[i];r;r=r->next)
+        if(r->kind==POOL&&address>=r->address&&address-r->address<=r->size&&size<=r->size-(address-r->address)){found=r;break;}
+    int ok=found&&found->gpu;
+    /* GPU-only pools retain their physical bytes. CPU-backed pools must land
+     * actual results before a later draw stages guest memory over this range. */
+    if(ok&&found->memory&&!(found->flags&1))ok=transfer(found,address-found->address,size,1);
+    pthread_mutex_unlock(&resource_lock);return ok;
+}
 int web_gpu_registered_texture(uint64_t key,unsigned index,WebGpuTextureBinding *output) {
     pthread_mutex_lock(&resource_lock);Resource *pool=find(key,TEXTURE_POOL);
     TextureSlot *slot=pool&&pool->textures?pool->textures[index&1023]:NULL;while(slot&&slot->index!=index)slot=slot->next;

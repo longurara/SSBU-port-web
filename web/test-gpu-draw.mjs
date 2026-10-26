@@ -1,10 +1,12 @@
 import {WebGpuBackend} from './gpu-backend.mjs';
+import {fixtureComputeShader} from './test-gpu-compute.mjs';
 
 /** Self-authored WGSL injected only into this fixture's compiler instance.
  * Production draws compile retained Maxwell bytes; these pixels verify the
  * real pipeline/buffer/bind-group/scissor/blending/index path independently. */
 export async function createFixtureGraphicsCompiler() {
   return {compile(control,data,options={}){
+    if(new DataView(control.buffer,control.byteOffset).getUint32(0x714,true)===5)return fixtureComputeShader();
     const vertex=(new DataView(data.buffer,data.byteOffset).getUint32(0x30,true)>>>10)===1;
     if(options.requestedStage!==undefined&&options.requestedStage!==(vertex?0:1))throw new Error('Graphics stage received another stage\'s resource options');
     const variant=new DataView(control.buffer,control.byteOffset).getUint32(0x704,true),flat=variant===0x464c4154,textured=!vertex&&variant===0x54455854,noOutput=!vertex&&variant===0x4e4f5554;

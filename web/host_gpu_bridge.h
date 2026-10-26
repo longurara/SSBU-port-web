@@ -17,6 +17,8 @@ typedef struct { int status; uint32_t value; } WebGpuReply;
  * snapshots and resolved physical resources; see host_gpu_draw.c/gpu-draw.mjs).
  * 25 depth/stencil clears (u32 count followed by 48-byte subresource/value/
  * stencil-mask/scissor/format records; see gpu-render.mjs).
+ * 26 compute dispatch (bounded JSON retained program/groups/stage5 resources;
+ * reply.value is the actual shader write-mask, followed by guest writeback).
  * The NVN recorder captures
  * targets/scissors/colors and preserves copy/clear ordering. The calling pthread
  * waits while the owner Worker validates and completes the WebGPU request. */
@@ -26,6 +28,7 @@ uint32_t web_gpu_origin_mode(void);
 int web_gpu_resources_import(Ctx *,const char *);
 int web_gpu_resolve(uint64_t address,uint64_t size,uint32_t *handle,uint64_t *offset);
 int web_gpu_draw_range(uint64_t address,uint64_t size,uint32_t *handle,uint64_t *offset);
+int web_gpu_writeback_range(uint64_t address,uint64_t size);
 int web_gpu_pool_hold(uint64_t pool,uint64_t offset,uint64_t size);
 void web_gpu_pool_release(uint64_t pool);
 int web_gpu_pool_copy(uint64_t pool,uint64_t offset,void *output,size_t size);

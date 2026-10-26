@@ -102,6 +102,7 @@ self.onmessage = async ({data}) => {
     if(backend?.render?.frameDiagnostics)result.frameDiagnostics=backend.render.frameDiagnostics;
     if(backend?.draw?.diagnosticDraws)result.drawDiagnostics=backend.draw.diagnosticDraws;
     if(backend?.draw?.lastPacket&&!result.ok)result.lastGraphicsPacket=backend.draw.lastPacket;
+    if(backend?.compute?.lastPacket&&!result.ok)result.lastComputePacket=backend.compute.lastPacket;
     if(backend?.programs?.lastFailure)result.lastShaderFailure=backend.programs.lastFailure;
     if(module.webgpuError)result.gpuError=module.webgpuError;
     if (result.phase !== 'guestThread') module._runtime_join();
@@ -114,6 +115,7 @@ self.onmessage = async ({data}) => {
       frameDiagnostics:backend?.render?.frameDiagnostics,
       drawDiagnostics:backend?.draw?.diagnosticDraws,
       lastGraphicsPacket:backend?.draw?.lastPacket,
+      lastComputePacket:backend?.compute?.lastPacket,
       lastShaderFailure:backend?.programs?.lastFailure,
       gpuError:module?.webgpuError,
       scope:'Runtime worker failure snapshot; a recorded draw packet does not prove GPU submission or game rendering'

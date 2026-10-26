@@ -3,6 +3,7 @@ import {WebGpuTextures} from './gpu-textures.mjs';
 import {WebGpuSamplers} from './gpu-samplers.mjs';
 import {WebGpuRender} from './gpu-render.mjs';
 import {WebGpuDraw} from './gpu-draw.mjs';
+import {WebGpuCompute} from './gpu-compute.mjs';
 import {stageInterface,diagnosticVertexLayout} from './wgsl-interface.mjs';
 /** WebGPU resources owned by the runtime Worker. NVN guest addresses never
  * become raw Wasm pointers here; transfers use bounded copied staging data. */
@@ -35,7 +36,7 @@ export async function dispatchGpuRequest(module,{token,operation,handle,offset,s
     const backend=module.webgpuBackend;
     if(!backend)throw new Error('WebGPU backend not attached');
     let bytes;
-    if(operation===2||operation===9||operation===12||operation===14||operation===17||operation===18||operation===22||operation===23||operation===24||operation===25) {
+    if(operation===2||operation===9||operation===12||operation===14||operation===17||operation===18||operation===22||operation===23||operation===24||operation===25||operation===26) {
       if(pointer+length>module.HEAPU8.length)throw new Error('GPU staging input range exceeds Wasm memory');
       bytes=module.HEAPU8.slice(pointer,pointer+length);
     }
@@ -66,9 +67,10 @@ export class WebGpuBackend {
     this.samplers=new WebGpuSamplers(device,action=>this.checked(action));
     this.render=new WebGpuRender(device,this.textures,action=>this.checked(action),{canvas,diagnosticFrames});
     this.draw=new WebGpuDraw(this);
+    this.compute=new WebGpuCompute(this);
     this.statistics={created:0,destroyed:0,writes:0,reads:0,bytesWritten:0,bytesRead:0,liveBytes:0,flushes:0,finishes:0,
       fencesCreated:0,fencesReleased:0,liveFences:0,syncWaits:0,serverWaits:0,
-      programsRegistered:0,livePrograms:0,shadersCompiled:0,programSnapshotsCreated:0,liveProgramSnapshots:0,...this.textures.statistics,...this.samplers.statistics,...this.render.statistics,...this.draw.statistics};
+      programsRegistered:0,livePrograms:0,shadersCompiled:0,programSnapshotsCreated:0,liveProgramSnapshots:0,...this.textures.statistics,...this.samplers.statistics,...this.render.statistics,...this.draw.statistics,...this.compute.statistics};
     this.device.lost.then(info=>{this.lost=info;});
     this.device.addEventListener('uncapturederror',event=>{this.failure=event.error;});
   }
@@ -187,6 +189,7 @@ export class WebGpuBackend {
     if(operation===23){await this.render.present(handle,bytes);Object.assign(this.statistics,this.render.statistics);return {value:0};}
     if(operation===25){await this.render.clearDepthStencil(bytes);Object.assign(this.statistics,this.render.statistics);return {value:0};}
     if(operation===24){await this.draw.draw(bytes);return {value:0};}
+    if(operation===26)return this.compute.dispatch(bytes);
     if(operation===5) {
       await this.checked(()=>this.device.queue.submit([]));this.statistics.flushes++;return {value:0};
     }
@@ -282,6 +285,7 @@ export class WebGpuBackend {
     } finally {clearTimeout(timer);}
   }
   close() {
+    this.compute.close();
     this.draw.close();
     this.render.close();
     this.programs.close();

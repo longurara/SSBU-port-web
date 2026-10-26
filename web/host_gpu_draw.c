@@ -13,7 +13,7 @@
 typedef struct {uint64_t address,size,pool,offset;} Range;
 enum {ATTR=1,STREAM,VERTEX,UNIFORM,STORAGE,TEXTURE,BLEND,COLOR,MASK,POLYGON,DEPTH,MULTISAMPLE,
       VIEWPORT,DEPTH_RANGE,STENCIL_REF,STENCIL_READ,STENCIL_WRITE,BLEND_COLOR,ALPHA_REF,POINT_SIZE,
-      SAMPLE_MASK,RASTER_DISCARD,DEPTH_CLAMP,RESTART,OFFSET,UNSUPPORTED,ARRAYS,ELEMENTS};
+      SAMPLE_MASK,RASTER_DISCARD,DEPTH_CLAMP,RESTART,OFFSET,UNSUPPORTED,ARRAYS,ELEMENTS,DISPATCH};
 struct WebGpuDrawRecord {unsigned op,stage,first,count,kind,range_count;uint64_t x[7];float f[4];uint8_t data[];};
 #define RANGES(record) ((Range *)(void *)(record)->data)
 struct WebGpuDrawState {
@@ -35,7 +35,7 @@ static unsigned operation(const char *name) {
         {"SetDepthClamp",DEPTH_CLAMP},{"SetPrimitiveRestart",RESTART},{"SetPolygonOffsetClamp",OFFSET},
         {"BindSeparateTexture",TEXTURE},{"BindSeparateTextures",TEXTURE},{"BindSeparateSampler",TEXTURE},{"BindSeparateSamplers",TEXTURE},
         {"SetDepthBounds",UNSUPPORTED},{"SetViewportSwizzles",UNSUPPORTED},
-        {"DrawArrays",ARRAYS},{"DrawArraysInstanced",ARRAYS},{"DrawElements",ELEMENTS},{"DrawElementsBaseVertex",ELEMENTS},{"DrawElementsInstanced",ELEMENTS}
+        {"DrawArrays",ARRAYS},{"DrawArraysInstanced",ARRAYS},{"DrawElements",ELEMENTS},{"DrawElementsBaseVertex",ELEMENTS},{"DrawElementsInstanced",ELEMENTS},{"DispatchCompute",DISPATCH}
     };
     for(unsigned i=0;i<sizeof names/sizeof *names;i++)if(!strcmp(name,names[i].name))return names[i].op;
     return 0;
@@ -103,6 +103,8 @@ WebGpuDrawRecord *web_gpu_draw_record(Ctx *c,const char *name,const char **error
             if(r->x[5]>UINT32_MAX||r->x[6]>UINT32_MAX)goto failed;
             if(c->x[3]&&r->x[6]&&!hold_range(&RANGES(r)[0],c->x[4],c->x[3]*(1ULL<<c->x[2]))){*error="invalid NVN index buffer range";goto failed;}
         }
+    }else if(r->op==DISPATCH){
+        for(unsigned i=0;i<3;i++)if(r->x[i]>UINT32_MAX)goto failed;
     }else if(r->op==UNSUPPORTED){
         if(!strcmp(name,"SetDepthBounds")){r->kind=1;r->x[0]=!!r->x[0];}
         else{r->kind=2;if(c->x[1]>16||c->x[2]>16-c->x[1])goto failed;
@@ -173,6 +175,31 @@ static const char *submit_draw(WebGpuDrawState *s,const WebGpuDrawRecord *r,cons
     if(!j.error){WebGpuReply reply=web_gpu_request(24,0,0,j.used,j.text,j.used);if(reply.status)j.error="WebGPU graphics draw failed";}
     error=j.error;free(j.text);return error;
 }
+static const char *submit_compute(WebGpuDrawState *s,const WebGpuDrawRecord *r,const uint32_t programs[6],uint64_t texture_pool,uint64_t sampler_pool){
+    if(!r->x[0]||!r->x[1]||!r->x[2])return NULL;
+    if(!programs[5])return "NVN dispatch requires a retained compute program";
+    Json j={.text=malloc(131072),.capacity=131072};if(!j.text)return "compute staging allocation failed";
+    append(&j,"{\"version\":1,\"program\":%u,\"groups\":[%u,%u,%u],\"ubo\":[",programs[5],(uint32_t)r->x[0],(uint32_t)r->x[1],(uint32_t)r->x[2]);
+    for(unsigned i=0;i<15;i++){if(i)append(&j,",");gpu_range(&j,&s->uniform[5][i],1);}append(&j,"],\"ssbo\":[");
+    for(unsigned i=0;i<16;i++){if(i)append(&j,",");gpu_range(&j,&s->storage[5][i],1);}append(&j,"],\"textures\":[");
+    for(unsigned i=0;i<32;i++){
+        if(i)append(&j,",");uint64_t handle=s->textures[5][i];
+        WebGpuTextureBinding t;WebGpuSamplerParams sampler;
+        if(!(handle&0x100000000ULL)||!web_gpu_registered_texture(texture_pool,(uint32_t)handle&0xfffff,&t)||t.image||!web_gpu_registered_sampler(sampler_pool,((uint32_t)handle>>20)&4095,&sampler)){append(&j,"null");continue;}
+        append(&j,"{\"texture\":%u,\"view\":%u,\"sampler\":",t.texture,t.view_handle);bytes(&j,(const uint8_t *)&sampler,sizeof sampler);append(&j,",\"swizzle\":");bytes(&j,(t.view.set&0x88)==0x88?t.view.swz:t.builder.swz,4);append(&j,"}");
+    }
+    append(&j,"]}");
+    if(!j.error){
+        WebGpuReply reply=web_gpu_request(26,0,0,j.used,j.text,j.used);
+        if(reply.status)j.error="WebGPU compute dispatch failed";
+        else if(reply.value&0xffff0000u)j.error="Invalid compute writeback mask";
+        else for(unsigned i=0;i<16;i++)if(reply.value&(1u<<i)){
+            const Range *range=&s->storage[5][i];
+            if(!range->address||!range->size||!web_gpu_writeback_range(range->address,range->size)){j.error="Compute storage guest writeback failed";break;}
+        }
+    }
+    const char *error=j.error;free(j.text);return error;
+}
 const char *web_gpu_draw_execute(WebGpuDrawState **state,const WebGpuDrawRecord *r,const WebGpuRenderState *render,const uint32_t programs[6],uint64_t texture_pool,uint64_t sampler_pool){
     WebGpuDrawState *s=*state;if(!s){
         s=calloc(1,sizeof *s);if(!s)return "graphics queue state allocation failed";*state=s;
@@ -208,5 +235,6 @@ const char *web_gpu_draw_execute(WebGpuDrawState **state,const WebGpuDrawRecord 
     else if(r->op==OFFSET)memcpy(s->offset,r->f,12);
     else if(r->op==UNSUPPORTED){if(r->kind){unsigned bit=1u<<(r->kind-1);s->unsupported=(s->unsupported&~bit)|(r->x[0]?bit:0);}}
     else if(r->op==ARRAYS||r->op==ELEMENTS)return submit_draw(s,r,render,programs,texture_pool,sampler_pool);
+    else if(r->op==DISPATCH)return submit_compute(s,r,programs,texture_pool,sampler_pool);
     return NULL;
 }

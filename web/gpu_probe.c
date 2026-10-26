@@ -569,6 +569,36 @@ static void *run(void *unused) {
                     if(textured){invoke("nvnTexturePoolRegisterTexture",TEXTURES,125,0,0);invoke("nvnTextureFinalize",DRAW_SOURCE,0,0,0);}
                 }
             }
+            if(configuration==0&&graphics_fixture()) {
+                /* Two real recorded dispatches: the second stages the first
+                 * output from guest memory. This detects missing GPU->guest
+                 * writeback and a later upload erasing computed bytes. */
+                const uint64_t CP=BASE+0x7780,CC=BASE+0xd000,DATA=BASE+0xd800;
+                const uint64_t PARAMS=STORAGE+65700,INPUT=STORAGE+65804,OUTPUT=STORAGE+65932,NEXT=STORAGE+66060;
+                wr32(CC,0x98761234);wr32(CC+0x6f8,32);wr32(CC+0x714,5);wr32(CC+0x748,4);wr32(CC+0x74c,1);wr32(CC+0x750,1);
+                wr64(SHADERS,DATA);wr64(SHADERS+8,CC);check(invoke("nvnProgramInitialize",CP,DEVICE,0,0)==1);
+                check(invoke("nvnProgramSetShaders",CP,1,SHADERS,0)==1);
+                check(invoke("nvnCommandBufferInitialize",COPY_CB,DEVICE,0,0)==1);
+                invoke("nvnCommandBufferAddCommandMemory",COPY_CB,POOL_OBJECT,0,81920);invoke("nvnCommandBufferAddControlMemory",COPY_CB,COPY_CONTROL,1024,0);
+                invoke("nvnCommandBufferBeginRecording",COPY_CB,0,0,0);invoke("nvnCommandBufferBindProgram",COPY_CB,CP,32,0);
+                context.x[4]=16;invoke("nvnCommandBufferBindUniformBuffer",COPY_CB,5,0,PARAMS);
+                context.x[4]=32;invoke("nvnCommandBufferBindStorageBuffer",COPY_CB,5,0,INPUT);
+                context.x[4]=32;invoke("nvnCommandBufferBindStorageBuffer",COPY_CB,5,1,OUTPUT);
+                invoke("nvnCommandBufferDispatchCompute",COPY_CB,0,1,1);invoke("nvnCommandBufferDispatchCompute",COPY_CB,2,1,1);
+                context.x[4]=32;invoke("nvnCommandBufferBindStorageBuffer",COPY_CB,5,0,OUTPUT);
+                context.x[4]=32;invoke("nvnCommandBufferBindStorageBuffer",COPY_CB,5,1,NEXT);
+                invoke("nvnCommandBufferDispatchCompute",COPY_CB,2,1,1);
+                for(unsigned i=0;i<2;i++){context.x[4]=0;invoke("nvnCommandBufferBindStorageBuffer",COPY_CB,5,i,0);}
+                context.x[4]=0;invoke("nvnCommandBufferBindUniformBuffer",COPY_CB,5,0,0);invoke("nvnCommandBufferBindProgram",COPY_CB,0,32,0);
+                uint64_t compute_list=invoke("nvnCommandBufferEndRecording",COPY_CB,0,0,0);wr64(COPY_HANDLES,compute_list);
+                invoke("nvnCommandBufferFinalize",COPY_CB,0,0,0);invoke("nvnProgramFinalize",CP,0,0,0);
+                wr32(PARAMS,7);wr32(PARAMS+4,5);wr32(PARAMS+8,0);wr32(PARAMS+12,0);
+                for(unsigned i=0;i<8;i++){wr32(INPUT+i*4,i+1);wr32(OUTPUT+i*4,0xdeadbeef);wr32(NEXT+i*4,0xdeadbeef);}
+                invoke("nvnQueueSubmitCommands",COPY_Q,1,COPY_HANDLES,0);invoke("nvnDeviceFinalizeCommandHandle",DEVICE,compute_list,0,0);
+                for(unsigned i=0;i<7;i++){check(rd32(INPUT+i*4)==i+1);check(rd32(OUTPUT+i*4)==(i+1)*3+5);check(rd32(NEXT+i*4)==((i+1)*3+5)*3+5);}
+                check(rd32(OUTPUT+28)==0xdeadbeef&&rd32(NEXT+28)==0xdeadbeef);
+                wr64(SHADERS,SHADER_DATA);wr64(SHADERS+8,SHADER_CONTROL);
+            }
             if(configuration==6||configuration==7) {
                 const uint64_t TARGET_ARRAY=COPY_HANDLES+32,CLEAR_VALUE=COPY_HANDLES+64;
                 unsigned integer=configuration==7;uint32_t color[4];
