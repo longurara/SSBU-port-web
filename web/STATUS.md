@@ -1,3 +1,16 @@
+> **26/10/2026 — 7cf0 ĐÃ QUA TITLE VÀ HIỆN THÔNG BÁO/PHẦN THƯỞNG THẬT, PHIÊN CÒN CHẠY.**
+> Không rebuild/reload phiên hiện tại. Opening thật808s, clock video12816000us/audio14708000us.
+> A838s giữ10presents/thả, phim đóng840s, title trắng ổn định908s.
+> A932s trên title được nhận; đến990s game còn chạy/threadFailed0 và hiện bảng
+> huy chương Smash màu hồng. Screenshot codex-title-7cf0-notification.png.
+> A1020s đóng bảng, tiếp1104s hiện màn phần thưởng nền vàng/icon xanh,
+> screenshot codex-title-7cf0-reward.png. A1132s được nhận/thả,1138s đang chuyển màn đen.
+> Các ảnh tại output/playwright/, logs build/codex-title-7cf0-{opening-press-a,title-press-a,
+> notification-press-a,reward-press-a,poll-10,screen-8}.log. Không gọi đây là menu/CPU match.
+> Text trong các bảng thông báo/phần thưởng chưa hiện; hình/icon/background có thật.
+> TIẾP: poll phiên đang chạy, xem màn hình trước khi input, xác nhận qua các bảng thưởng,
+> vào menu rồi CPU match+completion. Không spam cập nhật chờ theo yêu cầu người dùng.
+
 > **26/10/2026 — BUILDab6c9df COMPLETE; GAME7cf0 ĐANG BOOT ĐÚNG1LẦN.**
 > Chỉ thông báo thay đổi quan trọng theo yêu cầu tiết kiệm quota của người dùng.
 > PID76168/78148/79596 đã kết thúc, Linked runtime-fibers-compact.mjs.
