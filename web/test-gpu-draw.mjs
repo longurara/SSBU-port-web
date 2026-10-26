@@ -8,6 +8,12 @@ export async function createFixtureGraphicsCompiler() {
     const vertex=(new DataView(data.buffer,data.byteOffset).getUint32(0x30,true)>>>10)===1;
     if(options.requestedStage!==undefined&&options.requestedStage!==(vertex?0:1))throw new Error('Graphics stage received another stage\'s resource options');
     const variant=new DataView(control.buffer,control.byteOffset).getUint32(0x704,true),flat=variant===0x464c4154,textured=!vertex&&variant===0x54455854,noOutput=!vertex&&variant===0x4e4f5554;
+    if(variant===0x4d414e59){
+      const args=Array.from({length:9},(_,i)=>`@location(${i}) a${i}:vec4<${options.integerAttributes&(1<<i)?options.signedAttributes&(1<<i)?'i32':'u32':'f32'}>`).join(',');
+      const sum=Array.from({length:9},(_,i)=>`vec4<f32>(a${i})*${i+1}.0`).join('+');
+      return {code:vertex?`struct Out{@builtin(position) p:vec4<f32>,@location(0) shade:vec4<f32>}; @vertex fn vertex_main(@builtin(vertex_index) i:u32,${args})->Out{var p=array<vec2<f32>,3>(vec2<f32>(-1,-1),vec2<f32>(3,-1),vec2<f32>(-1,3));return Out(vec4<f32>(p[i%3u],0,1),(${sum})/45.0);}`:
+        '@fragment fn fragment_main(@location(0) shade:vec4<f32>)->@location(0) vec4<f32>{return shade;}',activeBindings:[],metadata:{stage:vertex?0:1,inputAttributes:vertex?511:0,cbufs:0,ssbos:0,ssbosWritten:0,images:0,textures:0},layout:{pushConstant:null,samplers:[]}};
+    }
     const flatVertex='@group(3) @binding(0) var<uniform> params:vec4<u32>; struct Out{@builtin(position) p:vec4<f32>,@location(0) @interpolate(flat) shade:vec4<f32>}; @vertex fn vertex_main(@location(0) p:vec4<f32>,@builtin(vertex_index) i:u32)->Out{let colors=array<vec4<f32>,3>(vec4<f32>(1,0,0,1),vec4<f32>(0,1,0,1),vec4<f32>(0,0,1,1));return Out(vec4<f32>(p.xyz,p.w*bitcast<f32>(params.z)),colors[i%3]);}';
     const flatFragment='@fragment fn fragment_main(@location(0) @interpolate(flat) shade:vec4<f32>)->@location(0) vec4<f32>{return shade;}';
     return {code:noOutput?'@fragment fn fragment_main(){}':flat?(vertex?flatVertex:flatFragment):vertex?'@group(3) @binding(0) var<uniform> params:vec4<u32>; @vertex fn vertex_main(@location(0) p:vec4<f32>)->@builtin(position) vec4<f32>{return vec4<f32>(p.xyz,p.w*bitcast<f32>(params.z));}':
@@ -163,6 +169,38 @@ export async function testGpuDraw(device,{shaderLowering=false}={}) {
     await backend.request(2,{handle:uniform,offset:4,size:16,bytes:new Uint8Array(new Float32Array([1,1,1,1]).buffer)});
     await clear();await draw();read=(await backend.request(16,{handle:target,offset:0,size:0})).bytes;
     for(let pixel=0;pixel<16;pixel++)for(let c=0;c<4;c++)check(Math.abs(read[pixel*4+c]-[255,128,64,255][c])<=1,'Combined program stage resources or pixels differ');
+    const savedPacket=JSON.parse(JSON.stringify(p));
+    const manySnapshots=[];
+    for(const type of [1,5]){const code=program(type);new DataView(code.buffer).setUint32(12+0x704,0x4d414e59,true);const {value:handle}=await backend.request(12,{bytes:code});manySnapshots.push((await backend.request(20,{handle})).value);}
+    for(const scenario of ['nine-instance-streams','indexed-base-and-first-instance','typed-streams','zero-stride-and-default','unaligned-normalized-three-channels']){
+      p.programs=manySnapshots.slice();p.attributes.fill(0);p.streams=Array.from({length:32},()=>[0,0,0,0,0]);p.color=[0,3,8,0];p.ds.fill(0);p.scissor=[0,0,4,4];
+      p.primitive=scenario==='indexed-base-and-first-instance'?[4,1,3,1,1,1,indices,0]:[4,-1,3,0,0,1,0,0];
+      const expected=[0,0,0,0];
+      for(let i=0;i<9;i++){
+        let values=[0.1+i*0.02,0.2,0.3,1],format=0x2e,step=1,stride=16,entries=1;
+        if(scenario==='indexed-base-and-first-instance'){step=i<4?0:1;entries=step?2:4;}
+        if(scenario==='typed-streams'&&i>=7){values=i===7?[1,-1,0,1]:[0,1,1,1];format=i===7?0x30:0x2f;}
+        if(scenario==='zero-stride-and-default'&&i<4){step=0;stride=0;}
+        if(scenario==='zero-stride-and-default'&&i===8){values=[0,0,0,1];for(let c=0;c<4;c++)expected[c]+=values[c]*(i+1)/45;continue;}
+        if(scenario==='unaligned-normalized-three-channels'&&i===8){
+          values=[64/255,128/255,192/255,1];const data=new Uint8Array(8);data.set([64,128,192],3);const handle=await buffer(data);p.attributes[i]=0x19|(i<<8)|(2<<14);p.streams[i]=[0,1,handle,1,5];
+        }else{
+          const data=new ArrayBuffer(entries*16),v=new DataView(data);
+          for(let entry=0;entry<entries;entry++)for(let c=0;c<4;c++){const value=entries>1&&entry===0?0:values[c];if(format===0x30)v.setInt32(entry*16+c*4,value,true);else if(format===0x2f)v.setUint32(entry*16+c*4,value,true);else v.setFloat32(entry*16+c*4,value,true);}
+          p.attributes[i]=format|(i<<8);p.streams[i]=[stride,step,await buffer(new Uint8Array(data)),0,data.byteLength];
+        }
+        for(let c=0;c<4;c++)expected[c]+=values[c]*(i+1)/45;
+      }
+      const packedBefore=backend.draw.statistics.packedVertexDraws;
+      await clear();await draw();read=(await backend.request(16,{handle:target,offset:0,size:0})).bytes;
+      check(backend.draw.statistics.packedVertexDraws===packedBefore+1,`${scenario}: excess streams were not interleaved`);
+      for(let pixel=0;pixel<16;pixel++)for(let c=0;c<4;c++)check(Math.abs(read[pixel*4+c]-Math.round(Math.min(1,Math.max(0,expected[c]))*255))<=1,`${scenario}: packed fetch pixels differ`);
+    }
+    const drawsBeforeBounds=backend.statistics.draws;p.streams[8][4]=1;let boundsRejected=false;
+    try{await draw();}catch(error){boundsRejected=String(error).includes('Packed vertex fetch exceeds bound');}
+    check(boundsRejected&&backend.statistics.draws===drawsBeforeBounds,'Packed fetch range failure changed draw submission');
+    const afterBounds=(await backend.request(16,{handle:target,offset:0,size:0})).bytes;check(afterBounds.every((n,i)=>n===read[i]),'Rejected packed fetch changed target');
+    Object.assign(p,savedPacket);
     if(shaderLowering){
     const {lowerSpirv}=await import('./spirv-compat.mjs'),{createShaderCompiler}=await import('./shader-compiler.mjs');
     // Real SPIR-V lowering behind the actual immutable packet/variant path.

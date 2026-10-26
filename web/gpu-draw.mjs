@@ -68,7 +68,7 @@ export class WebGpuDraw {
     this.depthSamples=new WebGpuDepthSamples(backend);
     this.logicalSamples=new WebGpuLogicalSamples(backend);
     if(backend.render.frameDiagnostics){this.diagnosticDraws={records:[],byteLimit:196608,scope:'Bounded actual draw inputs; buffer prefixes may be incomplete and are explicitly marked. Not a complete draw replay or proof of game pixels'};this.diagnosticKeys=new Set();}
-    this.statistics={drawSubmissions:0,draws:0,indexedDraws:0,graphicsPipelines:0,drawBufferCopies:0,convertedIndexDraws:0,convertedIndexBytes:0,convertedVertexStreams:0,convertedVertexBytes:0,arraySamplingViews:0,uniformSpecializedDraws:0,uniformBranchesRemoved:0,...this.logicalSamples.statistics};}
+    this.statistics={drawSubmissions:0,draws:0,indexedDraws:0,graphicsPipelines:0,drawBufferCopies:0,convertedIndexDraws:0,convertedIndexBytes:0,convertedVertexStreams:0,convertedVertexBytes:0,packedVertexDraws:0,packedVertexBytes:0,arraySamplingViews:0,uniformSpecializedDraws:0,uniformBranchesRemoved:0,...this.logicalSamples.statistics};}
   moduleId(module){if(!this.modules.has(module))this.modules.set(module,this.nextModule++);return this.modules.get(module);}
   async captureInputs(key,packet,shaders,options,failure=null) {
     const diagnostic=this.diagnosticDraws;
@@ -217,6 +217,53 @@ export class WebGpuDraw {
         this.statistics.convertedIndexDraws++;this.statistics.convertedIndexBytes+=indices.byteLength;
       }else if(indexType!==-1){index=await range([indexHandle,indexOffset,Math.ceil(count*(1<<indexType)/4)*4],GPUBufferUsage.INDEX,4);}
       const vertex=stageInterface(vs.code,'vertex'),fragment=stageInterface(fs.code,'fragment'),layouts=[],vertexBuffers=[];
+      const fetchCount=async instance=>{
+        if(instance)return baseInstance+instances;
+        if(indexType===-1)return first+count;
+        let maximum=-1;const restart=p.flags[2]?[255,65535,4294967295][indexType]:null;
+        for(const value of await readIndices())if(value!==restart)maximum=Math.max(maximum,value);
+        return maximum+first+1;
+      };
+      const inputState=vertex.locations.map(input=>{
+        const encoded=p.attributes[input.shaderLocation]>>>0,stream=(encoded>>>8)&31,s=p.streams[stream];array(s,5,'vertex stream');
+        const enabled=!!((encoded&255)&&s[2]&&s[4]);
+        if(enabled&&![0,1].includes(s[1]))throw new Error('Vertex instance divisor needs fetch lowering');
+        return {input,encoded,s,enabled,key:enabled?stream:`constant/${input.kind}`};
+      });
+      if(new Set(inputState.map(a=>a.key)).size>d.limits.maxVertexBuffers){
+        // NVN can bind more independent streams than WebGPU. Interleave the
+        // actual fetched attributes into one buffer per step mode. Decode the
+        // same native formats/default components as the ordinary fetch path;
+        // retain vertex/instance indexing, first/baseVertex and firstInstance.
+        if(vertex.locations.length>d.limits.maxVertexAttributes)throw new Error('NVN inputs exceed WebGPU vertex attribute count');
+        for(const instance of [0,1]){
+          const attrs=inputState.filter(a=>(a.enabled?a.s[1]:0)===instance);if(!attrs.length)continue;
+          const varying=attrs.some(a=>a.enabled&&a.s[0]!==0),entries=varying?await fetchCount(instance):1,packedStride=attrs.length*16,outputBytes=entries*packedStride;
+          if(entries<1||!Number.isSafeInteger(outputBytes)||outputBytes>67108864||packedStride>d.limits.maxVertexBufferArrayStride)throw new Error('Packed vertex fetch exceeds staging or stride limit');
+          const output=new ArrayBuffer(outputBytes),view=new DataView(output),attributes=[];
+          for(let a=0;a<attrs.length;a++){
+            const {input,encoded,s,enabled}=attrs[a],f=enabled?vertexFormat(encoded&255):null;
+            let data,stride=0,attributeOffset=0;
+            if(enabled){
+              stride=uint(s[0],'vertex stride');attributeOffset=encoded>>>14;
+              const [handle,offset,size]=s.slice(2),record=b.buffer(handle);uint(offset,'vertex offset');uint(size,'vertex size');
+              const sourceBytes=(entries-1)*stride+attributeOffset+f.bytes;
+              if(offset>record.size||size>record.size-offset||sourceBytes>size)throw new Error('Packed vertex fetch exceeds bound NVN range');
+              if(sourceBytes>67108864)throw new Error('Packed vertex source exceeds staging limit');
+              const begin=Math.floor(offset/4)*4,end=Math.ceil((offset+sourceBytes)/4)*4;
+              const {bytes}=await b.perform(3,{handle,offset:begin,size:end-begin});data=new DataView(bytes.buffer,bytes.byteOffset+offset-begin,sourceBytes);
+            }
+            const kind=enabled?(f.integer?(f.signed?'i32':'u32'):'f32'):input.kind;
+            attributes.push({shaderLocation:input.shaderLocation,offset:a*16,format:{f32:'float32x4',i32:'sint32x4',u32:'uint32x4'}[kind]});
+            for(let v=0;v<entries;v++){
+              const values=enabled?decodeVertex(data,v*stride+attributeOffset,encoded&255,f):[0,0,0,1];
+              for(let c=0;c<4;c++){const at=v*packedStride+a*16+c*4;if(kind==='i32')view.setInt32(at,values[c],true);else if(kind==='u32')view.setUint32(at,values[c],true);else view.setFloat32(at,values[c],true);}
+            }
+          }
+          layouts.push({arrayStride:varying?packedStride:0,stepMode:instance?'instance':'vertex',attributes});vertexBuffers.push(await upload(new Uint8Array(output),GPUBufferUsage.VERTEX));this.statistics.packedVertexBytes+=outputBytes;
+        }
+        this.statistics.packedVertexDraws++;
+      }else{
       const fetchGroups=new Map();
       for(const input of vertex.locations){const encoded=p.attributes[input.shaderLocation]>>>0,nvn=encoded&255,stream=(encoded>>>8)&31,s=p.streams[stream];array(s,5,'vertex stream');
         if(nvn&&s[2]&&s[4]){if(!fetchGroups.has(stream))fetchGroups.set(stream,[]);fetchGroups.get(stream).push({input,encoded,nvn,f:vertexFormat(nvn)});}}
@@ -227,7 +274,7 @@ export class WebGpuDraw {
         const stride=uint(s[0],'vertex stride'),[handle,offset,size]=s.slice(2),record=b.buffer(handle);
         uint(offset,'vertex offset');uint(size,'vertex size');if(offset>record.size||size>record.size-offset)throw new Error('Vertex range exceeds storage');
         let vertices=1;
-        if(stride){if(s[1])vertices=baseInstance+instances;else if(indexType===-1)vertices=first+count;else{let maximum=-1;const restart=p.flags[2]?[255,65535,4294967295][indexType]:null;for(const value of await readIndices())if(value!==restart)maximum=Math.max(maximum,value);vertices=maximum+first+1;}}
+        if(stride)vertices=await fetchCount(s[1]);
         const packedStride=attributes.length*16,outputBytes=vertices*packedStride;
         if(vertices<1||!Number.isSafeInteger(outputBytes)||outputBytes>67108864)throw new Error('Vertex conversion exceeds staging limit');
         const extent=Math.max(...attributes.map(a=>(a.encoded>>>14)+a.f.bytes)),sourceBytes=(vertices-1)*stride+extent;
@@ -258,6 +305,7 @@ export class WebGpuDraw {
         layouts[groups.get(key)].attributes.push({shaderLocation:input.shaderLocation,offset:fetch?fetch.attributes.findIndex(a=>a.input.shaderLocation===input.shaderLocation)*16:enabled?encoded>>>14:0,format});
       }
       if(layouts.length>d.limits.maxVertexBuffers)throw new Error('NVN streams exceed WebGPU vertex binding count');
+      }
       const attachment=value=>{
         if(!value)return null;
         const record=b.textures.get(value.handle),format=value.format?textureFormat(value.format).format:record.format.format;
