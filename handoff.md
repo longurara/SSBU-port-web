@@ -1,3 +1,27 @@
+> **26/10/2026 — FIX ImageQueryLod PUSHED f133896; LIVE SESSION PRESERVED.**
+> JS lowering reconstructs isotropic fragment 2D query from actual derivatives,
+> actual texture-view base dimensions/level count and actual sampler state.
+> Returns BOTH components: filter/clamp-dependent accessed mip and unclamped lambda;
+> no zero replacement/skipped draw. Nonzero bias/snap/reduction, anisotropy!=1,
+> arrays/cubes/non-fragment queries remain explicit errors. No WASM rebuild needed.
+> Tests: Node compatibility+LOD state guards PASS; actual captured Maxwell shader
+> through full compiler/swizzles and real GPU module PASS; GPU analytic numeric
+> 16cases x144pixels x2components PASS; draw fixture453checks/16draws PASS.
+> Fixtures web/lod-query-test.frag, web/test-gpu-lod-query.mjs, build_shader.py.
+> Reports build/codex-querylod-{gpu,full-compile,publication}.json; served JS hashes
+> match source. Runtime WASM still verified7cf0. Native pixel parity NOT proven.
+> Controlled boot helper REFUSED because a runtime is already active (guard worked).
+> DO NOT reload/kill it. Page-only evidence10:46:58Z at614s,306ctors/threadFailed0,
+> 45901draws/2393presents, black screen; actual current page differs from old terminal.
+> New session origin not established; it may have loaded pre-fix modules. Cannot call
+> it a verified f133896 boot. Keep it until actual terminal or useful visible scene.
+> Poll page only via build/codex-querylod-page-poll.cjs (worker evaluate pending;
+> exec session37723, do not interpret timeout as failure). Screenshot helper
+> build/codex-querylod-active-screen.cjs -> output/playwright/codex-querylod-active.png.
+> NEXT: observe active session, act only on actual scene. If old ImageQueryLod
+> terminal repeats, preserve report then boot verified fixed JS exactly once.
+> Menu/CPU match/completion still unverified. Goal active; notify important changes only.
+
 > **26/10/2026 — 7cf0 TERMINAL WEBGPU ImageQueryLod SAU CÁC BẢNG THƯỞNG.**
 > Phiên đã terminal1156s, error WebGPU graphics draw failed, gpuError
 > unsupported instruction ImageQueryLod at Function. Actual report
