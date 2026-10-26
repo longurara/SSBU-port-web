@@ -1,3 +1,17 @@
+> **26/10/2026 — BUILDab6c9df COMPLETE; GAME7cf0 ĐANG BOOT ĐÚNG1LẦN.**
+> Chỉ thông báo thay đổi quan trọng theo yêu cầu tiết kiệm quota của người dùng.
+> PID76168/78148/79596 đã kết thúc, Linked runtime-fibers-compact.mjs.
+> Publish2026-10-26T10:12:50Z, SHA256
+> 7cf054167924ed66816977be33522161d52aaabec503f4ec01a9af3028d477d7,
+> 283730072bytes /100375functions /maximumLocals10812. Local+HTTP SHA/receipt/5JS
+> khớp source lúc10:13:35Z; build/codex-title-ab6c9df-publication-verified.json.
+> State đã complete, không restart compiler. Phiêne272 terminal đã lưu trước boot mới.
+> Boot7cf0 đúng1lần:306ctors/33workers/threadFailed0 ở2s. Logs
+> build/codex-title-7cf0-{boot,trace,poll-1,reader}.log. Trace+reader đã cài;
+> unique GuestMemory20120040. Helper screen riêng build/codex-title-7cf0-screen.cjs.
+> TIẾP: giữ phiên game, chờ opening/title thật, A rồi kiểm tra callback1af1f40/menu,
+> CPU match+completion. Callback mới chỉ chứng minh có trong build; goal chưa đạt.
+
 > **26/10/2026 — e272 TERMINAL7101af1f40; BUILDab6c9df ĐANG CHẠY.**
 > Chỉ báo người dùng khi có thay đổi quan trọng, tránh lặp trạng thái chờ/tốn quota.
 > e272 loading hiện292s, opening thật686s (video2205000us/audio4089333us).
