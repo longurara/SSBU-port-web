@@ -1,3 +1,21 @@
+> **26/10/2026 — e272 TERMINAL7101af1f40; BUILDab6c9df ĐANG CHẠY.**
+> Chỉ báo người dùng khi có thay đổi quan trọng, tránh lặp trạng thái chờ/tốn quota.
+> e272 loading hiện292s, opening thật686s (video2205000us/audio4089333us).
+> A712s giữ10presents/thả; phim còn chạy720s rồi title776s. A804s,
+> title trắng ổn định870s; A896s giữ10presents/thả, vẫn chạy916s rồi terminal924s:
+> uncompiled indirect target7101af1f40, guestFunction7101b15370/lr71022d279c,
+> threadFailed0. Actual report build/codex-title-e272-terminal-page.json.
+> Screens output/playwright/codex-title-e272-{opening,title,stable-title,live}.png.
+> Original callback group71050a9168:6targets1af1c70/1af1d20/1af1de0/1af1e60/1af1f40/1af2050,
+> 4hàm trước đó chưa compile, tất cả native definitions có thật; body c_023e.c:10534.
+> Evidence build/codex-title-e272-callback-group.json. Codeab6c9df thêm đúng actual observed1af1f40.
+> Prepare --main --pointer-tables xong:70362functions(+4),306ctors, missing0,
+> cả6targets verified trong generated table. Log build/codex-title-1af1f40-prepare.log.
+> Full build PID76168 bắt đầu2026-10-26T08:46:37.1204794Z,
+> --fibers --compact-codegen --jobs8. Log/state build/codex-title-ab6c9df-build{,.err}.log / -state.json.
+> Không restart compiler/không boot lại e272 đã terminal. TIẾP: chờ build thành công,
+> xác minh local+HTTP SHA/receipt/5JS khác e272, boot mới1lần, menu/CPU match+completion.
+
 > **26/10/2026 — BUILD56590a8 COMPLETE; GAMEe272 ĐANG BOOT ĐÚNG1LẦN.**
 > Yêu cầu mới của người dùng: làm tới khi game chạy được, chỉ thông báo khi có việc quan trọng
 > để tránh tốn quota; không lặp thông báo đang chờ khi trạng thái không đổi.
