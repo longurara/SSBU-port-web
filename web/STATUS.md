@@ -1,3 +1,18 @@
+> **26/10/2026 — BUILD56590a8 COMPLETE; GAMEe272 ĐANG BOOT ĐÚNG1LẦN.**
+> Yêu cầu mới của người dùng: làm tới khi game chạy được, chỉ thông báo khi có việc quan trọng
+> để tránh tốn quota; không lặp thông báo đang chờ khi trạng thái không đổi.
+> PID78584/42876/78104 đã kết thúc. Linked runtime-fibers-compact.mjs.
+> Publish2026-10-26T08:23:11Z, SHA256
+> e272c95972ad4662ec4d8c563bb416c468a2b533b02e91ee0417c9a78086c90e,
+> 283719841bytes /100369functions /maximumLocals10812. Local+HTTP SHA/receipt/5JS
+> khớp source lúc08:26:23Z; build/codex-title-56590a8-publication-verified.json.
+> State đã complete, không restart compiler. Bảna525 terminal đã lưu trước boot mới.
+> Boot e272 đúng1lần:306ctors/33workers/threadFailed0 ở2s. Logs
+> build/codex-title-e272-{boot,trace,poll-1,reader}.log. Trace+reader đã cài;
+> unique GuestMemory20119976. Screenshot helper riêng build/codex-title-e272-screen.cjs.
+> TIẾP: giữ phiên game, chờ opening/title thật, A rồi kiểm tra callback1b1a230/menu,
+> CPU match+completion. Chỉ chứng minh callback group có trong build; goal chưa đạt.
+
 > **26/10/2026 — a525 TERMINAL7101b1a230; BUILD56590a8 ĐANG CHẠY.**
 > Phiêna525 đã phát gần hết phim thật: clock video125662000us/audio127545333us,
 > duration129799000us; screenshot output/playwright/codex-title-a525-opening-end.png.
