@@ -1,3 +1,49 @@
+> **26/10/2026 12:04Z — STREAM FIX PASSED; TERMINAL UNIMPLEMENTED COMPUTE DISPATCH.**
+> Current session TERMINATED1272s, unimplemented NVN:nvnCommandBufferDispatchCompute,
+> address/lr710009fc24,guestFunction7100031db0,sp80054af440,x0=8004db8a68,
+> x8=71052a9ff8,threadFailed1. Preserve build/codex-stream-pack-terminal.{json,log}.
+> Actual opening704s/A740release744; title850s/A906release910; notification1014s/
+> A1048release1050; greenreward1138s/A1200release1204. Last actual screen is BLUE
+> spirit card (pink wizard, ADVANCED text), output/playwright/codex-stream-pack-live.png.
+> ImageQueryLod and excess9vertexstreams are now passed in actual game. Not menu/match.
+> CodeHEAD120660f, docs990428c pushed; worktree clean. No compiler active. No reboot
+> until compute implementation/tests; WASM7cf0 must change for C bridge support.
+> NEXT IMPLEMENT REAL COMPUTE, no skip/zero outputs: native reference runtime/nvn_gl.c
+> compute_dispatch2466+, compute_bind_glsl2615+. Skinning writes storage buffers and
+> native compute_flush copies results back to guest memory before later CPU/draw reads.
+> Existing web shader compiler supports compute(type6->metadata.stage5), but web NVN
+> recorder and JS backend have NO dispatch execution yet. No compute code written.
+> Architecture: host_gpu_commands.c Queue.programs[6], retained immutable snapshots,
+> execute_binding_chain passes all6tokens to host_gpu_draw_execute; DrawState already
+> uniform[6][16],storage[6][32],textures[6][32]. Add DISPATCH enum/name/validation in
+> host_gpu_draw.c and DispatchCompute to known command names. Record x1/x2/x3 groups;
+> execute must use stage5 state/program and preserve command-list/queue ordering.
+> Add bridge operation26 JSON compute state, snapshots/program/15UBO/16SSBO/32textures.
+> C gpu_range stages actual bytes on submission. Need new resource writeback API:
+> host_gpu_resources.c transfer(pool,offset,size,1) reads GPU->guest; for CPU-backed
+> pools this MUST land before later draw_range reuploads CPU memory. GPU-only pools
+> keep authoritative GPU bytes. Return backend-written mask through WebGpuReply.value
+> then write back bound actual storage ranges (conservative ssbosWritten acceptable,
+> translator currently marks all used SSBOs when global stores exist). Do not fake.
+> JS: add gpu-compute.mjs, backend op26/staging decode/constructor/close/report capture,
+> full actual Maxwell->SPIRV->Naga pipeline, real dispatchWorkgroups and writable
+> SSBO alignment/copyback. Binding scheme compute base0, CB0..17, SSBO20..35,
+> sampled images group1 slot0..31; CBuf1 retained source constants, CBuf2 real handle
+> table as gpu-draw.mjs, CBuf>=3 from UBO slots n-3. Dynamic CB0/images need explicit
+> support/error; do not invent resources. Align writable storage via temp only when
+> needed and copy back; handle/reject writable aliasing explicitly. Real SSBO bytes
+> must remain visible to both later GPU work and guest CPU. Existing generic
+> compileSnapshot compiles all stages; requestedStage currently0/1 only. Extend to5
+> mappedsource6 if selecting compute from combined record; preserve variant caches.
+> Tests: dump-free C GPU probe can exercise record/sublist/snapshot/lifetime+writeback,
+> WebGPU compute numeric outputs and subsequent vertex use, alignments/alias/bounds;
+> actual retained compute fixture if available. web/build_gpu_probe.py is short build;
+> full runtime only after tests, --fibers --compact-codegen --jobs8 (mandatory), keep
+> existing Binaryen locals/hash validation. Add new JS to build_runtime.py and probe
+> copy lists if used. runtime-worker.mjs lastComputePacket diagnostic before cleanup.
+> Never edit protected guest_memory.h/runtime_memory.h/runtime/runtime.h. No compiler
+> restart on silence, no skips or dummy compute. Goal active, important notices only.
+
 > **26/10/2026 11:43Z — VERTEX STREAM FIX120660f PUSHED; NEW LIVE BOOT.**
 > Stage-fixed0b101cc session passed title/notification/reward and actual ImageQueryLod.
 > Opening724s/A752released758; title856s/A902released906; notification992s/A1024;
