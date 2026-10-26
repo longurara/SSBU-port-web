@@ -62,7 +62,7 @@ function zeroViewportOutputs(ops,types,builtins,instanceBase){
   return outputs;
 }
 
-export function lowerSpirv(input, {topology,singleInstanceBase,textureSwizzles} = {}) {
+export function lowerSpirv(input, {topology,singleInstanceBase,textureSwizzles,lodQuerySamplers} = {}) {
   if(singleInstanceBase!==undefined&&(!Number.isInteger(singleInstanceBase)||singleInstanceBase<0||singleInstanceBase>0xffffffff))throw new Error('Invalid single-instance base');
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
   if (bytes.length < 20 || bytes.length % 4 || bytes.length > 16 * 1024 * 1024) throw new Error('Invalid SPIR-V byte length');
@@ -170,6 +170,11 @@ export function lowerSpirv(input, {topology,singleInstanceBase,textureSwizzles} 
     constants.set(key,result);return result;
   }
   const floatConstants=new Map();
+  function floatConstant(type,value){
+    const bits=new Uint32Array(new Float32Array([value]).buffer)[0],key=`scalar/${type}/${bits}`;
+    if(floatConstants.has(key))return floatConstants.get(key);
+    const result=id();declarations.push([43,[type,result,bits]]);floatConstants.set(key,result);return result;
+  }
   function floatPair(type,bits){
     const key=`${type}/${bits}`;if(floatConstants.has(key))return floatConstants.get(key);
     const scalar=id(),vector=id();declarations.push([43,[type,scalar,bits]],[44,[matchingType(23,[type,2]),vector,scalar,scalar]]);floatConstants.set(key,vector);return vector;
@@ -183,6 +188,41 @@ export function lowerSpirv(input, {topology,singleInstanceBase,textureSwizzles} 
     if(op===10&&new TextDecoder().decode(new Uint8Array(new Uint32Array(a).buffer)).split('\0')[0]==='SPV_EXT_shader_viewport_index_layer')continue;
     if((op===5||op===71)&&viewportOutputs.has(a[0])||op===59&&viewportOutputs.has(a[1])||op===62&&viewportOutputs.has(a[0]))continue;
     if(op===17&&a[0]===25)continue; // ImageGatherExtended, checked above.
+    if(op===105){
+      // WGSL has no textureQueryLod. For isotropic 2D sampling, reconstruct
+      // lambda from the actual coordinate derivatives in base-level texels.
+      // Return both GLSL components: accessed mip(s), and unclamped lambda.
+      // https://registry.khronos.org/OpenGL/extensions/ARB/ARB_texture_query_lod.txt
+      const item=sampledSources.get(a[2]),imageType=item&&types.get(item.imageType),vector=types.get(a[0]);
+      const float=vector?.[0]===23?vector[1][0]:undefined,scalar=types.get(float);
+      if(a.length!==4||!ops.some(([op,b])=>op===15&&b[0]===4)||ops.some(([op,b])=>op===15&&b[0]!==4)||
+        imageType?.[0]!==25||imageType[1][1]!==1||imageType[1][3]||imageType[1][4]||imageType[1][5]!==1||
+        vector?.[0]!==23||vector[1][1]!==2||scalar?.[0]!==22||scalar[1][0]!==32||valueTypes.get(a[3])!==a[0])
+        throw new Error('ImageQueryLod requires a fragment 2D non-array sampled image and f32 vec2 coordinates');
+      const binding=layout.samplers.find(s=>combined.get(s.sourceVariable)===item);
+      const state=lodQuerySamplers?.[`${binding?.group}/${binding?.imageBinding}`];
+      if(!Array.isArray(state)||state.length!==48||state.some(v=>!Number.isInteger(v)||v<0||v>255))throw new Error('ImageQueryLod requires the actual 48-byte sampler state');
+      const sampler=new DataView(Uint8Array.from(state).buffer),min=sampler.getFloat32(8,true),max=sampler.getFloat32(12,true);
+      if(sampler.getFloat32(16,true)!==0||sampler.getFloat32(20,true)!==1||sampler.getFloat32(44,true)!==0||state[7]!==0)
+        throw new Error('ImageQueryLod bias, anisotropy, snap or reduction needs separate lowering');
+      if(state[0]>5||state[1]>1||!Number.isFinite(min)||!Number.isFinite(max)||max<min||max<0)throw new Error('Invalid ImageQueryLod filter or LOD range');
+      if(!glslImport){glslImport=id();annotations.push([11,[glslImport,0x4c534c47,0x6474732e,0x3035342e,0]]);}
+      const u=matchingType(21,[32,0]),uv=matchingType(23,[u,2]),image=id(),size=id(),sizeF=id(),dx=id(),dy=id(),sx=id(),sy=id(),xx=id(),yy=id(),rho2=id(),log=id(),lambda=id();
+      rewritten.push([100,[item.imageType,image,a[2]]],[103,[uv,size,image,constant(0,1)]],[112,[a[0],sizeF,size]],
+        [207,[a[0],dx,a[3]]],[208,[a[0],dy,a[3]]],[133,[a[0],sx,dx,sizeF]],[133,[a[0],sy,dy,sizeF]],
+        [148,[float,xx,sx,sx]],[148,[float,yy,sy,sy]],[12,[float,rho2,glslImport,40,xx,yy]],
+        [12,[float,log,glslImport,30,rho2]],[133,[float,lambda,log,floatConstant(float,0.5)]]);
+      let accessed=floatConstant(float,0);
+      if(state[0]>=2){
+        const clamped=id(),levels=id(),levelsF=id(),last=id(),positive=id(),bounded=id();
+        rewritten.push([12,[float,clamped,glslImport,43,lambda,floatConstant(float,min),floatConstant(float,max)]],
+          [106,[u,levels,image]],[112,[float,levelsF,levels]],[131,[float,last,levelsF,floatConstant(float,1)]],
+          [12,[float,positive,glslImport,40,clamped,floatConstant(float,0)]],[12,[float,bounded,glslImport,37,positive,last]]);
+        accessed=bounded;
+        if(state[0]<4){const rounded=id(),ceiling=id();accessed=id();rewritten.push([129,[float,rounded,bounded,floatConstant(float,0.5)]],[12,[float,ceiling,glslImport,9,rounded]],[131,[float,accessed,ceiling,floatConstant(float,1)]]);}
+      }
+      rewritten.push([80,[a[0],a[1],accessed,lambda]]);gatherQueries=true;layout.lodQueries=(layout.lodQueries||0)+1;continue;
+    }
     if((op===96||op===97)&&a.length>5&&a[5]){
       if(a.length!==7)throw new Error('Invalid gather offset operand count');
       const item=sampledSources.get(a[2]),imageType=item&&types.get(item.imageType),coordinateType=valueTypes.get(a[3]),coordinate=types.get(coordinateType),offset=types.get(valueTypes.get(a[6]));

@@ -133,13 +133,14 @@ export class WebGpuDraw {
     let integerAttributes=0,signedAttributes=0;
     for(let i=0;i<32;i++)if(p.attributes[i]&255){const f=vertexFormat(p.attributes[i]&255);if(f.integer)integerAttributes=(integerAttributes|1<<i)>>>0;if(f.signed)signedAttributes=(signedAttributes|1<<i)>>>0;}
     const textureFlags=stage=>{
-      let integerTextures=0,signedTextures=0;const textureSwizzles={};
+      let integerTextures=0,signedTextures=0;const textureSwizzles={},lodQuerySamplers={};
       array(p.textures[stage],32,'texture bindings');
       for(let i=0;i<32;i++)if(p.textures[stage][i]){const tex=b.textures.get(p.textures[stage][i].texture),fmt=tex.format.format;
+        lodQuerySamplers[`1/${stage*40+i}`]=p.textures[stage][i].sampler.slice();
         if(fmt.endsWith('uint')||fmt.endsWith('sint'))integerTextures=(integerTextures|1<<i)>>>0;
         if(fmt.endsWith('sint'))signedTextures=(signedTextures|1<<i)>>>0;
         const swizzle=p.textures[stage][i].swizzle;if(swizzle){if(!Array.isArray(swizzle)||swizzle.length!==4||swizzle.some(n=>!Number.isInteger(n)||n<0||n>5))throw new Error('Invalid NVN texture swizzle');if(swizzle.some((n,c)=>n!==c+2))textureSwizzles[`1/${stage*40+i}`]=swizzle.slice();}}
-      return {integerTextures,signedTextures,...(Object.keys(textureSwizzles).length?{textureSwizzles}:{})};
+      return {integerTextures,signedTextures,lodQuerySamplers,...(Object.keys(textureSwizzles).length?{textureSwizzles}:{})};
     };
     const options={topology:'triangles',integerAttributes,signedAttributes,...(instances===1?{singleInstanceBase:baseInstance}:{})};
     const shaderOptions=[{...options,...textureFlags(0)},{...options,...textureFlags(1)}];

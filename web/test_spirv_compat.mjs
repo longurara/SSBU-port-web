@@ -158,3 +158,29 @@ assert.throws(()=>lowerSpirv(binary(drefOps,17,0x10400),{textureSwizzles:{'1/7':
 const unknownOps=swizzleOps.map(([op,a])=>op===88?[88,[...a.slice(0,2),999,...a.slice(3)]]:[op,a]);
 assert.throws(()=>lowerSpirv(binary(unknownOps,1000,0x10400),{textureSwizzles:{'1/7':[1,1,1,2]}}),/Unresolved image source/);
 console.log('Texture swizzle contracts: PASS (typed constants, channel extraction, identity, invalid maps, comparison and unresolved sources)');
+
+// Queries return the full vec2, including when glslang stores it in a local.
+const queryOps=instructions(sampled).map(([op,a])=>[op,[...a]]);
+queryOps.splice(queryOps.findIndex(([op])=>op===54),0,[23,[12,1,2]],[43,[1,13,0x3f000000]],[44,[12,14,13,13]]);
+queryOps.splice(queryOps.findIndex(([op])=>op===253),0,[105,[12,15,10,14]]);
+const query=binary(queryOps,16,0x10400),sampler=new Uint8Array(48),sv=new DataView(sampler.buffer);
+sampler[0]=5;sampler[1]=1;sv.setFloat32(8,-1000,true);sv.setFloat32(12,1000,true);sv.setFloat32(20,1,true);
+const queryOptions={lodQuerySamplers:{'1/7':Array.from(sampler)}};
+assert.equal(lowerSpirv(query,queryOptions).layout.lodQueries,1);
+assert.ok(!instructions(lowerSpirv(query,queryOptions).bytes).some(([op])=>op===105));
+assert.throws(()=>lowerSpirv(query),/actual 48-byte/);
+for(const [offset,value]of [[16,1],[20,2],[44,1]]){
+  const changed=sampler.slice();new DataView(changed.buffer).setFloat32(offset,value,true);
+  assert.throws(()=>lowerSpirv(query,{lodQuerySamplers:{'1/7':Array.from(changed)}}),/separate lowering/);
+}
+for(const [offset,value]of [[0,6],[7,1]]){
+  const changed=Array.from(sampler);changed[offset]=value;
+  assert.throws(()=>lowerSpirv(query,{lodQuerySamplers:{'1/7':changed}}),/Invalid ImageQueryLod|separate lowering/);
+}
+for(const mutate of [
+  (op,a)=>op===15?[0,...a.slice(1)]:a,
+  (op,a)=>op===25?[...a.slice(0,2),3,...a.slice(3)]:a,
+  (op,a)=>op===25?[...a.slice(0,4),1,...a.slice(5)]:a,
+  (op,a)=>op===25?[...a.slice(0,5),1,...a.slice(6)]:a,
+])assert.throws(()=>lowerSpirv(binary(queryOps.map(([op,a])=>[op,mutate(op,a)]),16,0x10400),queryOptions),/fragment 2D/);
+console.log('LOD query contracts: PASS (full vector, actual sampler required, unsupported stage/dimensions/sampling state rejected)');

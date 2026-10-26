@@ -141,7 +141,7 @@ export async function testGpuDraw(device,{shaderLowering=false}={}) {
     await backend.draw.captureInputs('fixture-budget',first.packet,first.shaders,first.shaders.map(s=>s.options));
     check(capture.records.length===priorCount&&capture.omitted.includes('limit'),'Draw capture report budget was not enforced');capture.byteLimit=priorLimit;
     const perform=backend.perform;backend.perform=async()=>{throw new Error('injected draw capture failure');};
-    await backend.draw.captureInputs('fixture-error',first.packet,first.shaders,first.shaders.map(s=>s.options));
+    await backend.draw.captureInputs('fixture-error',first.packet,first.shaders,first.shaders.map(s=>s.options),new Error('fixture draw failed'));
     check(capture.lastError.includes('injected draw capture failure'),'Diagnostic read failure was not retained separately');backend.perform=perform;
     if(device.features.has('float32-filterable')&&device.features.has('texture-compression-bc')){
       const compressed=new Uint8Array(68),v=new DataView(compressed.buffer);[0x5854564e,0x42,1,3,3,1,1,0,1,0,0,3,3,1,8].forEach((n,i)=>v.setUint32(i*4,n,true));v.setUint16(60,0xf800,true);v.setUint16(62,0xf800,true);

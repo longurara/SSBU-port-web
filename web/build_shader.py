@@ -42,6 +42,11 @@ def main():
     shutil.copy2(ROOT/'web/shader-compiler.mjs',output/'shader-compiler.mjs')
     shutil.copy2(ROOT/'web/shader-test.mjs',output/'shader-test.mjs')
     shutil.copy2(ROOT/'web/test-gpu-swizzle.mjs',output/'test-gpu-swizzle.mjs')
+    shutil.copy2(ROOT/'web/test-gpu-lod-query.mjs',output/'test-gpu-lod-query.mjs')
+    lod_fixture=ROOT/'build/web-lod-query-test.spv'
+    subprocess.run([str(ROOT/'deps/glslang/bin/glslang.exe'),'-V','-S','frag',str(ROOT/'web/lod-query-test.frag'),'-o',str(lod_fixture)],check=True)
+    lod_data=lod_fixture.read_bytes()
+    (output/'lod-query-test.json').write_text(json.dumps({'words':list(struct.unpack('<%dI'%(len(lod_data)//4),lod_data))})+'\n')
     fixture=ROOT/'build/web-shader-test.spv'
     subprocess.run([str(ROOT/'deps/glslang/bin/glslang.exe'),'-V','-S','comp',str(ROOT/'web/shader-test.comp'),'-o',str(fixture)],check=True)
     data=fixture.read_bytes()
