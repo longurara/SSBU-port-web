@@ -1,3 +1,23 @@
+> **26/10/2026 — 7cf0 TERMINAL WEBGPU ImageQueryLod SAU CÁC BẢNG THƯỞNG.**
+> Phiên đã terminal1156s, error WebGPU graphics draw failed, gpuError
+> unsupported instruction ImageQueryLod at Function. Actual report
+> build/codex-title-7cf0-terminal-page.json (đừng in toàn bộ GPU/media base64).
+> lastShaderFailure giữ actual Maxwell control/data/options. Đã dịch lại bằng compiler thật,
+> lưu build/codex-querylod.{frag,spv}; helper/log build/codex-querylod-translate.{cjs,log}.
+> GLSL actual: textureQueryLod(mx_t1_sampler2D,vec2(...)); chỉ đọc q[1]*256, không q[0].
+> Packet texture stage1 slot1: actual sampler bias0/snap0/anisotropy1, min5/mag1,
+> LOD clamps -1000/1000. Không được thay ImageQueryLod bằng0 hoặc bỏ draw.
+> Naga29.0.4 SPIR-V reader không hỗ trợ ImageQueryLod; WGSL không có textureQueryLod.
+> Hướng đang nghiên cứu: hạ actual 2D unclamped y sang derivative LOD thật, dùng kích thước
+> texture mip0 và bias từ sampler thật, chứng minh chỉ y được dùng; x/clamp/anisotropy khác
+> phải explicit unsupported tới khi có xử lý đúng. Chưa có code fix/test cho hướng này.
+> Nguồn chuẩn: registry.khronos.org/OpenGL/extensions/ARB/ARB_texture_query_lod.txt,
+> y là lambda sau bias/trước clamp. Kiểm tra cả shader actual và GPU numeric derivatives.
+> Code liên quan web/spirv-compat.mjs lowerSpirv, gpu-draw.mjs shaderOptions quanh136,
+> game-shaders.mjs, shader-compiler.mjs (Naga WASM). Chỉ JS fix có thể không cần full runtime rebuild.
+> Không compiler đang chạy. HEAD trước note0b826b0/9af4523; served WASM7cf0 đã verified.
+> Chưa menu/CPU match. Tiếp xử lý shader từ actual capture, không reboot bản lỗi trước fix.
+
 > **26/10/2026 — 7cf0 ĐÃ QUA TITLE VÀ HIỆN THÔNG BÁO/PHẦN THƯỞNG THẬT, PHIÊN CÒN CHẠY.**
 > Không rebuild/reload phiên hiện tại. Opening thật808s, clock video12816000us/audio14708000us.
 > A838s giữ10presents/thả, phim đóng840s, title trắng ổn định908s.
