@@ -1,3 +1,21 @@
+> **26/10/2026 — a525 TERMINAL7101b1a230; BUILD56590a8 ĐANG CHẠY.**
+> Phiêna525 đã phát gần hết phim thật: clock video125662000us/audio127545333us,
+> duration129799000us; screenshot output/playwright/codex-title-a525-opening-end.png.
+> A1652s giữ10presents/thả đúng, vẫn chạy1674s rồi terminal1694s:
+> uncompiled indirect target7101b1a230, guestFunction71032e9a80/lr71022d2774,
+> threadFailed0. Báo cáo build/codex-title-a525-terminal-page.json. Chưa menu/match.
+> Phim đã EOF/reset/close tự nhiên trước A; diagnostic movieError cuối có
+> No current movie sample, chưa chứng minh là nguyên nhân dừng (actual terminal là target trên).
+> Original group71050a93b8 gồm6targets:1b19f30/1b1a010/1b1a0f0/1b1a150/1b1a230/1b1a340,
+> 4hàm trước đó chưa compile, tất cả có native definitions. Evidence
+> build/codex-title-a525-callback-group.json. Code56590a8 thêm đúng observed callback1b1a230.
+> Prepare --main --pointer-tables đã xong:70358functions(+5),306ctors, missing0;
+> cả6targets có trong generated table. Log build/codex-title-1b1a230-prepare.log.
+> Full build PID78584 bắt đầu2026-10-26T06:56:03.5740448Z,
+> --fibers --compact-codegen --jobs8. Log/state build/codex-title-56590a8-build{,.err}.log / -state.json.
+> Không restart compiler/không boot lại bảna525 đã terminal. TIẾP: chờ build thành công,
+> xác minh local+HTTP SHA/receipt/5JS khác a525, boot mới1lần, menu/CPU match+completion.
+
 > **26/10/2026 — BUILD608df20 COMPLETE; GAMEa525 ĐANG BOOT ĐÚNG1LẦN.**
 > PID67540/55800/66224 đã kết thúc; Linked runtime-fibers-compact.mjs.
 > Receipt publish2026-10-25T23:21:26Z, SHA256
