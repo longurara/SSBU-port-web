@@ -1,3 +1,39 @@
+> **26/10/2026 16:09Z — USER REQUESTED ALL NATIVE COVERAGE; COMPILE PREFLIGHT LIVE70560.**
+> Latest human instruction: prioritize finding/adding EVERYTHING because rebuilds
+> are slow. This explicitly supersedes the earlier observed-callback-only strategy.
+> Added --all-functions to prepare_runtime.py; runtime_roots.json allNativeFunctions:true
+> persists full coverage for subsequent prepares. New observed target3353750 retained.
+> Original index audit:112890native f definitions in1159files,70119unique code-relative
+> pointer targets from288143ELFslots; previously30908pointer targets/43561native funcs
+> missing. ALL targets have original definitions, no stubs. Audit all-callback-audit.json.
+> Prepared --main --all-functions --all-pointer-tables into staging, independently
+> compared EVERY original f definition and EVERY ELF pointer target against fn_table.
+> EXACT112890tableentries, zero missing/extra,70119pointers covered,3353750included.
+> Total113930functions including unwind,306ctors,source1090117063bytes. Reports
+> build/codex-all-functions-{prepare.log,coverage.json}; coverage helper independently
+> rescans original sources+ELF, not just manifest. Graph copied into build/web-runtime.
+> Code8c64675 pushed.13pruning tests PASS. Protected headers unchanged. Full coverage
+> is preparation proof, NOT compilation/browser/playable-game proof.
+> Compile-only preflight started16:09:53Z parent70560, --fibers --compact-codegen
+> --jobs8 --compile-only. State build/codex-all-functions-build-state.json;
+> logs codex-all-functions-compile{,.err}.log. Verified parent live and objects advancing.
+> Wait wrapper exec session14232 waits70560; no compiler restart on quiet output.
+> NEXT after real completion/Prepared objects: run build/codex-audit-all-function-objects.py
+> to inspect every compiled object's numeric locals (>=113930defined funcs, max<=50000).
+> Preserve full coverage if an object needs repair. Then run full SAME flags/jobs8
+> WITHOUT --compile-only to reuse cached objects and link; record new linker PID/state.
+> Do not boot oldddc3. Only after guarded full link/hash/HTTP/source verification boot
+> once. Old compute verifier rejects7cf0, so NEW verifier must reject ddc3 instead!
+> Last ddc3 session TERMINAL6944s actual uncompiled7103353750/lr71038fb850,
+> guestFunction71038fb320,threadFailed0. Full build/codex-compute-runtime-terminal.json.
+> Compute PASSED in actual game:1625dispatches/4404writtenbuffers/5267packed draws.
+> ddc3 opening794s/A826release828,title932s/A960release964; notification was held
+> a long time before A6434release6438; greenreward6536s/A6562release6566; blueVenusaur
+> Spirit card6640s. One A6812released6822(holdtimeout10s,still released), black6876,
+> terminal6944. Do not interpret long notification dwell as boot time. No game/compiler
+> from oldddc3 active. Native/codec/graphics patches remain; goal menu/CPU match/
+> completion NOT achieved. Notify important changes only, no repeat narrow rebuilds.
+
 > **26/10/2026 14:02Z — COMPUTE BUILD COMPLETE, VERIFIED ddc3 BOOTED ONCE.**
 > Parent78396/emcc68700/wasm-opt68940 finished, Linked runtime-fibers-compact.mjs.
 > Guarded publish14:02:19Z; SHA256ddc3d11b3efd4a357b29180ddd62446cf27d3b923ee663fe8d8e888b4fd6f69d,
