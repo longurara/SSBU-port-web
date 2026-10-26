@@ -1,3 +1,24 @@
+> **26/10/2026 10:54Z — FIX f133896 NOW BOOTED ONCE; PRESERVE LIVE GAME.**
+> Previously active session reached actual title (840s), accepted A860s/released864s,
+> then terminal958s with the OLD unsupported ImageQueryLod. Captured
+> build/codex-querylod-old-terminal.{log,json}; no callback/compiler failure.
+> This confirms that session had pre-fix modules; it was not restarted while live.
+> After terminal, controlled helper booted verified fixed JS exactly once10:54Z.
+> build/codex-querylod-fixed-boot.log started:true; trace+reader installed successfully,
+> GuestMemory20120040. Fixed-poll-1:14s/306ctors/threadFailed0, heap300154880.
+> Runtime WASM remains7cf0; JS source/published/HTTP hashes recorded in
+> build/codex-querylod-publication.json. Code f133896 is pushed; no compiler active.
+> NEXT: keep this fixed session; page-safe helper build/codex-querylod-page-poll.cjs;
+> once worker evaluates promptly, existing codex-av-poll-compact/clock helpers work.
+> Observe actual opening/title before input. Original C-input-verified helper
+> build/codex-boot23-press-a.cjs available; fallback codex-querylod-press-a.cjs uses
+> real keyboard/focused canvas/10presents but DOES NOT claim C memory verification.
+> Screenshot helper codex-querylod-active-screen.cjs uses querylod-active.png;
+> copy important scenes to distinct paths. Old querylod-{opening,title}.png are
+> PRE-FIX evidence. New fixed screenshots should use fixed-* names.
+> Goal NOT complete: fixed shader passed isolated GPU tests, but actual menu,
+> CPU match and completion still unverified. Do not reboot this session on timeout.
+
 > **26/10/2026 — 7cf0 TERMINAL WEBGPU ImageQueryLod SAU CÁC BẢNG THƯỞNG.**
 > Phiên đã terminal1156s, error WebGPU graphics draw failed, gpuError
 > unsupported instruction ImageQueryLod at Function. Actual report
