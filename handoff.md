@@ -1,3 +1,23 @@
+> **26/10/2026 16:17Z — ALL-NATIVE COMPILE+OBJECT AUDIT PASS; FULL LINK LIVE75144.**
+> Preflight parent70560 finished normally; stdout Prepared objects, not linked.
+> Audited ALL1204objects:159617definedfunctions, maximum pre-link numericlocals40,
+> no limit violation. build/codex-all-functions-objects-audit.{json,log}. This is NOT
+> final linked locals/browser proof; retain publisher's final50000guard.
+> Full link started16:17:33Z parent75144, code8c64675, --fibers --compact-codegen
+> --jobs8 WITHOUT --compile-only. Reuses fully compiled cached objects. State
+> codex-all-functions-build-state.json phase linking-full-native; logs
+> build/codex-all-functions-link{,.err}.log. Do NOT restart on silent Binaryen passes.
+> Latest user explicitly wants all missing native code at once, avoid single-callback
+> rebuilds. Entire112890original f functions/70119ELFpointers covered, total113930
+> functions with unwind,306ctors; source1.09GB. Preserve full coverage even if repair
+> needed; do not revert to observed-only graph. Config allNativeFunctions:true persists.
+> NEXT: verify actual parent/children/CPU and linker completion. Use NEW
+> build/codex-verify-all-functions-publication.py, which rejects oldddc3, validates
+> full graph/function-count lower bound, independent coverage, local+HTTP hash/receipt,
+> numeric-local guard and11JS. Only after successful guarded publication boot once.
+> No game currently active (ddc3 terminal6944s missing3353750); actual compute1625
+> dispatches had passed. Menu/CPU match/completion still unproven. Goal active.
+
 > **26/10/2026 16:09Z — USER REQUESTED ALL NATIVE COVERAGE; COMPILE PREFLIGHT LIVE70560.**
 > Latest human instruction: prioritize finding/adding EVERYTHING because rebuilds
 > are slow. This explicitly supersedes the earlier observed-callback-only strategy.
