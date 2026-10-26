@@ -4,8 +4,9 @@ import {WebGpuBackend} from './gpu-backend.mjs';
  * Production draws compile retained Maxwell bytes; these pixels verify the
  * real pipeline/buffer/bind-group/scissor/blending/index path independently. */
 export async function createFixtureGraphicsCompiler() {
-  return {compile(control,data){
+  return {compile(control,data,options={}){
     const vertex=(new DataView(data.buffer,data.byteOffset).getUint32(0x30,true)>>>10)===1;
+    if(options.requestedStage!==undefined&&options.requestedStage!==(vertex?0:1))throw new Error('Graphics stage received another stage\'s resource options');
     const variant=new DataView(control.buffer,control.byteOffset).getUint32(0x704,true),flat=variant===0x464c4154,textured=!vertex&&variant===0x54455854,noOutput=!vertex&&variant===0x4e4f5554;
     const flatVertex='@group(3) @binding(0) var<uniform> params:vec4<u32>; struct Out{@builtin(position) p:vec4<f32>,@location(0) @interpolate(flat) shade:vec4<f32>}; @vertex fn vertex_main(@location(0) p:vec4<f32>,@builtin(vertex_index) i:u32)->Out{let colors=array<vec4<f32>,3>(vec4<f32>(1,0,0,1),vec4<f32>(0,1,0,1),vec4<f32>(0,0,1,1));return Out(vec4<f32>(p.xyz,p.w*bitcast<f32>(params.z)),colors[i%3]);}';
     const flatFragment='@fragment fn fragment_main(@location(0) @interpolate(flat) shade:vec4<f32>)->@location(0) vec4<f32>{return shade;}';
@@ -152,6 +153,16 @@ export async function testGpuDraw(device,{shaderLowering=false}={}) {
       for(let pixel=0;pixel<16;pixel++)for(let c=0;c<4;c++)check(Math.abs(read[pixel*4+c]-[128,0,0,255][c])<=1,'Logical compressed view did not reach the actual draw/sampler');
       check(backend.draw.statistics.logicalSamplingCopies===1,'Logical copy was not counted through draw submission');
     }
+    // A combined native program can be bound for both stages. Vertex state has
+    // no textures here, while the fragment's sampler must remain available.
+    const combined=new Uint8Array(4+program(1).length-4+textured.length-4);
+    new DataView(combined.buffer).setUint32(0,2,true);combined.set(program(1).subarray(4),4);combined.set(textured.subarray(4),program(1).length);
+    const {value:combinedHandle}=await backend.request(12,{bytes:combined}),{value:combinedSnapshot}=await backend.request(20,{handle:combinedHandle});
+    p.programs=[combinedSnapshot,combinedSnapshot];p.attributes[0]=0x2e;p.streams[0]=[16,0,vertices,0,48];p.primitive=[4,-1,3,0,0,1,0,0];p.ds.fill(0);
+    p.textures[1][0]={texture:sourceHandle,view,sampler:Array.from(sampler)};
+    await backend.request(2,{handle:uniform,offset:4,size:16,bytes:new Uint8Array(new Float32Array([1,1,1,1]).buffer)});
+    await clear();await draw();read=(await backend.request(16,{handle:target,offset:0,size:0})).bytes;
+    for(let pixel=0;pixel<16;pixel++)for(let c=0;c<4;c++)check(Math.abs(read[pixel*4+c]-[255,128,64,255][c])<=1,'Combined program stage resources or pixels differ');
     if(shaderLowering){
     const {lowerSpirv}=await import('./spirv-compat.mjs'),{createShaderCompiler}=await import('./shader-compiler.mjs');
     // Real SPIR-V lowering behind the actual immutable packet/variant path.

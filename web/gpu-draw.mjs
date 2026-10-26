@@ -143,7 +143,7 @@ export class WebGpuDraw {
       return {integerTextures,signedTextures,lodQuerySamplers,...(Object.keys(textureSwizzles).length?{textureSwizzles}:{})};
     };
     const options={topology:'triangles',integerAttributes,signedAttributes,...(instances===1?{singleInstanceBase:baseInstance}:{})};
-    const shaderOptions=[{...options,...textureFlags(0)},{...options,...textureFlags(1)}];
+    const shaderOptions=[{...options,...textureFlags(0),requestedStage:0},{...options,...textureFlags(1),requestedStage:1}];
     const compileStage=async stage=>{
       const compile=async()=> (await b.programs.compileSnapshot(p.programs[stage],shaderOptions[stage])).find(s=>s.metadata.stage===stage);
       let shader=await compile();if(!shader)return shader;

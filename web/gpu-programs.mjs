@@ -58,10 +58,17 @@ export class WebGpuPrograms {
   }
   async compileRecord(record,options,valid) {
     if(this.closed||!valid())throw new Error('GPU program source released or replaced during compilation');
+    const requested=options.requestedStage;
+    if(requested!==undefined&&requested!==0&&requested!==1)throw new Error('Invalid requested graphics stage');
+    if(requested!==undefined&&record.stages.some(source=>source.type!==1&&source.type!==5))throw new Error('Graphics program contains an unsupported stage');
     const key=JSON.stringify(Object.fromEntries(Object.entries(options).sort(([a],[b])=>a.localeCompare(b))));
     if(record.variants.has(key))return record.variants.get(key);
     this.compiler??=await this.compilerFactory();const stages=[];
     for(const source of record.stages) {
+      // One retained program may own both stages. Each draw supplies different
+      // textures, samplers, uniform specialization and output requirements per
+      // stage; do not compile its other stage against the wrong resource state.
+      if(requested!==undefined&&source.type!==(requested===0?1:5))continue;
       if(this.closed||!valid())throw new Error('GPU program source released or replaced during compilation');
       let translated;
       try {translated=this.compiler.compile(source.control,source.data,options);}

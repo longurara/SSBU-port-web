@@ -38,3 +38,22 @@ const pending=validation.compile(validHandle,{topology:'triangles'});
 await new Promise(resolve=>setTimeout(resolve,0));validation.close();finish({messages:[]});
 await assert.rejects(pending,/released or replaced/);
 console.log('Program source ownership/cache/replacement/lifetime: PASS (mock compiler/device; not GPU validation)');
+
+// The same immutable program/snapshot can own both stages. Their per-draw
+// resource state is different, and compiling the unused fragment with vertex
+// samplers reproduces the real post-reward LOD failure.
+const combined=new Uint8Array(4+2*(packet().length-4));new DataView(combined.buffer).setUint32(0,2,true);
+combined.set(packet().subarray(4),4);const fragmentPacket=packet();new DataView(fragmentPacket.buffer).setUint32(12+0x720+0x30,5<<10,true);
+combined.set(fragmentPacket.subarray(4),packet().length);
+const calls=[];
+const stages=new WebGpuPrograms({createShaderModule:()=>({getCompilationInfo:async()=>({messages:[]})})},action=>action(),async()=>({compile(control,data,options){
+  const stage=(new DataView(data.buffer,data.byteOffset).getUint32(0x30,true)>>>10)===1?0:1;
+  assert.equal(options.resourceStage,stage,'Stage compiled using another stage\'s resource state');calls.push(stage);return {code:'test',metadata:{stage},layout:{}};
+}}));
+const both=stages.register(0,combined),snapshot=stages.retain(both);
+for(const stage of [1,0])assert.equal((await stages.compileSnapshot(snapshot,{requestedStage:stage,resourceStage:stage}))[0].metadata.stage,stage);
+assert.deepEqual(calls,[1,0]);
+await stages.compileSnapshot(snapshot,{requestedStage:1,resourceStage:1});assert.deepEqual(calls,[1,0]);
+await stages.compileSnapshot(snapshot,{requestedStage:1,resourceStage:1,variant:2});assert.deepEqual(calls,[1,0,1]);
+await assert.rejects(stages.compileSnapshot(snapshot,{requestedStage:5}),/Invalid requested/);
+stages.close();console.log('Combined graphics program stage/resource selection and independent variant cache: PASS');
