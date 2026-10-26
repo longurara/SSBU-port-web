@@ -1,3 +1,16 @@
+> **26/10/2026 — BUILD608df20 COMPLETE; GAMEa525 ĐANG BOOT ĐÚNG1LẦN.**
+> PID67540/55800/66224 đã kết thúc; Linked runtime-fibers-compact.mjs.
+> Receipt publish2026-10-25T23:21:26Z, SHA256
+> a52567bab5d02ac873d48e261016d9c126a6062d4a2b28b81aa6c75f92f5e7e7,
+> 283709042bytes /100362functions /maximumLocals10812. Xác minh local+HTTP SHA,
+> receipt và5 JS modules khớp source lúc2026-10-26T06:21:45Z:
+> build/codex-title-608df20-publication-verified.json. State đã complete, không restart compiler.
+> Sau khi xác nhậnc738 terminal, boot mớia525 đúng1lần:306ctors/33workers/threadFailed0 ở2s.
+> Logs build/codex-title-a525-{boot,trace,poll-1,reader}.log. Trace và guest reader đã cài,
+> unique GuestMemory20119896. Helper screen riêng build/codex-title-a525-screen.cjs.
+> Giữ phiên đang chạy; chờ loading/opening/title thật rồi A. Callback5080 mới chỉ chứng minh
+> đã có trong build, chưa chứng minh chạy qua. Menu/CPU match+completion vẫn chưa xác nhận.
+
 > **26/10/2026 — c738 DỪNG SAU TITLE Ở CALLBACK7103375080; BUILD608df20 ĐANG CHẠY.**
 > Bảnc738 đã phát opening thật: video13016000us/audio14900000us, screenshot
 > output/playwright/codex-title-c738-opening.png. A922s giữ10presents/thả đúng,
