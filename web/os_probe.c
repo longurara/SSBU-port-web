@@ -1,4 +1,4 @@
-/* Self-authored event tests through the actual OS import adapter. */
+/* Self-authored event/thread lifecycle tests through the actual OS adapter. */
 #define _POSIX_C_SOURCE 200809L
 #include "runtime.h"
 #include <emscripten/emscripten.h>
@@ -20,18 +20,32 @@ static _Thread_local jmp_buf *boundary;
 static pthread_mutex_t error_lock=PTHREAD_MUTEX_INITIALIZER;
 static char error[160],report[256];
 static atomic_uint failures,entered,done;
+static atomic_uint thread_calls;
+static atomic_uint thread_gate,joiner_entered,joiner_done;
+static atomic_uint probe_stage;
+EMSCRIPTEN_KEEPALIVE unsigned os_probe_stage(void){return atomic_load(&probe_stage);}
 static unsigned checks;
 static pthread_t driver;
 static const uint64_t EVENT=0x7100001000ULL;
 void guest_trap(const char *what,uint64_t address) {
     pthread_mutex_lock(&error_lock);snprintf(error,sizeof error,"%s (%llx)",what,(unsigned long long)address);pthread_mutex_unlock(&error_lock);
-    if(boundary)longjmp(*boundary,1);abort();
+    if(boundary)longjmp(*boundary,1);
+    fprintf(stderr,"OS fixture worker trap: %s (%llx)\n",what,(unsigned long long)address);abort();
 }
-int web_runtime_thread_call(Ctx *c,uint64_t address){(void)c;guest_trap("guest thread execution is outside event fixture",address);return 0;}
+int web_runtime_thread_call(Ctx *c,uint64_t address){
+    if(address!=0x7100002000ULL)guest_trap("unexpected thread fixture entry",address);
+    Ctx current={0};
+    if(!web_os_import(&current,"nnosGetCurrentThread")||!current.x[0]||rd64(c->tpidr+0x1f8)!=current.x[0]||rd64(c->tpidr+0x20)!=0||c->x[0]!=0x12345678ULL||c->x[31]!=0x7100100000ULL)
+        atomic_fetch_add(&failures,1);
+    wr64(c->tpidr+0x20,0xabcdefULL);
+    while(atomic_load(&thread_gate)){struct timespec pause={0,1000000};nanosleep(&pause,NULL);}
+    atomic_fetch_add(&thread_calls,1);return 1;
+}
 void call_indirect(Ctx *c,uint64_t address){(void)c;guest_trap("font guest callback is outside dump-free event fixture",address);}
 static void check_at(int value,int line){checks++;if(!value){atomic_fetch_add(&failures,1);pthread_mutex_lock(&error_lock);size_t n=strlen(error);if(n+16<sizeof error)snprintf(error+n,sizeof error-n,"%sL%d",n?",":"",line);pthread_mutex_unlock(&error_lock);}}
 #define check(v) check_at((v),__LINE__)
 static uint64_t invoke(const char *name,uint64_t key,uint64_t a,uint64_t b) {
+    atomic_fetch_add(&probe_stage,1);
     Ctx c={0};c.x[0]=key;c.x[1]=a;c.x[2]=b;
     if(!web_os_import(&c,name)&&!web_fs_import(&c,name)&&!web_mutex_import(&c,name))guest_trap("import not handled",0);
     return c.x[0];
@@ -57,6 +71,11 @@ static void *waiter(void *argument) {
     } else atomic_fetch_add(&failures,1);
     atomic_fetch_add(&done,1);return NULL;
 }
+static void *thread_joiner(void *argument) {
+    atomic_fetch_add(&joiner_entered,1);
+    invoke("nnosWaitThread",*(const uint64_t*)argument,0,0);
+    atomic_fetch_add(&joiner_done,1);return NULL;
+}
 __attribute__((noinline)) static void publish(void){MAIN_THREAD_ASYNC_EM_ASM({Module['onOsProbeReport'](UTF8ToString($0));},report);}
 __attribute__((noinline)) static void inject_input(int mode){MAIN_THREAD_EM_ASM({Module['onInputFixture']($0,$1);},web_input_pointer(),mode);}
 static void *run(void *unused) {
@@ -75,7 +94,8 @@ static void *run(void *unused) {
         check(invoke(TRY,EVENT,0,0)==1&&!invoke(TRY,EVENT,0,0));invoke(FINALIZE,EVENT,0,0);
         for(unsigned automatic=0;automatic<2;automatic++) {
             invoke(INITIALIZE,EVENT,0,automatic);atomic_store(&entered,0);atomic_store(&done,0);
-            pthread_t a,b;check(!pthread_create(&a,NULL,waiter,NULL));check(!pthread_create(&b,NULL,waiter,NULL));
+            pthread_t a,b;check(!pthread_create(&a,NULL,waiter,NULL));
+            check(!pthread_create(&b,NULL,waiter,NULL));
             check(reach(&entered,2,2));invoke(SIGNAL,EVENT,0,0);
             if(automatic){check(reach(&done,1,0.5));check(atomic_load(&done)==1);invoke(SIGNAL,EVENT,0,0);}
             check(!pthread_join(a,NULL));check(!pthread_join(b,NULL));check(atomic_load(&done)==2);
@@ -369,9 +389,55 @@ static void *run(void *unused) {
             Ctx c={0};c.x[0]=0x7800011000ULL;c.x[1]=16;c.x[2]=0x7800010fe0ULL;c.x[3]=42;
             check(web_os_import(&c,"swprintf")&&c.x[0]==2&&rd32(0x7800011000ULL)=='4'&&rd32(0x7800011004ULL)=='2'&&rd32(0x7800011008ULL)==0);
         }
+        // The game destroys and recreates ThreadType objects at the same guest
+        // address. Each new lifetime must run its own real pthread callback.
+        check(gm_reserve(&memory,0x7800020000ULL,255*65536)==GM_OK);
+        uint64_t previous_thread_id=0;
+        for(unsigned lifetime=0;lifetime<600;lifetime++) {
+            uint64_t key=0x7100003000ULL+(lifetime<300?0:(uint64_t)lifetime*512);
+            Ctx create={0};create.x[0]=key;create.x[1]=0x7100002000ULL;
+            create.x[2]=0x12345678ULL;create.x[3]=0x71000f0000ULL;create.x[4]=65536;create.x[5]=16;
+            check(web_os_import(&create,"nnosCreateThread")&&create.x[0]==0);
+            uint64_t thread_id=invoke("_ZN2nn2os11GetThreadIdEPKNS0_10ThreadTypeE",key,0,0);
+            check(thread_id>previous_thread_id);previous_thread_id=thread_id;
+            invoke("nnosStartThread",key,0,0);
+            if(!lifetime) {
+                boundary=&expected;
+                if(!setjmp(expected)){invoke("nnosStartThread",key,0,0);check(0);}
+                else {check(strstr(error,"thread started twice")!=NULL);error[0]=0;}
+                boundary=&stopped;
+            }
+            invoke("nnosWaitThread",key,0,0);
+            invoke("nnosWaitThread",key,0,0);
+            check(atomic_load(&thread_calls)==lifetime+1);
+            invoke("nnosDestroyThread",key,0,0);
+        }
+        // Never-started objects also release slots; the limit is simultaneous
+        // lifetimes, rather than the total number ever created.
+        for(unsigned slot=0;slot<256;slot++) {
+            Ctx create={0};create.x[0]=0x7100100000ULL+(uint64_t)slot*512;
+            create.x[1]=0x7100002000ULL;create.x[3]=0x71000f0000ULL;create.x[4]=65536;create.x[5]=16;
+            check(web_os_import(&create,"nnosCreateThread")&&create.x[0]==(slot==255?0x1015:0));
+        }
+        for(unsigned slot=0;slot<255;slot++)invoke("nnosDestroyThread",0x7100100000ULL+(uint64_t)slot*512,0,0);
+        {
+            const uint64_t key=0x7100003000ULL;
+            Ctx create={0};create.x[0]=key;create.x[1]=0x7100002000ULL;create.x[2]=0x12345678ULL;
+            create.x[3]=0x71000f0000ULL;create.x[4]=65536;create.x[5]=16;
+            check(web_os_import(&create,"nnosCreateThread")&&create.x[0]==0);
+            atomic_store(&thread_gate,1);invoke("nnosStartThread",key,0,0);
+            pthread_t a,b;
+            check(!pthread_create(&a,NULL,thread_joiner,(void*)&key));
+            check(!pthread_create(&b,NULL,thread_joiner,(void*)&key));
+            check(reach(&joiner_entered,2,2));check(atomic_load(&joiner_done)==0);
+            atomic_store(&thread_gate,0);
+            check(!pthread_join(a,NULL)&&!pthread_join(b,NULL));
+            check(atomic_load(&joiner_done)==2&&atomic_load(&thread_calls)==601);
+            invoke("nnosWaitThread",key,0,0);invoke("nnosDestroyThread",key,0,0);
+        }
         web_memory_bind(NULL);
     } else atomic_fetch_add(&failures,1);
-    snprintf(report,sizeof report,"{\"ok\":%s,\"checks\":%u,\"failures\":%u,\"error\":\"%s\"}",atomic_load(&failures)?"false":"true",checks,atomic_load(&failures),error);
+    snprintf(report,sizeof report,"{\"ok\":%s,\"checks\":%u,\"failures\":%u,\"threadCallbacks\":%u,\"error\":\"%s\"}",atomic_load(&failures)?"false":"true",checks,atomic_load(&failures),atomic_load(&thread_calls),error);
     publish();return NULL;
 }
 int os_probe_start(void){return pthread_create(&driver,NULL,run,NULL);}

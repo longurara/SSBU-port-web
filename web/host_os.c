@@ -29,6 +29,8 @@ int web_runtime_thread_call(Ctx *, uint64_t);
 typedef struct {
     uint64_t key, entry, arg, stack, stack_size, mask, id;
     atomic_int priority, core, started, finished;
+    unsigned waiters;
+    int joining, joined;
     pthread_t thread;
     char name[128];
 } HostThread;
@@ -77,6 +79,7 @@ static uint64_t next_stdalloc_region = 0x7900000000ULL;
 static int bcat_mounted;
 static float volume_main = 0.25f, volume_library = 1.0f;
 static unsigned thread_count;
+static uint64_t next_thread_id;
 static pthread_mutex_t registry = PTHREAD_MUTEX_INITIALIZER;
 static _Thread_local HostThread *current_thread;
 static struct {
@@ -149,7 +152,7 @@ void web_os_reset(void) {
     bcat_mounted = 0; volume_main = 0.25f; volume_library = 1.0f;
     vsync_event = 0;
     threads[0] = (HostThread){.key=MAIN_THREAD,.id=1,.priority=16,.core=0,.mask=1,.started=1};
-    current_thread = &threads[0]; thread_count = 1;
+    current_thread = &threads[0]; thread_count = 1; next_thread_id = 2;
     environment.focus = 1; environment.recording = 1;
     hid_state.supported_styles = 0x3fu; hid_state.player0_connected = 1u;
 }
@@ -160,6 +163,39 @@ static HostThread *thread_for(uint64_t key) {
         pthread_mutex_unlock(&registry); return &threads[i];
     }
     pthread_mutex_unlock(&registry); guest_trap("unknown ThreadType", key); return NULL;
+}
+/* SDK WaitThread may be called repeatedly. A pthread handle is joined exactly
+ * once, while all waiters retain the stable registry slot until they return. */
+static void join_thread(HostThread *thread) {
+    pthread_mutex_lock(&registry);
+    if(thread==current_thread||thread==&threads[0]) {
+        uint64_t key=thread->key;pthread_mutex_unlock(&registry);guest_trap("joining current or main thread",key);
+    }
+    thread->waiters++;
+    while(thread->joining)pthread_cond_wait(&multiwait_cv,&registry);
+    int rc=0;
+    if(thread->started&&!thread->joined) {
+        thread->joining=1;pthread_t native=thread->thread;
+        pthread_mutex_unlock(&registry);rc=pthread_join(native,NULL);pthread_mutex_lock(&registry);
+        thread->joining=0;if(!rc)thread->joined=1;
+    }
+    thread->waiters--;pthread_cond_broadcast(&multiwait_cv);
+    uint64_t key=thread->key;pthread_mutex_unlock(&registry);
+    if(rc)guest_trap("join failed",key);
+}
+static void destroy_thread(HostThread *thread) {
+    join_thread(thread);
+    pthread_mutex_lock(&registry);
+    if(thread->waiters||thread->joining) {
+        uint64_t key=thread->key;pthread_mutex_unlock(&registry);guest_trap("destroying thread with active waiters",key);
+    }
+    for(unsigned i=0;i<256;i++)if(holders[i].used&&holders[i].is_thread&&holders[i].target==thread->key) {
+        uint64_t key=thread->key;pthread_mutex_unlock(&registry);guest_trap("destroying thread with live wait holder",key);
+    }
+    if(thread->started&&gm_decommit(elf_memory(),TLS_BASE+(uint64_t)(thread-threads)*65536,65536)!=GM_OK) {
+        uint64_t key=thread->key;pthread_mutex_unlock(&registry);guest_trap("cannot release thread TLS",key);
+    }
+    memset(thread,0,sizeof *thread);pthread_mutex_unlock(&registry);
 }
 static HostEvent *event_for(uint64_t key, int create, int signaled, int autoclear) {
     pthread_mutex_lock(&registry);
@@ -251,7 +287,9 @@ static void *thread_entry(void *arg) {
     GuestMemory *memory = elf_memory();
     Ctx c = {0}; c.x[31] = (thread->stack + thread->stack_size) & ~15ULL;
     c.x[30] = 0x7300000000ULL; c.x[0] = thread->arg;
-    c.tpidr = TLS_BASE + (thread->id - 1) * 65536;
+    // Thread IDs identify lifetimes; TLS storage belongs to bounded registry
+    // slots and can be reused only after pthread_join has completed.
+    c.tpidr = TLS_BASE + (uint64_t)(thread-threads) * 65536;
     if (gm_commit(memory, c.tpidr, 65536) != GM_OK || gm_write(memory, c.tpidr + 0x1f8, &thread->key, 8) != GM_OK) {
         // Establish the diagnostic boundary before reporting this through guest code.
         c.tpidr = 0;
@@ -973,12 +1011,18 @@ int web_os_import(Ctx *c, const char *name) {
         !strcmp(name, "_ZN2nn2os12CreateThreadEPNS0_10ThreadTypeEPFvPvES3_S3_mii") ||
         !strcmp(name, "nnosCreateThread")) {
         pthread_mutex_lock(&registry);
-        if (thread_count == 256) { pthread_mutex_unlock(&registry); c->x[0] = 0x1015; return 1; }
+        HostThread *thread=NULL;
+        if(!c->x[0]){pthread_mutex_unlock(&registry);guest_trap("null ThreadType",0);}
+        for(unsigned i=0;i<thread_count;i++) {
+            if(threads[i].key==c->x[0]){pthread_mutex_unlock(&registry);guest_trap("thread already initialized",c->x[0]);}
+            if(!threads[i].key&&!thread)thread=&threads[i];
+        }
+        if(!thread&&thread_count<256)thread=&threads[thread_count++];
+        if(!thread){pthread_mutex_unlock(&registry);c->x[0]=0x1015;return 1;}
         int has_core = !strcmp(name, "_ZN2nn2os12CreateThreadEPNS0_10ThreadTypeEPFvPvES3_S3_mii") || !strcmp(name, "nnosCreateThread");
         int core = has_core && (int)c->x[6] >= 0 && (int)c->x[6] < 64 ? (int)c->x[6] : 0;
-        HostThread *thread = &threads[thread_count];
-        *thread = (HostThread){.key=c->x[0],.entry=c->x[1],.arg=c->x[2],.stack=c->x[3],.stack_size=c->x[4],.priority=(int)c->x[5],.id=thread_count+1,.core=core,.mask=1ULL<<core};
-        thread_count++; pthread_mutex_unlock(&registry); c->x[0] = 0; return 1;
+        *thread = (HostThread){.key=c->x[0],.entry=c->x[1],.arg=c->x[2],.stack=c->x[3],.stack_size=c->x[4],.priority=(int)c->x[5],.id=next_thread_id++,.core=core,.mask=1ULL<<core};
+        pthread_mutex_unlock(&registry); c->x[0] = 0; return 1;
     }
     if (!strcmp(name, "_ZN2nn2os13SetThreadNameEPNS0_10ThreadTypeEPKc") || !strcmp(name, "nnosSetThreadNamePointer")) {
         HostThread *thread = thread_for(c->x[0]); size_t i;
@@ -986,22 +1030,26 @@ int web_os_import(Ctx *c, const char *name) {
         thread->name[sizeof thread->name-1] = 0; return 1;
     }
     if (!strcmp(name, "_ZN2nn2os11StartThreadEPNS0_10ThreadTypeE") || !strcmp(name, "nnosStartThread")) {
-        HostThread *thread = thread_for(c->x[0]); if (thread->started) guest_trap("thread started twice", thread->key);
+        HostThread *thread = thread_for(c->x[0]);pthread_mutex_lock(&registry);
+        if(thread->started){pthread_mutex_unlock(&registry);guest_trap("thread started twice",thread->key);}
+        thread->started=1;
         pthread_attr_t attributes; pthread_attr_init(&attributes); pthread_attr_setstacksize(&attributes, 2097152);
         int rc = pthread_create(&thread->thread, &attributes, thread_entry, thread); pthread_attr_destroy(&attributes);
-        if (rc) guest_trap("pthread_create failed", (uint64_t)rc); thread->started = 1; return 1;
-    }
-    if (!strcmp(name, "_ZN2nn2os10WaitThreadEPNS0_10ThreadTypeE") || !strcmp(name, "nnosWaitThread")) { HostThread *thread = thread_for(c->x[0]); if (thread->started && pthread_join(thread->thread, NULL)) guest_trap("join failed", thread->key); return 1; }
-    if (!strcmp(name, "pthread_join")) {
-        pthread_t pt = 0; int found = 0;
-        pthread_mutex_lock(&registry);
-        for (unsigned i = 0; i < thread_count; i++) if (threads[i].key == c->x[0] && threads[i].started) { pt = threads[i].thread; found = 1; break; }
+        if(rc)thread->started=0;
         pthread_mutex_unlock(&registry);
-        if (found) pthread_join(pt, NULL);
+        if (rc) guest_trap("pthread_create failed", (uint64_t)rc); return 1;
+    }
+    if (!strcmp(name, "_ZN2nn2os10WaitThreadEPNS0_10ThreadTypeE") || !strcmp(name, "nnosWaitThread")) { join_thread(thread_for(c->x[0])); return 1; }
+    if (!strcmp(name, "pthread_join")) {
+        HostThread *thread=NULL;
+        pthread_mutex_lock(&registry);
+        for (unsigned i = 0; i < thread_count; i++) if (threads[i].key == c->x[0] && threads[i].started) { thread=&threads[i];break; }
+        pthread_mutex_unlock(&registry);
+        if (thread) join_thread(thread);
         if (c->x[1]) wr64(c->x[1], 0);
         c->x[0] = 0; return 1;
     }
-    if (!strcmp(name, "_ZN2nn2os13DestroyThreadEPNS0_10ThreadTypeE") || !strcmp(name, "nnosDestroyThread")) { return 1; }
+    if (!strcmp(name, "_ZN2nn2os13DestroyThreadEPNS0_10ThreadTypeE") || !strcmp(name, "nnosDestroyThread")) { destroy_thread(thread_for(c->x[0])); return 1; }
     if (!strcmp(name, "_ZN2nn2os19GenerateRandomBytesEPvm") || !strcmp(name, "_ZN2nn6crypto36GenerateCryptographicallyRandomBytesEPvm")) {
         static uint64_t rng = 0x243f6a8885a308d3ULL;
         uint64_t dst = c->x[0], n = c->x[1];

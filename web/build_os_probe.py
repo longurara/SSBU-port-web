@@ -1,4 +1,4 @@
-"""Build the dump-free pthread/LightEvent import integration fixture."""
+"""Build dump-free thread lifecycle, LightEvent and OS import integration checks."""
 from pathlib import Path
 import subprocess
 import sys
@@ -11,9 +11,13 @@ def main():
        '-DRECOMP_WEB_MEMORY','-DWEB_FULL_RUNTIME','-I',str(ROOT/'runtime'),'-I',str(ROOT/'web'),
        *[str(ROOT/'web'/name) for name in ('os_probe.c','host_os.c','host_movie.c','host_movie_codec.c','host_movie_decoder.c','host_movie_bridge.c','host_font.c','font_raster.c','font_otf.c','host_fs.c','host_mutex.c','guest_sort.c','guest_memory.c','runtime_memory.c')],
        '-sUSE_FREETYPE=1',
-       '--no-entry','-pthread','-sPTHREAD_POOL_SIZE=3','-sMODULARIZE=1','-sEXPORT_ES6=1','-sENVIRONMENT=node',
+       '--no-entry','-pthread','-sASSERTIONS=1','-sSTACK_OVERFLOW_CHECK=2',
+       # Match the runtime's 2 MiB stacks. The expanded setjmp fixture exceeds
+       # Emscripten's 64 KiB default; bounds checks expose this before corruption.
+       '-sSTACK_SIZE=2097152','-sDEFAULT_PTHREAD_STACK_SIZE=2097152',
+       '-sPTHREAD_POOL_SIZE=4','-sMODULARIZE=1','-sEXPORT_ES6=1','-sENVIRONMENT=node',
        '-sINITIAL_MEMORY=16777216','-sALLOW_MEMORY_GROWTH=1','-sMAXIMUM_MEMORY=67108864',
-       '-sEXPORTED_FUNCTIONS=["_os_probe_start","_os_probe_join"]','-sEXPORTED_RUNTIME_METHODS=["PThread","HEAPU8"]',
+       '-sEXPORTED_FUNCTIONS=["_os_probe_start","_os_probe_join","_os_probe_stage"]','-sEXPORTED_RUNTIME_METHODS=["PThread","HEAPU8"]',
        '-o',str(output/'probe.mjs')],check=True)
     subprocess.run([str(ROOT/'deps/emsdk/node/24.19.0_64bit/node.exe'),str(ROOT/'web/test_os_events.mjs')],check=True)
 
