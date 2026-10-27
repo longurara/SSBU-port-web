@@ -1,3 +1,16 @@
+> **28/10/2026 — USER CANCELLED UNFINISHED ASYNCIFY TO SHUT DOWN.**
+> Build80924/emcc64112/wasm-opt92108 were identity-checked and terminated; zero
+> remaining build processes. State codex-thread-lifecycle-build-state.json and
+> pause metadata both cancelled. Do NOT resume obsolete PIDs. Objects and source
+> preserved; unfinished Asyncify has no resumable checkpoint. Next authorized
+> build must relink from cached objects with --fibers --compact-codegen --jobs 8
+> (plus --trace-asyncify for pass timings), retaining all-native coverage.
+> Code075ad1d thread lifecycle fix passed2247checks/601realpthread callbacks and
+> full1204object audit, but has NOT been published or tested in actual game.
+> Served37917f still fails thread started twice after Spirit card. No game active.
+> Verify any future publication using codex-verify-thread-lifecycle-publication.py
+> before one controlled boot. Menu/CPU match/completion remain unproven.
+
 > **27/10/2026 16:50Z — FIRST FULL-NATIVE GAME TEST TERMINATED; THREAD FIX LINK LIVE80924.**
 > Actual published37917f build booted once. Observed opening930s,title1052s,
 > notification1166s,reward1270s,Rapidash Spirit card1374s. Real Z/A inputs recorded
