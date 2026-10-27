@@ -1,3 +1,55 @@
+> **27/10/2026 16:50Z — FIRST FULL-NATIVE GAME TEST TERMINATED; THREAD FIX LINK LIVE80924.**
+> Actual published37917f build booted once. Observed opening930s,title1052s,
+> notification1166s,reward1270s,Rapidash Spirit card1374s. Real Z/A inputs recorded
+> and always released. After card transition terminated around1530s with
+> thread started twice, ThreadType80613100e0, guestFunction710392acb0,
+> lr7103993ee4,sp7106df3f40,threadFailed1.6340frames/136483draws,
+> 560realcompute dispatches/1680writtenbuffers/2073packedvertexdraws.
+> Evidence build/codex-all-functions-runtime-terminal.{json,log}; screenshots
+> output/playwright/codex-all-functions-runtime-{opening,title,notification,reward,spirit}.png.
+> No game currently active. Initial black screenshots were a background-tab capture
+> issue: real GPU samples had nonblack pixels; bringToFront before screenshot fixed
+> visibility. Preserve production rendering; no graphics patch was needed for that.
+> Reproduced same thread-reuse trap in dump-free real-pthread OS fixture before fix.
+> Root cause: DestroyThread was a no-op, CreateThread appended duplicate addresses,
+> lookup returned old started record. Code075ad1d implements real join-once waits,
+> registry retirement/reuse,TLS decommit after join,unique lifetime IDs,bounded TLS
+> slots,serialized starts,and retained rejection of duplicate starts/live-holder destruction.
+> OS fixture PASS2247checks/601actualguestthreadcallbacks:300same-address and300new
+> address lifetimes,repeatedwaits,clean TLS,capacity255+main,never-started destruction,
+> two concurrent native waiters joining one guest pthread. Existing events/input checks pass.
+> Expanded fixture exceeded its old64KiB stack; STACK_OVERFLOW_CHECK=2 proved this.
+> Fixture now uses2MiB stacks matching actual runtime; actual runtime stack unchanged.
+> Full-native compile-only --fibers --compact-codegen --jobs8 PASS,only host_os rebuilt.
+> All1204objects audited159619functions,maxlocals40; final linked guard still required.
+> New full link parent80924 started16:50:28Z,source075ad1d,same full graph andjobs8,
+> plus --trace-asyncify (BINARYEN_PASS_DEBUG=1). Pass names/timings are not percent.
+> State build/codex-thread-lifecycle-build-state.json; stdout/stderr
+> build/codex-thread-lifecycle-link{,.err}.log. Do NOT resume obsolete75144/81680.
+> NEXT: verify process and link completion,then NEW verifier
+> build/codex-verify-thread-lifecycle-publication.py rejects old37917f and validates
+> full native coverage,local+HTTP receipt/hash,locals guard,11JS. Only then ONE fresh
+> boot,install guest reader afresh (global address may move),and test past thread reuse
+> into actual menu/CPU match/completion. Game completion remains unproven.
+
+> **27/10/2026 15:49Z — FULL-NATIVE BUILD PUBLISHED; FIRST BOOT LIVE.**
+> Link parent75144 and wasm-opt81680 finished normally; stdout Linked runtime-fibers-compact.mjs.
+> Guarded receipt 15:46:12Z: SHA256 37917f83987428a400e4524ddce7251339ad8324ad52ddcb4b401765c3c3eb89,
+> 580540926 bytes,161120 defined functions,maximumLocals10812. Full-native manifest
+> and independent coverage,local+HTTP hash/receipt,and11JS verified15:46:39Z by
+> build/codex-verify-all-functions-publication.py; report all-functions-publication-verified.json.
+> No build is currently active; do not resume/restart obsolete PIDs or suspended metadata.
+> User explicitly requested actual game test. ONE controlled boot started in existing
+> Playwright ssbu-web session; runtime about15:48Z. At elapsed118s:306ctors,
+> 11796961imports,heap820969472,threadFailed0,frames0,done:false. Preserve running game.
+> Movie trace installed; unique validated GuestMemory address20817288 (different from
+> old ddc3). New evidence build/codex-all-functions-runtime-*.log and
+> output/playwright/codex-all-functions-runtime-live.png. Poll using page-only
+> build/codex-compute-runtime-poll.cjs redirected to all-functions filenames.
+> NEXT: observe actual opening/title,inspect before deliberate input,pass old3353750
+> failure then actual menu/CPU match/completion. None of those is yet proven on new build.
+> Build success and306ctors do NOT establish playable-game completion.
+
 > **26/10/2026 16:17Z — ALL-NATIVE COMPILE+OBJECT AUDIT PASS; FULL LINK LIVE75144.**
 > Preflight parent70560 finished normally; stdout Prepared objects, not linked.
 > Audited ALL1204objects:159617definedfunctions, maximum pre-link numericlocals40,
